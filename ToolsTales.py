@@ -207,52 +207,7 @@ class ToolsTales:
             yield i
             i = s.find(p, i+1)
     
-    def bytesToText(self, text):
-        print("Converting")
-        
-        
-        def findall(p, s):
-            '''Yields all the positions of
-            the pattern p in the string s.'''
-            i = s.find(p)
-            while i != -1:
-                yield i
-                i = s.find(p, i+1)
-            
-            
-        
-        text = '[Veigue] is a nice guy'
-        textInitial = text
-        dictFound = dict()
-        listFoundPositions = []
-        listKeys = []
-        listValues = []
-        
-        #Loop over all elements of the tbl file
-        #key is in bytes
-        #value is the text
-        tblDict = dict()
-        for key,value in tblDict.items():
-            
-            #Look for all the matches 
-            matches = [i for i in findall(value, textInitial) if i not in listFoundPositions]
-            
-            lenMatches = len(matches)
-            if lenMatches > 0:
-                print(value)
-                text = text.replace(value, '')  
-                
-                lenValue = len(value)
-                x = [listFoundPositions.extend( list(range(posStart, posStart+lenValue))) for posStart in matches]
-                listKeys.extend( matches)
-                listValues.extend( [key] * lenMatches)
-            if text == "":
-                break
-        
-            b''.join([listValues[pos] for pos in sorted( listKeys)])
-                
-  
-    
+
             
         
         
