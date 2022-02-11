@@ -6,40 +6,25 @@ import io
 import re
 import string
 import pandas as pd
+import json
 
 
 tool = ToolsTOR.ToolsTOR("tbl")
-tool.extractMainArchive()
 
+tool.bytes_to_text_with_offset("../Data/TOR/Disc/Original/SLPS_254.50", 0x119890)
 
-tool.extractAllStory()
-
-tool.insertStoryFile("10247.scpk")
-tool.insertMainArchive()
-
-
-text = '自由青年'
-text = '<Blue><Eugene> is awesome'
-bytesFinal = tool.textToBytes(text)
-
-def is_compressed(data):
-    if len(data) < 0x09:
-        return False
-
-    expected_size = struct.unpack("<L", data[1:5])[0]
-    tail_data = abs(len(data) - (expected_size + 9))
-    if expected_size == len(data) - 9:
-        return True
-    elif tail_data <= 0x10 and data[expected_size + 9 :] == b"#" * tail_data:
-        return True # SCPK files have these trailing "#" bytes :(
-    return False
+with open("MenuFiles.json") as f:
+    menu_files_json = json.load(f)
         
+file_def = [ele for ele in menu_files_json if ele['File_Extract'] == "../Data/TOR/Menu/New/00013/00013_0000d.unknown" ][0]
+tool.extract_Menu_File(file_def)
+#tool.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
 
 
-with open("event.dat", "rb") as f:
+
+with open("00013.pak3", "rb") as f:
+    
     data = f.read()
-  
+    
 
-is_compressed(data)
-
-comptolib.decompress_data(data)
+t = tool.get_pak_type(data)

@@ -30,44 +30,39 @@ class ToolsTOR(ToolsTales):
     
     
     #Path to used
-    datBinOriginal   = '../Data/Disc/Original/DAT.BIN'
-    datBinNew        = '../Data/Disc/New/DAT.BIN'
-    elfOriginal      = '../Data/Disc/Original/SLPS_254.50'
-    elfNew           = '../Data/Disc/New/SLPS_254.50'
-    storyPathArchives= '../Data/Story/SCPK/'                        #Story XML files will be extracted here                      
-    storyPathXML     = '../Data/Story/XML/'                     #SCPK will be repacked here
-    skitPathArchives = '../Data//Skits/'                        #Skits XML files will be extracted here              
-    datPathExtract   = '../Data/DAT/' 
+    datBinOriginal   = '../Data/TOR/Disc/Original/DAT.BIN'
+    datBinNew        = '../Data/TOR/Disc/New/DAT.BIN'
+    elfOriginal      = '../Data/TOR/Disc/Original/SLPS_254.50'
+    elfNew           = '../Data/TOR/Disc/New/SLPS_254.50'
+    storyPathArchives= '../Data/TOR/Story/SCPK/'                        #Story XML files will be extracted here                      
+    storyPathXML     = '../Data/TOR/Story/XML/'                     #SCPK will be repacked here
+    skitPathArchives = '../Data/TOR/Skits/'                        #Skits XML files will be extracted here              
+    datPathExtract   = '../Data/TOR/DAT/' 
     
     def __init__(self, tbl):
         
         super().__init__("TOR", tbl)
         
+        print("Loading TBL json")
         with open("TBL_All.json") as f:
             jsonRaw = json.load(f)
             jsonTblTags = jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
             self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
-                
+          
+        print("TBL json is loaded")
+          
+        with open("MenuFiles.json") as f:
+            self.menu_files_json = json.load(f)
+    
         self.itable = dict([[i, struct.pack(">H", int(j))] for j, i in self.jsonTblTags['TBL'].items()])
         self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
         self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAMES'].items()])
         self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLORS'].items()])
         
         
-    def get_pointers(self):
-
-        f = open(self.elfOriginal , "rb")
     
-        f.seek(self.POINTERS_BEGIN, 0)
-        pointers = []
     
-        while f.tell() < self.POINTERS_END:
-            
-            p = struct.unpack("<L", f.read(4))[0]
-            pointers.append(p)
     
-        f.close()
-        return pointers
 
     
     # Extract the story files
@@ -130,119 +125,7 @@ class ToolsTOR(ToolsTales):
         return pointers_offset, texts_offset
         
     
-    #Convert a bytes object to text using TAGS and TBL in the json file
-    def bytesToText(self, theirsce):
     
-        finalText = ''
-        TAGS = self.jsonTblTags['TAGS']
-        
-            
-        b = theirsce.read(1)
-        while b != b"\x00":
-            b = ord(b)
-            if (b >= 0x99 and b <= 0x9F) or (b >= 0xE0 and b <= 0xEB):
-                c = (b << 8) + ord(theirsce.read(1))
-               
-                # if str(c) not in json_data.keys():
-                #    json_data[str(c)] = char_index[decode(c)]
-                try:
-                    finalText += (self.jsonTblTags['TBL'][str(c)])
-                except KeyError:
-                    b_u = (c >> 8) & 0xff
-                    b_l = c & 0xff
-                    finalText += ("{%02X}" % b_u)
-                    finalText += ("{%02X}" % b_l)
-            elif b == 0x1:
-                finalText += ("\n")
-            elif b in (0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xB, 0xC, 0xD, 0xE, 0xF):
-                b2 = struct.unpack("<L", theirsce.read(4))[0]
-                if b in TAGS:
-                    tag_name = TAGS.get(b)
-                    
-                    tag_param = None
-                    tag_search = tag_name.upper()+'S'
-                    if (tag_search in self.jsonTblTags.keys()):
-                        tags2 = self.jsonTblTags[tag_search]
-                        tag_param = tags2.get(b2, None) 
-                    if tag_param != None:
-                        finalText += tag_param
-                    else:
-                        finalText += ("<%s:%08X>" % (tag_name, b2))
-                else:
-                    finalText += "<%02X:%08X>" % (b, b2)
-            elif chr(b) in self.PRINTABLE_CHARS:
-                finalText += chr(b)
-            elif b >= 0xA1 and b < 0xE0:
-                finalText += struct.pack("B", b).decode("cp932")
-            elif b in (0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19):
-                finalText += "{%02X}" % b
-                next_b = b""
-                while next_b != b"\x80":
-                    next_b = theirsce.read(1)
-                    finalText += "{%02X}" % ord(next_b)
-            elif b == 0x81:
-                next_b = theirsce.read(1)
-                if next_b == b"\x40":
-                    finalText += "　"
-                else:
-                    finalText += "{%02X}" % b
-                    finalText += "{%02X}" % ord(next_b)
-            else:
-                finalText += "{%02X}" % b
-            b = theirsce.read(1)
-       
-            
-        return finalText
-    
-    #Convert text to Bytes object to reinsert text into THEIRSCE and other files
-    def textToBytes(self, text):
-        
-        
-       
-        unames = []
-        
-        splitLineBreak = text.split('\x0A')
-        nb = len(splitLineBreak)
-        
-        bytesFinal = b''
-        i=0
-        for line in splitLineBreak:
-            string_hex = re.split(self.HEX_TAG, line)
-            string_hex = [sh for sh in string_hex if sh]
-        
-            for s in string_hex:
-                if re.match(self.HEX_TAG, s):
-                    bytesFinal += struct.pack("B", int(s[1:3], 16))
-                else:
-                    s_com = re.split(self.COMMON_TAG, s)
-                    s_com = [sc for sc in s_com if sc]
-                    for c in s_com:
-                        if re.match(self.COMMON_TAG, c):
-                            if ":" in c:
-                                split = c.split(":")
-                                if split[0][1:] in self.itags.keys():
-                                    bytesFinal += struct.pack("B", self.itags[split[0][1:]])
-                                    bytesFinal += struct.pack("<I", int(split[1][:8], 16))
-                                else:
-                                    bytesFinal += struct.pack("B", int(split[0][1:], 16))
-                                    bytesFinal += struct.pack("<I", int(split[1][:8], 16))
-                            if c in self.inames:
-                                bytesFinal += struct.pack("B", 0xB)
-                                bytesFinal += struct.pack("<I", self.inames[c])
-                            if c in self.icolors:
-                                bytesFinal += struct.pack("B", 0x5)
-                                bytesFinal += struct.pack("<I", self.icolors[c])
-                        else:
-                            for c2 in c:
-                                if c2 in self.itable.keys():
-                                    bytesFinal += self.itable[c2]
-                                else:
-                                    bytesFinal += c2.encode("cp932")
-            i=i+1
-            if (nb >=2 and i<nb):
-                bytesFinal += b'\x01'
-        
-        return bytesFinal
         
     # Extract THEIRSCE to XML
     def extractTheirSceXML(self, scpkFileName):
@@ -432,12 +315,12 @@ class ToolsTOR(ToolsTales):
             
     
     # Extract the file DAT.BIn to the different directorties
-    def extractMainArchive(self):
+    def extract_Main_Archive(self):
         
      
         f = open( self.datBinOriginal, "rb")
     
-        pointers = self.get_pointers()
+        pointers = self.get_pointers(self.POINTERS_BEGIN)
         total_files = len(pointers)
     
         for i in range(total_files - 1):
@@ -480,7 +363,7 @@ class ToolsTOR(ToolsTales):
         print("Writing file %05d/%05d..." % (i, total_files))
         f.close()
         
-    def insertMainArchive(self):
+    def insert_Main_Archive(self):
         sectors = [0]
         remainders = []
         buffer = 0

@@ -1,0 +1,205 @@
+[
+	{	
+		"File_Extract": "../Data/TOR/Disc/Original/SLPS_254.50",
+		"File_XML":		"../Data/TOR/Menu/XML/SLPS_254.xml",
+		"File_New":		"../Data/TOR/Disc/New/SLPS_254.50",
+		"Text_Start":	1120640,
+		"Text_End":		1247839,
+		"Base_Offset":	-1044480,
+		"Sections":
+		[
+		{
+			"Section":					"Character Names",
+			"Pointer_Offset_Start":		830472,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				1120640,
+			"Text_End":					1120990
+		},
+		{
+			"Section":					"Action 1",
+			"Pointer_Offset_Start":		945440,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				1124438,
+			"Text_End":					1124910
+		},
+		{
+			"Section":					"Skit Names and Other",
+			"Pointer_Offset_Start":		945440,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				1126048,
+			"Text_End":					1152415
+		},
+		{
+			"Section":					"Artes",
+			"Pointer_Offset_Start":		1051588,
+			"Nb_Per_Block":				3,
+			"Step":						40,
+			"Text_Start":				1153174,
+			"Text_End":					1165478
+		},
+		{
+			"Section":					"Attribute",
+			"Pointer_Offset_Start":		1063172,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				1179432,
+			"Text_End":					1181078
+		},
+		{
+			"Section":					"Armor",
+			"Pointer_Offset_Start":		1068892,
+			"Nb_Per_Block":				2,
+			"Step":						20,
+			"Text_Start":				1190704,
+			"Text_End":					1200222
+		},
+		{
+			"Section":					"Weapon",
+			"Pointer_Offset_Start":		1072116,
+			"Nb_Per_Block":				2,
+			"Step":						20,
+			"Text_Start":				1200224,
+			"Text_End":					1210143
+		},
+		{
+			"Section":					"Jewel",
+			"Pointer_Offset_Start":		1075500,
+			"Nb_Per_Block":				2,
+			"Step":						12,
+			"Text_Start":				1210144,
+			"Text_End":					1211055
+		},
+		{
+			"Section":					"Charm",
+			"Pointer_Offset_Start":		1075888,
+			"Nb_Per_Block":				2,
+			"Step":						16,
+			"Text_Start":				1211056,
+			"Text_End":					1213751
+		},
+		{
+			"Section":					"Consumables",
+			"Pointer_Offset_Start":		1076680,
+			"Nb_Per_Block":				2,
+			"Step":						16,
+			"Text_Start":				1213752,
+			"Text_End":					1222206
+		},
+		{
+			"Section":					"Cooking",
+			"Pointer_Offset_Start":		1094844,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				1236128,
+			"Text_End":					1240958
+		},
+		{
+			"Section":					"Title",
+			"Pointer_Offset_Start":		1095064,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				1241072,
+			"Text_End":					1247838
+		}
+		]
+
+	},
+	{	
+		"File_Extract": "../Data/TOR/DAT/BIN/11181.bin",
+		"File_XML":		"../Data/TOR/Menu/XML/11181.xml",
+		"File_New":		"../Data/TOR/Menu/New/11181.bin",
+		"Text_Start":	60980,
+		"Text_End":		75466,
+		"Base_Offset":	58880,
+		"Sections":
+		[
+		{
+			"Section":					"Triangle Menu",
+			"Pointer_Offset_Start":		58888,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				60980,
+			"Text_End":					75466
+		}
+		]
+	},
+	{	
+		"File_Extract": "../Data/TOR/Menu/New/00013/00013_0000d.unknown",
+		"File_XML":		"../Data/TOR/Menu/XML/00013_0000.xml",
+		"File_New":		"../Data/TOR/Menu/New/",
+		"Base_Offset":	-3077760,
+		"Sections":
+		[
+		{
+			"Section":					"Battle Tutorial 1",
+			"Pointer_Offset_Start":		352272,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				360160,
+			"Text_End":					376318
+		},
+		{
+			"Section":					"Battle Tutorial 2",
+			"Pointer_Offset_Start":		353104,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				363944,
+			"Text_End":					363974
+		},
+		{
+			"Section":					"Battle Tutorial 3",
+			"Pointer_Offset_Start":		354648,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				368608,
+			"Text_End":					368638
+		},
+		{
+			"Section":					"Battle Tutorial 4",
+			"Pointer_Offset_Start":		354880,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				368672,
+			"Text_End":					368830
+		},
+		{
+			"Section":					"Battle Tutorial 5",
+			"Pointer_Offset_Start":		354944,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				368976,
+			"Text_End":					369582
+		},
+		{
+			"Section":					"Battle Tutorial 6",
+			"Pointer_Offset_Start":		355068,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				369904,
+			"Text_End":					376318
+		}
+		]
+	},
+	{	
+		"File_Extract": "../Data/TOR/DAT/BIN/11217.bin",
+		"File_XML":		"../Data/TOR/Menu/XML/11217.xml",
+		"File_New":		"../Data/TOR/Menu/New/",
+		"Base_Offset":	-2984192,
+		"Sections":
+		[
+		{
+			"Section":					"Stuff 1",
+			"Pointer_Offset_Start":		19536,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				27504,
+			"Text_End":					79101
+		}
+		]
+	}
+		
+	
+]
