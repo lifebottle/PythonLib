@@ -234,13 +234,14 @@ class ToolsTales:
         
         root = etree.Element('Text')
         val = b'02'
-        while( f.tell() < 0x1198B8 ):
+        while( f.tell() < fsize ):
             
             pos = f.tell()
             if (val != b'\x00'):
                 
                 
                 offset = hex(pos).replace("0x","")
+                print(offset)
                 text = self.bytesToText(f)
                 node = etree.SubElement( root, "Entry")
                 etree.SubElement(node, "TextOffset").text = offset
@@ -315,8 +316,11 @@ class ToolsTales:
                 finalText += "{%02X}" % b
                 next_b = b""
                 while next_b != b"\x80":
-                    next_b = fileRead.read(1)
-                    finalText += "{%02X}" % ord(next_b)
+                    
+                    if next_b != b'':
+                        finalText += "{%02X}" % ord(next_b)
+                    else:
+                        next_b = b"\x80"
             elif b == 0x81:
                 next_b = fileRead.read(1)
                 if next_b == b"\x40":

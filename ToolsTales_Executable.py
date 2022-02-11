@@ -57,15 +57,21 @@ def get_arguments(argv=None):
     
     sp_utility.add_argument(
         "function",
-        choices=["hex2bytes"],
+        choices=["hex2bytes", "dumptext"],
         metavar="function_name",
-        help="Options: hex2bytes",
+        help="Options: hex2bytes, dumptext",
     )
     
     sp_utility.add_argument(
         "param1",
         metavar="param1",
         help="First parameter of a function",
+    )
+    
+    sp_utility.add_argument(
+        "param2",
+        metavar="param2",
+        help="Second parameter of a function",
     )
     
     
@@ -201,7 +207,9 @@ if __name__ == "__main__":
             
             hex2bytes(tales_instance, args.param1)
            
-    
+        if args.function == "dumptext":
+            
+            tales_instance.bytes_to_text_with_offset( args.param1, int(args.param2))
     if args.action == "pack":
         
         if args.file == "Menu":
@@ -211,3 +219,4 @@ if __name__ == "__main__":
             print("new SLPS is found inside Data/{}/Disc/New".format(game_name))
             #Other files for menu stuff
                 
+        
