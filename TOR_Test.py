@@ -8,6 +8,7 @@ import string
 import pandas as pd
 import json
 import os
+import lxml.etree as etree
 
 
 tool = ToolsTOR.ToolsTOR("tbl")
@@ -37,13 +38,14 @@ for path, subdirs, files in os.walk(myDir):
 tool.bytes_to_text_with_offset("../Data/TOR/Disc/Original/SLPS_254.50", 0x0)
 
 
+
+list_files = os.listdir("abcde_lauren")
+for file in list_files:
+    tool.extract_abcde_text("abcde_lauren/" + file)
+
+
+
 tool.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
 
 
 
-with open("00013.pak3", "rb") as f:
-    
-    data = f.read()
-    
-
-t = tool.get_pak_type(data)

@@ -1,0 +1,726 @@
+//GAME NAME:		Tales of Rebirth
+
+// Define required TABLE variables and load the corresponding tables
+#VAR(Table_0, TABLE)
+#ADDTBL("C:\Users\Lauren\Downloads\abcde_Secret_Training\ToR.tbl", Table_0)
+
+//BLOCK #000 NAME:		Descriptions
+#ACTIVETBL(Table_0) // Activate this block's starting TABLE
+
+#JMP($11D7F0, $11FCC9) // Jump to insertion point
+#HDR($-FF000) // Difference between ROM and RAM addresses for pointer value calculations
+
+//POINTER #0 @ $1033C4 - STRING #0 @ $11FCC0
+#W32($1033C4)
+*2 DAMAGE[END]
+// current address: $11FCCA
+
+//POINTER #1 @ $1033D4 - STRING #1 @ $11FCA8
+#W32($1033D4)
+RG -20[END]
+// current address: $11FCAF
+
+//POINTER #2 @ $1033E4 - STRING #2 @ $11FC78
+#W32($1033E4)
+HOLD +0.5[END]
+// current address: $11FC82
+
+//POINTER #3 @ $1033F4 - STRING #3 @ $11FC50
+#W32($1033F4)
+HEAL HP[END]
+// current address: $11FC58
+
+//POINTER #4 @ $103404 - STRING #4 @ $11FC30
+#W32($103404)
+ROBBER ITEM[END]
+// current address: $11FC3C
+
+//POINTER #5 @ $103414 - STRING #5 @ $11FC18
+#W32($103414)
+RG -30[END]
+// current address: $11FC1F
+
+//POINTER #6 @ $103424 - STRING #6 @ $11FBF0
+#W32($103424)
+MINUS ATK[END]
+// current address: $11FBFA
+
+//POINTER #7 @ $103434 - STRING #7 @ $11FBD8
+#W32($103434)
+POISON[END]
+// current address: $11FBDF
+
+//POINTER #8 @ $103444 - STRING #8 @ $11FBB8
+#W32($103444)
+*3 DAMAGE[END]
+// current address: $11FBC2
+
+//POINTER #9 @ $103454 - STRING #9 @ $11D7F0
+#W32($103454)
+FG HEAL[END]
+// current address: $11D7F8
+
+//POINTER #10 @ $103464 - STRING #10 @ $11FB80
+#W32($103464)
+PANIC[END]
+// current address: $11FB86
+
+//POINTER #11 @ $103474 - STRING #11 @ $11FB50
+#W32($103474)
+MINUS MIND[END]
+// current address: $11FB5B
+
+//POINTER #12 @ $103484 - STRING #12 @ $11FB28
+#W32($103484)
+MINUS DEF[END]
+// current address: $11FB32
+
+//POINTER #13 @ $103494 - STRING #13 @ $11FB10
+#W32($103494)
+//PIYO[END]
+DIZZY[END]
+// current address: $11FB15
+
+//POINTER #14 @ $1034A4 - STRING #14 @ $11FAF8
+#W32($1034A4)
+WEAK[END]
+// current address: $11FAFD
+
+//POINTER #15 @ $1034B4 - STRING #15 @ $11FAD8
+#W32($1034B4)
+PARALYZE[END]
+// current address: $11FAE1
+
+//POINTER #16 @ $1034C4 - STRING #16 @ $11FAB8
+#W32($1034C4)
+*4 DAMAGE[END]
+// current address: $11FAC2
+
+//POINTER #17 @ $1034D4 - STRING #17 @ $11FA88
+#W32($1034D4)
+//MINUS REGIST[END]
+MINUS RESIST[END]
+// current address: $11FA95
+
+//POINTER #18 @ $1034E4 - STRING #18 @ $11FA70
+#W32($1034E4)
+FREEZE[END]
+// current address: $11FA77
+
+//POINTER #19 @ $1034F4 - STRING #19 @ $11FA48
+#W32($1034F4)
+ATKCHAIN +1[END]
+// current address: $11FA54
+
+//POINTER #20 @ $103504 - STRING #20 @ $11FA28
+#W32($103504)
+FG CURE[END]
+// current address: $11FA30
+
+//POINTER #21 @ $103514 - STRING #21 @ $11FA10
+#W32($103514)
+SLOW[END]
+// current address: $11FA15
+
+//POINTER #22 @ $103524 - STRING #22 @ $11F9F0
+#W32($103524)
+HITS +2[END]
+// current address: $11F9F8
+
+//POINTER #23 @ $103534 - STRING #23 @ $11F9D0
+#W32($103534)
+SMASH![END]
+// current address: $11F9D7
+
+//POINTER #24 @ $103544 - STRING #24 @ $11F9A8
+#W32($103544)
+SHOCK WAVE[END]
+// current address: $11F9B3
+
+//POINTER #25 @ $103554 - STRING #25 @ $11F978
+#W32($103554)
+HOLD +1.5[END]
+// current address: $11F982
+
+//POINTER #26 @ $103564 - STRING #26 @ $11F950
+#W32($103564)
+DACOITY ITEM[END]
+// current address: $11F95D
+
+//POINTER #27 @ $103574 - STRING #27 @ $11F928
+#W32($103574)
+CURE HP[END]
+// current address: $11F930
+
+//POINTER #28 @ $103584 - STRING #28 @ $11F900
+#W32($103584)
+ATKCHAIN +3[END]
+// current address: $11F90C
+
+//POINTER #29 @ $103594 - STRING #29 @ $11F8E0
+#W32($103594)
+FG CHARGE[END]
+// current address: $11F8EA
+
+//POINTER #30 @ $1035A4 - STRING #30 @ $11F8C0
+#W32($1035A4)
+*32 DAMAGE[END]
+// current address: $11F8CB
+
+//POINTER #31 @ $1035B4 - STRING #31 @ $11F8A0
+#W32($1035B4)
+RG 1[END]
+// current address: $11F8A5
+
+//POINTER #32 @ $1035C4 - STRING #32 @ $11F878
+#W32($1035C4)
+RG 50[END]
+// current address: $11F87E
+
+//POINTER #33 @ $1035D4 - STRING #33 @ $11F858
+#W32($1035D4)
+HP +3%[END]
+// current address: $11F85F
+
+//POINTER #34 @ $1035E4 - STRING #34 @ $11F828
+#W32($1035E4)
+PHY HIT 50%[END]
+// current address: $11F834
+
+//POINTER #35 @ $1035F4 - STRING #35 @ $11F7F8
+#W32($1035F4)
+MIN HIT 50%[END]
+// current address: $11F804
+
+//POINTER #36 @ $103604 - STRING #36 @ $11F7C8
+#W32($103604)
+VANISH EFFECT[END]
+// current address: $11F7D6
+
+//POINTER #37 @ $103614 - STRING #37 @ $11D7F0
+#W32($103614)
+FG HEAL[END]
+// current address: $11D7F8
+
+//POINTER #38 @ $103624 - STRING #38 @ $11F790
+#W32($103624)
+DEF UP[END]
+// current address: $11F797
+
+//POINTER #39 @ $103634 - STRING #39 @ $11F770
+#W32($103634)
+ATK UP[END]
+// current address: $11F777
+
+//POINTER #40 @ $103644 - STRING #40 @ $11F740
+#W32($103644)
+VANISH DRAIN[END]
+// current address: $11F74D
+
+//POINTER #41 @ $103654 - STRING #41 @ $11F718
+#W32($103654)
+//REGIST UP[END]
+RESIST UP[END]
+// current address: $11F722
+
+//POINTER #42 @ $103664 - STRING #42 @ $11F6F0
+#W32($103664)
+PASSIVE[END]
+// current address: $11F6F8
+
+//POINTER #43 @ $103674 - STRING #43 @ $11F6D0
+#W32($103674)
+MIND UP[END]
+// current address: $11F6D8
+
+//POINTER #44 @ $103684 - STRING #44 @ $11F6A0
+#W32($103684)
+MAXHP +1[END]
+// current address: $11F6A9
+
+//POINTER #45 @ $103694 - STRING #45 @ $11F678
+#W32($103694)
+HPHEAL UP[END]
+// current address: $11F682
+
+//POINTER #46 @ $1036A4 - STRING #46 @ $11F7C8
+#W32($1036A4)
+VANISH EFFECT[END]
+// current address: $11F7D6
+
+//POINTER #47 @ $1036B4 - STRING #47 @ $11F630
+#W32($1036B4)
+FGHEAL UP[END]
+// current address: $11F63A
+
+//POINTER #48 @ $1036C4 - STRING #48 @ $11F610
+#W32($1036C4)
+HP +6%[END]
+// current address: $11F617
+
+//POINTER #49 @ $1036D4 - STRING #49 @ $11F5E0
+#W32($1036D4)
+FG HEAL [END]
+// current address: $11F5E9
+
+//POINTER #50 @ $1036E4 - STRING #50 @ $11F5B0
+#W32($1036E4)
+PHY HIT 1%[END]
+// current address: $11F5BB
+
+//POINTER #51 @ $1036F4 - STRING #51 @ $11F580
+#W32($1036F4)
+MIN HIT 1%[END]
+// current address: $11F58B
+
+//POINTER #52 @ $103704 - STRING #52 @ $11F740
+#W32($103704)
+VANISH DRAIN[END]
+// current address: $11F74D
+
+//POINTER #53 @ $103714 - STRING #53 @ $11F540
+#W32($103714)
+STUN GUARD[END]
+// current address: $11F54B
+
+//POINTER #54 @ $103724 - STRING #54 @ $11F510
+#W32($103724)
+//AUTO DEFFEND[END]
+AUTO DEFEND[END]
+// current address: $11F51D
+
+//POINTER #55 @ $103734 - STRING #55 @ $11F4E0
+#W32($103734)
+ITEMHEAL *2[END]
+// current address: $11F4EC
+
+//POINTER #56 @ $103744 - STRING #56 @ $11F4B8
+#W32($103744)
+REVIVE [END]
+// current address: $11F4C0
+
+//POINTER #57 @ $103754 - STRING #57 @ $11F498
+#W32($103754)
+HP +20%[END]
+// current address: $11F4A0
+
+//POINTER #58 @ $103764 - STRING #58 @ $11F470
+#W32($103764)
+FLASH [END]
+// current address: $11F477
+
+//POINTER #59 @ $103774 - STRING #59 @ $11F440
+#W32($103774)
+//SORN DAMAGE[END]
+THORN DAMAGE[END]
+// current address: $11F44C
+
+//POINTER #60 @ $103784 - STRING #60 @ $11F420
+#W32($103784)
+HP +30%[END]
+// current address: $11F428
+
+//POINTER #61 @ $103794 - STRING #61 @ $11F7C8
+#W32($103794)
+VANISH EFFECT[END]
+// current address: $11F7D6
+
+//POINTER #62 @ $1037A4 - STRING #62 @ $11F3D8
+#W32($1037A4)
+PENETRATE[END]
+// current address: $11F3E2
+
+//POINTER #63 @ $1037B4 - STRING #63 @ $11F3D8
+#W32($1037B4)
+PENETRATE[END]
+// current address: $11F3E2
+
+//BLOCK #001 NAME:		Names
+#ACTIVETBL(Table_0) // Activate this block's starting TABLE
+
+#JMP($11F3C0, $11FCDC) // Jump to insertion point
+#HDR($-FF000) // Difference between ROM and RAM addresses for pointer value calculations
+
+//POINTER #0 @ $1033C0 - STRING #0 @ $11FCD0
+#W32($1033C0)
+//ダメージ２倍[END]
+Damage *2[END]
+// current address: $11FCDD
+
+//POINTER #1 @ $1033D0 - STRING #1 @ $11FCB0
+#W32($1033D0)
+//自分のRG－２０[END]
+Self RG -20[END]
+// current address: $11FCBF
+
+//POINTER #2 @ $1033E0 - STRING #2 @ $11FC88
+#W32($1033E0)
+//敵のけぞり時間＋０．５秒[END]
+Enemy Stun Time +0.5 Sec.[END]
+// current address: $11FCA1
+
+//POINTER #3 @ $1033F0 - STRING #3 @ $11FC58
+#W32($1033F0)
+//ダメージに比例したＨＰ回復[END]
+Recovers % of Dealt Damage[END]
+// current address: $11FC73
+
+//POINTER #4 @ $103400 - STRING #4 @ $11FC40
+#W32($103400)
+//アイテムを盗む[END]
+Steal Items[END]
+// current address: $11FC4F
+
+//POINTER #5 @ $103410 - STRING #5 @ $11FC20
+#W32($103410)
+//敵のRG－３０[END]
+Enemy RG -30[END]
+// current address: $11FC2D
+
+//POINTER #6 @ $103420 - STRING #6 @ $11FC00
+#W32($103420)
+//敵の攻撃力を減少させる[END]
+Reduces Enemy P.ATK[END]
+// current address: $11FC17
+
+//POINTER #7 @ $103430 - STRING #7 @ $11FBE0
+#W32($103430)
+//熱毒の追加効果[END]
+Inflicts Poison[END]
+// current address: $11FBEF
+
+//POINTER #8 @ $103440 - STRING #8 @ $11FBC8
+#W32($103440)
+//ダメージ３倍[END]
+Damage *3[END]
+// current address: $11FBD5
+
+//POINTER #9 @ $103450 - STRING #9 @ $11FB98
+#W32($103450)
+//自分のFGの一つが少量回復[END]
+Slightly Recover One FG[END]
+// current address: $11FBB1
+
+//POINTER #10 @ $103460 - STRING #10 @ $11FB88
+#W32($103460)
+//恐慌の追加効果[END]
+Inflicts Panic[END]
+// current address: $11FB97
+
+//POINTER #11 @ $103470 - STRING #11 @ $11FB60
+#W32($103470)
+//敵の術攻撃力を減少させる[END]
+Lowers Enemy's F.ATK[END]
+// current address: $11FB79
+
+//POINTER #12 @ $103480 - STRING #12 @ $11FB38
+#W32($103480)
+//敵の防御力を減少させる[END]
+Lowers Enemy's P.DEF[END]
+// current address: $11FB4F
+
+//POINTER #13 @ $103490 - STRING #13 @ $11FB18
+#W32($103490)
+//気絶させる[END]
+Inflicts Dizzy[END]
+// current address: $11FB23
+
+//POINTER #14 @ $1034A0 - STRING #14 @ $11FB00
+#W32($1034A0)
+//衰弱の追加効果[END]
+Inflicts Weak[END]
+// current address: $11FB0F
+
+//POINTER #15 @ $1034B0 - STRING #15 @ $11FAE8
+#W32($1034B0)
+//マヒの追加効果[END]
+Inflicts Paralysis[END]
+// current address: $11FAF7
+
+//POINTER #16 @ $1034C0 - STRING #16 @ $11FAC8
+#W32($1034C0)
+//ダメージ４倍[END]
+Damage *4[END]
+// current address: $11FAD5
+
+//POINTER #17 @ $1034D0 - STRING #17 @ $11FA98
+#W32($1034D0)
+//敵の術防御力を減少させる[END]
+Reduces Enemy's F.ATK[END]
+// current address: $11FAB1
+
+//POINTER #18 @ $1034E0 - STRING #18 @ $11FA78
+#W32($1034E0)
+//凍結の追加効果[END]
+Inflicts Freeze[END]
+// current address: $11FA87
+
+//POINTER #19 @ $1034F0 - STRING #19 @ $11FA58
+#W32($1034F0)
+//通常攻撃連携数＋１[END]
+Basic Attack Chain +1[END]
+// current address: $11FA6B
+
+//POINTER #20 @ $103500 - STRING #20 @ $11FA30
+#W32($103500)
+//自分のFGの一つが大回復[END]
+Greatly Restore's One FG[END]
+// current address: $11FA47
+
+//POINTER #21 @ $103510 - STRING #21 @ $11FA18
+#W32($103510)
+//鈍足の追加効果[END]
+Inflicts Slow[END]
+// current address: $11FA27
+
+//POINTER #22 @ $103520 - STRING #22 @ $11F9F8
+#W32($103520)
+//連続ヒット数＋２[END]
+Consecutive Hits +2[END]
+// current address: $11FA09
+
+//POINTER #23 @ $103530 - STRING #23 @ $11F9D8
+#W32($103530)
+//弱い敵を一撃で倒す[END]
+One-Hit K.O. Weak Enemies[END]
+// current address: $11F9EB
+
+//POINTER #24 @ $103540 - STRING #24 @ $11F9B8
+#W32($103540)
+//衝撃波が追加発生[END]
+Generates Shockwaves[END]
+// current address: $11F9C9
+
+//POINTER #25 @ $103550 - STRING #25 @ $11F988
+#W32($103550)
+//敵のけぞり時間＋１．５秒[END]
+Enemy Stun Time +1.5 Sec.[END]
+// current address: $11F9A1
+
+//POINTER #26 @ $103560 - STRING #26 @ $11F960
+#W32($103560)
+//高確率でアイテムを盗む[END]
+High Chance to Steal Items[END]
+// current address: $11F977
+
+//POINTER #27 @ $103570 - STRING #27 @ $11F930
+#W32($103570)
+//与えたダメージの８倍を吸収[END]
+Absorbs *8 Damage Dealt
+// current address: $11F94B
+
+//POINTER #28 @ $103580 - STRING #28 @ $11F910
+#W32($103580)
+//通常攻撃連携数＋３[END]
+Basic Attack Chain +3[END]
+// current address: $11F923
+
+//POINTER #29 @ $103590 - STRING #29 @ $11F8F0
+#W32($103590)
+//FG全回復[END]
+Restores All FG[END]
+// current address: $11F8F9
+
+//POINTER #30 @ $1035A0 - STRING #30 @ $11F8D0
+#W32($1035A0)
+//ダメージ３２倍[END]
+Damage *32[END]
+// current address: $11F8DF
+
+//POINTER #31 @ $1035B0 - STRING #31 @ $11F8A8
+#W32($1035B0)
+//自分と敵のRGが１になる[END]
+Self and Enemy RG Set to 1[END]
+// current address: $11F8BF
+
+//POINTER #32 @ $1035C0 - STRING #32 @ $11F880
+#W32($1035C0)
+//防御時：自分のRGが５０になる[END]
+Self RG Set to 50 when Guarding[END]
+// current address: $11F89D
+
+//POINTER #33 @ $1035D0 - STRING #33 @ $11F860
+#W32($1035D0)
+//防御時：HPが３％回復[END]
+Restore 3% of HP when Guarding[END]
+// current address: $11F875
+
+//POINTER #34 @ $1035E0 - STRING #34 @ $11F838
+#W32($1035E0)
+//物理ダメージ時：５０％に軽減[END]
+Phys. Hit Damage 50%[END]
+// current address: $11F855
+
+//POINTER #35 @ $1035F0 - STRING #35 @ $11F808
+#W32($1035F0)
+//術ダメージ時：５０％に軽減[END]
+Force Hit Damage 50%[END]
+// current address: $11F823
+
+//POINTER #36 @ $103600 - STRING #36 @ $11F7D8
+#W32($103600)
+//状態異常：低確率で打ち消し[END]
+Low Chance of Negating Status[END]
+// current address: $11F7F3
+
+//POINTER #37 @ $103610 - STRING #37 @ $11F7B0
+#W32($103610)
+//防御時：FGの一つが回復[END]
+Restore 1 FG when Guarding[END]
+// current address: $11F7C7
+
+//POINTER #38 @ $103620 - STRING #38 @ $11F798
+#W32($103620)
+//防御時：防御力が上昇[END]
+Raise F.DEF when Guarding[END]
+// current address: $11F7AD
+
+//POINTER #39 @ $103630 - STRING #39 @ $11F778
+#W32($103630)
+//防御時：攻撃力が上昇[END]
+Raise P.ATK when Guarding[END]
+// current address: $11F78D
+
+//POINTER #40 @ $103640 - STRING #40 @ $11F750
+#W32($103640)
+//能力減少効果：中確率で打ち消し[END]
+Med. Chance of Negating Debuff[END]
+// current address: $11F76F
+
+//POINTER #41 @ $103650 - STRING #41 @ $11F728
+#W32($103650)
+//防御時：術防御力が上昇[END]
+Raise F.DEF when Guarding[END]
+// current address: $11F73F
+
+//POINTER #42 @ $103660 - STRING #42 @ $11F6F8
+#W32($103660)
+//落下時：自動で受身を取る[END]
+Right Self when Falling[END]
+// current address: $11F711
+
+//POINTER #43 @ $103670 - STRING #43 @ $11F6D8
+#W32($103670)
+//防御時：術攻撃力が上昇[END]
+Raise F.ATK when Guarding[END]
+// current address: $11F6EF
+
+//POINTER #44 @ $103680 - STRING #44 @ $11F6B0
+#W32($103680)
+//勝利時：最大ＨＰが１増える[END]
+Max HP +1 on Win[END]
+// current address: $11F6CB
+
+//POINTER #45 @ $103690 - STRING #45 @ $11F688
+#W32($103690)
+//防御時：HP回復力が上昇[END]
+Raise HP Regen when Guarding[END]
+// current address: $11F69F
+
+//POINTER #46 @ $1036A0 - STRING #46 @ $11F658
+#W32($1036A0)
+//状態異常：中確率で打ち消し[END]
+Med. Chance of Negating Status[END]
+// current address: $11F673
+
+//POINTER #47 @ $1036B0 - STRING #47 @ $11F640
+#W32($1036B0)
+//防御時：FG回復力が上昇[END]
+Raise FG Regen when Guarding[END]
+// current address: $11F657
+
+//POINTER #48 @ $1036C0 - STRING #48 @ $11F618
+#W32($1036C0)
+//防御時：HPが６％回復[END]
+Heal 6% of HP when Guarding[END]
+// current address: $11F62D
+
+//POINTER #49 @ $1036D0 - STRING #49 @ $11F5F0
+#W32($1036D0)
+//防御時：４つFGが少し回復[END]
+Slighly Restore 4 FG when Guarding[END]
+// current address: $11F609
+
+//POINTER #50 @ $1036E0 - STRING #50 @ $11F5C0
+#W32($1036E0)
+//物理ダメージ時：１％に軽減[END]
+Phys. Hit Damage 1%[END]
+// current address: $11F5DB
+
+//POINTER #51 @ $1036F0 - STRING #51 @ $11F590
+#W32($1036F0)
+//術ダメージ時：１％に軽減[END]
+Force Hit Damage 1%[END]
+// current address: $11F5A9
+
+//POINTER #52 @ $103700 - STRING #52 @ $11F560
+#W32($103700)
+//能力減少効果：高確率で打ち消し[END]
+High Chance of Negating Debuffs[END]
+// current address: $11F57F
+
+//POINTER #53 @ $103710 - STRING #53 @ $11F550
+#W32($103710)
+//気絶を回避[END]
+Prevents Dizzy[END]
+// current address: $11F55B
+
+//POINTER #54 @ $103720 - STRING #54 @ $11F520
+#W32($103720)
+//物理ダメージ時：自動防御[END]
+Auto Guard Phys. Hits[END]
+// current address: $11F539
+
+//POINTER #55 @ $103730 - STRING #55 @ $11F4F0
+#W32($103730)
+//アイテム使用時：HP回復量２倍[END]
+Item HP Recovery *2[END]
+// current address: $11F50D
+
+//POINTER #56 @ $103740 - STRING #56 @ $11F4C0
+#W32($103740)
+//戦闘不能時：HP１で生き残る[END]
+Survive With 1 HP When K.O.'d[END]
+// current address: $11F4DB
+
+//POINTER #57 @ $103750 - STRING #57 @ $11F4A0
+#W32($103750)
+//瀕死時：HP２０％回復[END]
+Recover 20% HP When Low Health[END]
+// current address: $11F4B5
+
+//POINTER #58 @ $103760 - STRING #58 @ $11F478
+#W32($103760)
+//防御時：約３秒間敵の攻撃無効[END]
+Negates Damage 3 Sec. After Guarding[END]
+// current address: $11F495
+
+//POINTER #59 @ $103770 - STRING #59 @ $11F450
+#W32($103770)
+//防御時：ダメージを跳ね返す[END]
+Inflicts Damage When Guarding[END]
+// current address: $11F46B
+
+//POINTER #60 @ $103780 - STRING #60 @ $11F428
+#W32($103780)
+//防御時：HPが３０％回復[END]
+Restore 30% HP when Guarding[END]
+// current address: $11F43F
+
+//POINTER #61 @ $103790 - STRING #61 @ $11F400
+#W32($103790)
+//状態異常：高確率で打ち消し[END]
+High Chance of Negating Status[END]
+// current address: $11F41B
+
+//POINTER #62 @ $1037A0 - STRING #62 @ $11F3E8
+#W32($1037A0)
+//物理攻撃にのけぞらない[END]
+Immune to Stagger against Phy. Attacks[END]
+// current address: $11F3FF
+
+//POINTER #63 @ $1037B0 - STRING #63 @ $11F3C0
+#W32($1037B0)
+//術攻撃にのけぞらない[END]
+Immune to Stagger against Force Attacks[END]
+// current address: $11F3D5

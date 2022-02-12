@@ -125,7 +125,6 @@ class ToolsTOR(ToolsTales):
         return pointers_offset, texts_offset
         
     
-    
         
     # Extract THEIRSCE to XML
     def extractTheirSceXML(self, scpkFileName):

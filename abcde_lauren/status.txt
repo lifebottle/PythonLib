@@ -1,0 +1,1058 @@
+//GAME NAME:		Tales of Rebirth
+
+// Define required TABLE variables and load the corresponding tables
+#VAR(Table_0, TABLE)
+#ADDTBL("C:\Users\symph\Documents\abcde_Secret_Training\ToR.tbl", Table_0)
+
+//BLOCK #000 NAME:		Names
+#ACTIVETBL(Table_0) // Activate this block's starting TABLE
+
+#JMP($11FCE0, $120774) // Jump to insertion point
+#HDR($-FF000) // Difference between ROM and RAM addresses for pointer value calculations
+
+//POINTER #0 @ $1037C8 - STRING #0 @ $11FF10
+#W32($1037C8)
+//斬撃攻撃力が更に上昇！[END]
+Slash ATK rose![END]
+// current address: $11FF27
+
+//POINTER #1 @ $1037CC - STRING #1 @ $11FEF8
+#W32($1037CC)
+//斬撃防御力が更に上昇！[END]
+Slash DEF rose![END]
+// current address: $11FF0F
+
+//POINTER #2 @ $1037D0 - STRING #2 @ $11FEE0
+#W32($1037D0)
+//打撃攻撃力が更に上昇！[END]
+Blow ATK rose![END]
+// current address: $11FEF7
+
+//POINTER #3 @ $1037D4 - STRING #3 @ $11FEC8
+#W32($1037D4)
+//打撃防御力が更に上昇！[END]
+Blow DEF rose![END]
+// current address: $11FEDF
+
+//POINTER #4 @ $1037D8 - STRING #4 @ $11FEB8
+#W32($1037D8)
+//＜表示失敗＞[END]
+Failure[END]
+// current address: $11FEC5
+
+//POINTER #5 @ $1037DC - STRING #5 @ $11FEB8
+#W32($1037DC)
+//＜表示失敗＞[END]
+Failure[END]
+// current address: $11FEC5
+
+//POINTER #6 @ $1037E0 - STRING #6 @ $11FEA0
+#W32($1037E0)
+//術攻撃力が更に上昇！[END]
+F.ATK rose![END]
+// current address: $11FEB5
+
+//POINTER #7 @ $1037E4 - STRING #7 @ $11FE88
+#W32($1037E4)
+//術防御力が更に上昇！[END]
+F.DEF rose![END]
+// current address: $11FE9D
+
+//POINTER #8 @ $1037E8 - STRING #8 @ $11FE70
+#W32($1037E8)
+//FG回復力が更に上昇！[END]
+FG Regen rose![END]
+// current address: $11FE85
+
+//POINTER #9 @ $1037EC - STRING #9 @ $11FE58
+#W32($1037EC)
+//HP回復力が更に上昇！[END]
+HP Regen rose![END]
+// current address: $11FE6D
+
+//POINTER #10 @ $1037F0 - STRING #10 @ $11FE40
+#W32($1037F0)
+//覚醒率が更に上昇！[END]
+Awakening Rate rose![END]
+// current address: $11FE53
+
+//POINTER #11 @ $1037F4 - STRING #11 @ $11FE40
+#W32($1037F4)
+//覚醒率が更に上昇！[END]
+Awakening Rate rose![END]
+// current address: $11FE53
+
+//POINTER #14 @ $103800 - STRING #14 @ $11FE20
+#W32($103800)
+//潜在能力が覚醒しやすくなった！[END]
+It became easier to awaken Latent Abilities![END]
+// current address: $11FE3F
+
+//POINTER #15 @ $103804 - STRING #15 @ $11FE20
+#W32($103804)
+//潜在能力が覚醒しやすくなった！[END]
+It became easier to awaken Latent Abilities![END]
+// current address: $11FE3F
+
+//POINTER #16 @ $103808 - STRING #16 @ $11FE00
+#W32($103808)
+//消費エンハンスポイントが減少！[END]
+Required EP reduced![END]
+// current address: $11FE1F
+
+//POINTER #17 @ $10380C - STRING #17 @ $11FE00
+#W32($10380C)
+//消費エンハンスポイントが減少！[END]
+Required EP reduced![END]
+// current address: $11FE1F
+
+//POINTER #18 @ $103810 - STRING #18 @ $11FEB8
+#W32($103810)
+//＜表示失敗＞[END]
+Failure[END]
+// current address: $11FEC5
+
+//POINTER #19 @ $103814 - STRING #19 @ $11FEB8
+#W32($103814)
+//＜表示失敗＞[END]
+Failure[END]
+// current address: $11FEC5
+
+//POINTER #20 @ $103818 - STRING #20 @ $11FDE0
+#W32($103818)
+//エンハンス最大レベルが上昇！[END]
+Enhancement Max Level rose![END]
+// current address: $11FDFD
+
+//POINTER #21 @ $10381C - STRING #21 @ $11FDE0
+#W32($10381C)
+//エンハンス最大レベルが上昇！[END]
+Enhancement Max Level rose![END]
+// current address: $11FDFD
+
+//POINTER #22 @ $103820 - STRING #22 @ $11FDC0
+#W32($103820)
+//エンハンスポイント取得！[END]
+Acquired EP![END]
+// current address: $11FDD9
+
+//POINTER #23 @ $103824 - STRING #23 @ $11FDC0
+#W32($103824)
+//エンハンスポイント取得！[END]
+Acquired EP![END]
+// current address: $11FDD9
+
+//POINTER #24 @ $103828 - STRING #24 @ $11FDA8
+#W32($103828)
+//潜在能力を継承！[END]
+Inherited Latent Ability![END]
+// current address: $11FDB9
+
+//POINTER #25 @ $10382C - STRING #25 @ $11FDA8
+#W32($10382C)
+//潜在能力を継承！[END]
+Inherited Latent Ability![END]
+// current address: $11FDB9
+
+//POINTER #26 @ $103830 - STRING #26 @ $11FD80
+#W32($103830)
+//イレギュラー：武器の形状が変化！！[END]
+Irregular: Weapon changed form!![END]
+// current address: $11FDA3
+
+//POINTER #27 @ $103834 - STRING #27 @ $11FD58
+#W32($103834)
+//イレギュラー：防具の形状が変化！！[END]
+Irregular: Armor changed form!![END]
+// current address: $11FD7B
+
+//POINTER #28 @ $103838 - STRING #28 @ $11FD30
+#W32($103838)
+//イレギュラー：３つの攻撃属性が発現！！[END]
+Irregular: 3 ATK attributes increased!![END]
+// current address: $11FD57
+
+//POINTER #29 @ $10383C - STRING #29 @ $11FD08
+#W32($10383C)
+//イレギュラー：３つの防御属性が発現！！[END]
+Irregular: 3 DEF attributes increased!![END]
+// current address: $11FD2F
+
+//POINTER #30 @ $103840 - STRING #30 @ $11FCE0
+#W32($103840)
+//イレギュラー：潜在能力が変化！！[END]
+Irregular: Latent Ability changed!![END]
+// current address: $11FD01
+
+//POINTER #31 @ $103844 - STRING #31 @ $11FCE0
+#W32($103844)
+//イレギュラー：潜在能力が変化！！[END]
+Irregular: Latent Ability changed!![END]
+// current address: $11FD01
+
+//POINTER #32 @ $103848 - STRING #32 @ $120770
+#W32($103848)
+EASY[END]
+// current address: $120775
+
+//POINTER #33 @ $10384C - STRING #33 @ $120768
+#W32($10384C)
+NORMAL[END]
+// current address: $12076F
+
+//POINTER #34 @ $103850 - STRING #34 @ $120760
+#W32($103850)
+HARD[END]
+// current address: $120765
+
+//POINTER #35 @ $103854 - STRING #35 @ $120758
+#W32($103854)
+MANIA[END]
+// current address: $12075E
+
+//POINTER #36 @ $103858 - STRING #36 @ $120750
+#W32($103858)
+UNKNOWN[END]
+// current address: $120758
+
+//POINTER #37 @ $10385C - STRING #37 @ $120748
+#W32($10385C)
+//弱点[END]
+Weak[END]
+// current address: $12074D
+
+//POINTER #38 @ $103860 - STRING #38 @ $120740
+#W32($103860)
+//鋼体[END]
+Steel Body[END]
+// current address: $120745
+
+//POINTER #39 @ $103864 - STRING #39 @ $120738
+#W32($103864)
+//半減[END]
+Resist[END]
+// current address: $12073D
+
+//POINTER #40 @ $103868 - STRING #40 @ $120730
+#W32($103868)
+//防御[END]
+Defend[END]
+// current address: $120735
+
+//POINTER #41 @ $10386C - STRING #41 @ $120728
+#W32($10386C)
+//斬[END]
+Slash[END]
+// current address: $12072B
+
+//POINTER #42 @ $103870 - STRING #42 @ $120720
+#W32($103870)
+//打[END]
+Blow[END]
+// current address: $120723
+
+//POINTER #43 @ $103874 - STRING #43 @ $120718
+#W32($103874)
+//地[END]
+[Left+Up][END]
+// current address: $12071B
+
+//POINTER #44 @ $103878 - STRING #44 @ $120710
+#W32($103878)
+//風[END]
+[Left+Down][END]
+// current address: $120713
+
+//POINTER #45 @ $10387C - STRING #45 @ $120708
+#W32($10387C)
+//火[END]
+[Left+Up+Down][END]
+// current address: $12070B
+
+//POINTER #46 @ $103880 - STRING #46 @ $120700
+#W32($103880)
+//水[END]
+[Right+Up][END]
+// current address: $120703
+
+//POINTER #47 @ $103884 - STRING #47 @ $1206F8
+#W32($103884)
+//光[END]
+[Right+Down][END]
+// current address: $1206FB
+
+//POINTER #48 @ $103888 - STRING #48 @ $1206F0
+#W32($103888)
+//闇[END]
+[Right+Up+Down][END]
+// current address: $1206F3
+
+//POINTER #49 @ $10388C - STRING #49 @ $1206E8
+#W32($10388C)
+//突撃[END]
+Attack[END]
+// current address: $1206ED
+
+//POINTER #50 @ $103890 - STRING #50 @ $1206D8
+#W32($103890)
+//防御行動[END]
+Guards[END]
+// current address: $1206E1
+
+//POINTER #51 @ $103894 - STRING #51 @ $1206D0
+#W32($103894)
+%s:%s[END]
+// current address: $1206D6
+
+//POINTER #52 @ $103898 - STRING #52 @ $1206C8
+#W32($103898)
+ [END]
+// current address: $1206CA
+
+//POINTER #53 @ $10389C - STRING #53 @ $1206B8
+#W32($10389C)
+//ＲＧ一定以上[END]
+High RG[END]
+// current address: $1206C5
+
+//POINTER #54 @ $1038A0 - STRING #54 @ $1206A8
+#W32($1038A0)
+//ＲＧ一定以下[END]
+Low RG[END]
+// current address: $1206B5
+
+//POINTER #55 @ $1038A4 - STRING #55 @ $120698
+#W32($1038A4)
+//ＨＰ一定以上[END]
+High HP[END]
+// current address: $1206A5
+
+//POINTER #56 @ $1038A8 - STRING #56 @ $120688
+#W32($1038A8)
+//ＨＰ一定以下[END]
+Low HP[END]
+// current address: $120695
+
+//POINTER #57 @ $1038AC - STRING #57 @ $120670
+#W32($1038AC)
+//味方ＲＧ一定以上[END]
+High Ally RG[END]
+// current address: $120681
+
+//POINTER #58 @ $1038B0 - STRING #58 @ $120658
+#W32($1038B0)
+//味方ＲＧ一定以下[END]
+Low Ally RG[END]
+// current address: $120669
+
+//POINTER #59 @ $1038B4 - STRING #59 @ $120650
+#W32($1038B4)
+常時[END]
+// current address: $120655
+
+//POINTER #60 @ $1038B8 - STRING #60 @ $120640
+#W32($1038B8)
+//特定攻撃前[END]
+Before Attacking[END]
+// current address: $12064B
+
+//POINTER #61 @ $1038BC - STRING #61 @ $120630
+#W32($1038BC)
+//特定攻撃後[END]
+After Attacking[END]
+// current address: $12063B
+
+//POINTER #62 @ $1038C0 - STRING #62 @ $120620
+#W32($1038C0)
+//ヒューマ[END]
+Huma[END]
+// current address: $120629
+
+//POINTER #63 @ $1038C4 - STRING #63 @ $120610
+#W32($1038C4)
+//ガジュマ[END]
+Gajuma[END]
+// current address: $120619
+
+//POINTER #64 @ $1038C8 - STRING #64 @ $120608
+#W32($1038C8)
+//ハーフ[END]
+Half[END]
+// current address: $12060F
+
+//POINTER #65 @ $1038CC - STRING #65 @ $120600
+#W32($1038CC)
+//飛翼[END]
+Avian[END]
+// current address: $120605
+
+//POINTER #66 @ $1038D0 - STRING #66 @ $1205F8
+#W32($1038D0)
+//昆虫[END]
+Insect[END]
+// current address: $1205FD
+
+//POINTER #67 @ $1038D4 - STRING #67 @ $1205E8
+#W32($1038D4)
+//水棲生物[END]
+Aquatic[END]
+// current address: $1205F1
+
+//POINTER #68 @ $1038D8 - STRING #68 @ $1205E0
+#W32($1038D8)
+//爬虫類[END]
+Reptile[END]
+// current address: $1205E7
+
+//POINTER #69 @ $1038DC - STRING #69 @ $1205D8
+#W32($1038DC)
+//植物[END]
+Vegetation[END]
+// current address: $1205DD
+
+//POINTER #70 @ $1038E0 - STRING #70 @ $1205D0
+#W32($1038E0)
+//獣[END]
+Beasts[END]
+// current address: $1205D3
+
+//POINTER #71 @ $1038E4 - STRING #71 @ $1205C8
+#W32($1038E4)
+//不死者[END]
+Undead[END]
+// current address: $1205CF
+
+//POINTER #72 @ $1038E8 - STRING #72 @ $1205C0
+#W32($1038E8)
+//精神体[END]
+Phantasm[END]
+// current address: $1205C7
+
+//POINTER #73 @ $1038EC - STRING #73 @ $1205B8
+#W32($1038EC)
+//無機物[END]
+Inorganic[END]
+// current address: $1205BF
+
+//POINTER #74 @ $1038F0 - STRING #74 @ $1205B0
+#W32($1038F0)
+//不定形[END]
+Amorphous[END]
+// current address: $1205B7
+
+//POINTER #75 @ $1038F4 - STRING #75 @ $1205A8
+#W32($1038F4)
+//魔生命[END]
+Demonic[END]
+// current address: $1205AF
+
+//POINTER #76 @ $1038F8 - STRING #76 @ $1205A0
+#W32($1038F8)
+//聖獣[END]
+Sacred Beast[END]
+// current address: $1205A5
+
+//POINTER #77 @ $1038FC - STRING #77 @ $120598
+#W32($1038FC)
+//不明[END]
+Unexplained[END]
+// current address: $12059D
+
+//POINTER #79 @ $103904 - STRING #79 @ $120588
+#W32($103904)
+//斬撃攻撃力[END]
+Slash Attack[END]
+// current address: $120593
+
+//POINTER #80 @ $103908 - STRING #80 @ $120578
+#W32($103908)
+//打撃攻撃力[END]
+Blow Attack[END]
+// current address: $120583
+
+//POINTER #81 @ $10390C - STRING #81 @ $120568
+#W32($10390C)
+//斬撃防御力[END]
+Slash Defense[END]
+// current address: $120573
+
+//POINTER #82 @ $103910 - STRING #82 @ $120558
+#W32($103910)
+//打撃防御力[END]
+Blow Defense[END]
+// current address: $120563
+
+//POINTER #83 @ $103914 - STRING #83 @ $120548
+#W32($103914)
+//術攻撃力[END]
+Force Attack[END]
+// current address: $120551
+
+//POINTER #84 @ $103918 - STRING #84 @ $120538
+#W32($103918)
+//術防御力[END]
+Force Defense[END]
+// current address: $120541
+
+//POINTER #85 @ $10391C - STRING #85 @ $120528
+#W32($10391C)
+//HP回復力[END]
+HP Regen[END]
+// current address: $120531
+
+//POINTER #86 @ $103920 - STRING #86 @ $120518
+#W32($103920)
+//FG回復力[END]
+FG Regen[END]
+// current address: $120521
+
+//POINTER #87 @ $103924 - STRING #87 @ $120510
+#W32($103924)
+//最大HP[END]
+Max HP[END]
+// current address: $120517
+
+//POINTER #88 @ $103928 - STRING #88 @ $1204F8
+#W32($103928)
+//通常攻撃によるFG回復量[END]
+FG Recovery from basic attacks[END]
+// current address: $12050F
+
+//POINTER #89 @ $10392C - STRING #89 @ $1204E0
+#W32($10392C)
+//撃破時のHP回復量[END]
+HP Recovery when defeating enemy[END]
+// current address: $1204F1
+
+//POINTER #90 @ $103930 - STRING #90 @ $1204C8
+#W32($103930)
+//撃破時のFG回復量[END]
+FG Recovery when defeating enemy[END]
+// current address: $1204D9
+
+//POINTER #91 @ $103934 - STRING #91 @ $1204B8
+#W32($103934)
+//敵ＲＧ低下[END]
+Enemy RG Reduction[END]
+// current address: $1204C3
+
+//POINTER #92 @ $103938 - STRING #92 @ $1204A0
+#W32($103938)
+//上昇効果継続時間[END]
+Buff Duration[END]
+// current address: $1204B1
+
+//POINTER #93 @ $10393C - STRING #93 @ $120488
+#W32($10393C)
+//減少効果継続時間[END]
+Debuff Duration[END]
+// current address: $120499
+
+//POINTER #94 @ $103940 - STRING #94 @ $120478
+#W32($103940)
+//チャージ速度[END]
+Charge Speed[END]
+// current address: $120485
+
+//POINTER #95 @ $103944 - STRING #95 @ $120468
+#W32($103944)
+//詠唱時間[END]
+Casting Time[END]
+// current address: $120471
+
+//POINTER #96 @ $103948 - STRING #96 @ $120458
+#W32($103948)
+//気絶時間[END]
+Dizzy Duration[END]
+// current address: $120461
+
+//POINTER #97 @ $10394C - STRING #97 @ $120588
+#W32($10394C)
+//斬撃攻撃力[END]
+Slash ATK[END]
+// current address: $120593
+
+//POINTER #98 @ $103950 - STRING #98 @ $120578
+#W32($103950)
+//打撃攻撃力[END]
+Blow ATK[END]
+// current address: $120583
+
+//POINTER #99 @ $103954 - STRING #99 @ $120450
+#W32($103954)
+//？[END]
+?[END]
+// current address: $120453
+
+//POINTER #100 @ $103958 - STRING #100 @ $120450
+#W32($103958)
+//？[END]
+?[END]
+// current address: $120453
+
+//POINTER #101 @ $10395C - STRING #101 @ $120548
+#W32($10395C)
+//術攻撃力[END]
+Force ATK[END]
+// current address: $120551
+
+//POINTER #102 @ $103960 - STRING #102 @ $120518
+#W32($103960)
+//FG回復力[END]
+FG Regen[END]
+// current address: $120521
+
+//POINTER #103 @ $103964 - STRING #103 @ $120448
+#W32($103964)
+//覚醒率[END]
+Awakening[END]
+// current address: $12044F
+
+//POINTER #104 @ $103968 - STRING #104 @ $120568
+#W32($103968)
+//斬撃防御力[END]
+Slash DEF[END]
+// current address: $120573
+
+//POINTER #105 @ $10396C - STRING #105 @ $120558
+#W32($10396C)
+//打撃防御力[END]
+Blow DEF[END]
+// current address: $120563
+
+//POINTER #106 @ $103970 - STRING #106 @ $120450
+#W32($103970)
+//？[END]
+?[END]
+// current address: $120453
+
+//POINTER #107 @ $103974 - STRING #107 @ $120450
+#W32($103974)
+//？[END]
+?[END]
+// current address: $120453
+
+//POINTER #108 @ $103978 - STRING #108 @ $120538
+#W32($103978)
+//術防御力[END]
+Force DEF[END]
+// current address: $120541
+
+//POINTER #109 @ $10397C - STRING #109 @ $120528
+#W32($10397C)
+//HP回復力[END]
+HP Regen[END]
+// current address: $120531
+
+//POINTER #110 @ $103980 - STRING #110 @ $120448
+#W32($103980)
+//覚醒率[END]
+Awakening[END]
+// current address: $12044F
+
+//POINTER #111 @ $103984 - STRING #111 @ $120428
+#W32($103984)
+//潜在能力が覚醒しました！[END]
+Awakened Latent Ability![END]
+// current address: $120441
+
+//POINTER #112 @ $103988 - STRING #112 @ $120408
+#W32($103988)
+//継承武具能力が付与されました！[END]
+Inheritance Conferred![END]
+// current address: $120427
+
+//POINTER #113 @ $10398C - STRING #113 @ $1203D8
+#W32($10398C)
+//継承能力にイレギュラーが起こりました！！[END]
+Irregular Inheritence Occurred!![END]
+// current address: $120401
+
+//POINTER #114 @ $103990 - STRING #114 @ $1203C8
+#W32($103990)
+//グレード取得率[END]
+Grade Rate[END]
+// current address: $1203D7
+
+//POINTER #115 @ $103994 - STRING #115 @ $1203B8
+#W32($103994)
+SMASH POINTS[END]
+// current address: $1203C4
+
+//POINTER #116 @ $103998 - STRING #116 @ $120398
+#W32($103998)
+//奥義習得：派生元の術技を選択[END]
+Select skills to fuse[END]
+// current address: $1203B5
+
+//POINTER #117 @ $10399C - STRING #117 @ $120378
+#W32($10399C)
+//奥義として習得する術技を選択[END]
+Select Arte to learn[END]
+// current address: $120395
+
+//POINTER #118 @ $1039A0 - STRING #118 @ $120300
+#W32($1039A0)
+//習得すると、各スマッシュポイントを[LINE]
+//消費します。よろしいですか？[LINE]
+//[S14][Grey]----[LINE]
+//[S14][Yellow][Circle_ani]習得する [Cross_ani]やめる[END]
+If you learn this, the required[LINE]
+Smash Points will be consumed. Proceed?[LINE]
+[S14][Grey]----[LINE]
+[S14][Yellow][Circle_ani]Learn [Cross_ani]Cancel[END]
+// current address: $120374
+
+//POINTER #119 @ $1039A4 - STRING #119 @ $1202E8
+#W32($1039A4)
+//[TAG_019]を習得しました！[END]
+Learned [TAG_019]![END]
+// current address: $1202FE
+
+//POINTER #120 @ $1039A8 - STRING #120 @ $1202C8
+#W32($1039A8)
+//キャラレベルが足りません[END]
+Character's level is too low.[END]
+// current address: $1202E1
+
+//POINTER #121 @ $1039AC - STRING #121 @ $1202A8
+#W32($1039AC)
+//スマッシュポイントが足りません[END]
+Not enough Smash Points.[END]
+// current address: $1202C7
+
+//POINTER #122 @ $1039B0 - STRING #122 @ $120290
+#W32($1039B0)
+//すでに習得しています[END]
+Already Learned.[END]
+// current address: $1202A5
+
+//POINTER #123 @ $1039B4 - STRING #123 @ $120270
+#W32($1039B4)
+//武具継承：強化した武具を選択[END]
+Select Enhanced Equipment[END]
+// current address: $12028D
+
+//POINTER #124 @ $1039B8 - STRING #124 @ $120240
+#W32($1039B8)
+//能力を受け継ぐ未強化・未継承の武具を選択[END]
+Select Equipment to Inherit[END]
+// current address: $120269
+
+//POINTER #125 @ $1039BC - STRING #125 @ $120230
+#W32($1039BC)
+//EPが足りません[END]
+Not enough EP.[END]
+// current address: $12023F
+
+//POINTER #126 @ $1039C0 - STRING #126 @ $120228
+#W32($1039C0)
+//奥義[END]
+Arte: [END]
+// current address: $12022D
+
+//POINTER #127 @ $1039C4 - STRING #127 @ $1201E8
+#W32($1039C4)
+//[Green][TAG_015]は[LINE]
+//称号『[TAG_016]』を取得しました。[LINE]
+//[Yellow][TAG_017][TAG_018][END]
+[Green][TAG_015] recieved the[LINE]
+Title "[TAG_16]".[LINE]
+[Yellow][TAG_017][TAG_018][END]
+// current address: $120223
+
+//POINTER #128 @ $1039C8 - STRING #128 @ $120150
+#W32($1039C8)
+//[Green][TAG_015]たちは[LINE]
+//称号『[TAG_016]』を取得しました。[LINE]
+//[Yellow][TAG_017][TAG_018][TAG_019][LINE]
+//[TAG_020][TAG_021][TAG_022][LINE]
+//[TAG_023][TAG_024][TAG_025][LINE]
+//[TAG_026][TAG_027][TAG_028][LINE]
+//[TAG_029][TAG_030][TAG_031][LINE]
+//[TAG_032][TAG_033][TAG_034][END]
+[Green][TAG_015]'s party received the[LINE]
+"[TAG_016]" titles.[LINE]
+[Yellow][TAG_017][TAG_018][TAG_019][LINE]
+[TAG_020][TAG_021][TAG_022][LINE]
+[TAG_023][TAG_024][TAG_025][LINE]
+[TAG_026][TAG_027][TAG_028][LINE]
+[TAG_029][TAG_030][TAG_031][LINE]
+[TAG_032][TAG_033][TAG_034][END]
+// current address: $1201E4
+
+//POINTER #129 @ $1039CC - STRING #129 @ $120120
+#W32($1039CC)
+//[Green][TAG_015]は[LINE]
+//称号『[TAG_016]』を失いました。[LINE]
+//[END]
+[Green][TAG_015] lost the[LINE]
+"[TAG_016]" title.[LINE]
+[END]
+// current address: $12014A
+
+//POINTER #130 @ $1039D0 - STRING #130 @ $1200B8
+#W32($1039D0)
+[TAG_015][TAG_016][LINE]
+[TAG_017][TAG_018][LINE]
+[TAG_019][TAG_020][LINE]
+[TAG_021][TAG_022][LINE]
+[TAG_023][TAG_024][LINE]
+[TAG_025][TAG_026][LINE]
+[TAG_027][TAG_028][LINE]
+[TAG_029][TAG_030][LINE]
+[TAG_031][TAG_032][LINE]
+[END]
+// current address: $12011C
+
+//POINTER #131 @ $1039D4 - STRING #131 @ $1200A0
+#W32($1039D4)
+//補正を受けていません。[END]
+No Correction Received.[END]
+// current address: $1200B7
+
+//POINTER #133 @ $1039DC - STRING #133 @ $120090
+#W32($1039DC)
+//最大ＨＰ＋[END]
+MAX HP +[END]
+// current address: $12009B
+
+//POINTER #134 @ $1039E0 - STRING #134 @ $120080
+#W32($1039E0)
+//斬撃攻撃力＋[END]
+SLASH ATK +[END]
+// current address: $12008D
+
+//POINTER #135 @ $1039E4 - STRING #135 @ $120070
+#W32($1039E4)
+//打撃攻撃力＋[END]
+BLOW ATK +[END]
+// current address: $12007D
+
+//POINTER #136 @ $1039E8 - STRING #136 @ $120060
+#W32($1039E8)
+//術攻撃力＋[END]
+F.ATK +[END]
+// current address: $12006B
+
+//POINTER #137 @ $1039EC - STRING #137 @ $120050
+#W32($1039EC)
+//斬撃防御力＋[END]
+SLASH DEF +[END]
+// current address: $12005D
+
+//POINTER #138 @ $1039F0 - STRING #138 @ $120040
+#W32($1039F0)
+//打撃防御力＋[END]
+BLOW DEF +[END]
+// current address: $12004D
+
+//POINTER #139 @ $1039F4 - STRING #139 @ $120030
+#W32($1039F4)
+//術防御力＋[END]
+F.DEF +[END]
+// current address: $12003B
+
+//POINTER #140 @ $1039F8 - STRING #140 @ $120020
+#W32($1039F8)
+//ＨＰ回復力＋[END]
+HP REGEN +[END]
+// current address: $12002D
+
+//POINTER #141 @ $1039FC - STRING #141 @ $120010
+#W32($1039FC)
+//ＦＧ回復力＋[END]
+FG REGEN +[END]
+// current address: $12001D
+
+//POINTER #143 @ $103A04 - STRING #143 @ $120000
+#W32($103A04)
+//：最大ＨＰ＋[END]
+: MAX HP +[END]
+// current address: $12000D
+
+//POINTER #144 @ $103A08 - STRING #144 @ $11FFF0
+#W32($103A08)
+//：斬撃攻撃力＋[END]
+: SLASH ATK +[END]
+// current address: $11FFFF
+
+//POINTER #145 @ $103A0C - STRING #145 @ $11FFE0
+#W32($103A0C)
+//：打撃攻撃力＋[END]
+: BLOW ATK +
+// current address: $11FFEF
+
+//POINTER #146 @ $103A10 - STRING #146 @ $11FFD0
+#W32($103A10)
+//：術攻撃力＋[END]
+: F.ATK +[END]
+// current address: $11FFDD
+
+//POINTER #147 @ $103A14 - STRING #147 @ $11FFC0
+#W32($103A14)
+//：斬撃防御力＋[END]
+: SLASH DEF +[END]
+// current address: $11FFCF
+
+//POINTER #148 @ $103A18 - STRING #148 @ $11FFB0
+#W32($103A18)
+//：打撃防御力＋[END]
+: BLOW DEF +[END]
+// current address: $11FFBF
+
+//POINTER #149 @ $103A1C - STRING #149 @ $11FFA0
+#W32($103A1C)
+//：術防御力＋[END]
+: F.DEF +[END]
+// current address: $11FFAD
+
+//POINTER #150 @ $103A20 - STRING #150 @ $11FF90
+#W32($103A20)
+//：ＨＰ回復力＋[END]
+: HP REGEN +[END]
+// current address: $11FF9F
+
+//POINTER #151 @ $103A24 - STRING #151 @ $11FF80
+#W32($103A24)
+//：ＦＧ回復力＋[END]
+: FG REGEN +[END]
+// current address: $11FF8F
+
+//POINTER #152 @ $103A28 - STRING #152 @ $11FF78
+#W32($103A28)
+//攻撃[END]
+ATK[END]
+// current address: $11FF7D
+
+//POINTER #153 @ $103A2C - STRING #153 @ $11FF70
+#W32($103A2C)
+FG[END]
+// current address: $11FF73
+
+//POINTER #154 @ $103A30 - STRING #154 @ $11FF68
+#W32($103A30)
+//HP回復[END]
+HP Reg.[END]
+// current address: $11FF6F
+
+//POINTER #155 @ $103A34 - STRING #155 @ $120740
+#W32($103A34)
+//鋼体[END]
+Iron S.[END]
+// current address: $120745
+
+//POINTER #156 @ $103A38 - STRING #156 @ $11FF60
+#W32($103A38)
+//硬直[END]
+Rigid.[END]
+// current address: $11FF65
+
+//POINTER #157 @ $103A3C - STRING #157 @ $11FF58
+#W32($103A3C)
+//奥義RG[END]
+Arte RG[END]
+// current address: $11FF5F
+
+//POINTER #158 @ $103A40 - STRING #158 @ $11FF78
+#W32($103A40)
+//攻撃[END]
+ATK[END]
+// current address: $11FF7D
+
+//POINTER #159 @ $103A44 - STRING #159 @ $11FF70
+#W32($103A44)
+FG[END]
+// current address: $11FF73
+
+//POINTER #160 @ $103A48 - STRING #160 @ $11FF68
+#W32($103A48)
+//HP回復[END]
+HP Reg.[END]
+// current address: $11FF6F
+
+//POINTER #161 @ $103A4C - STRING #161 @ $11FF50
+#W32($103A4C)
+//ヒット[END]
+Hits[END]
+// current address: $11FF57
+
+//POINTER #162 @ $103A50 - STRING #162 @ $11FF48
+#W32($103A50)
+//詠唱[END]
+Cast[END]
+// current address: $11FF4D
+
+//POINTER #163 @ $103A54 - STRING #163 @ $11FF40
+#W32($103A54)
+//昇華RG[END]
+Arte RG[END]
+// current address: $11FF47
+
+//POINTER #164 @ $103A58 - STRING #164 @ $11FF38
+#W32($103A58)
+//効力[END]
+Effect[END]
+// current address: $11FF3D
+
+//POINTER #165 @ $103A5C - STRING #165 @ $11FF30
+#W32($103A5C)
+//半径[END]
+Size[END]
+// current address: $11FF35
+
+//POINTER #166 @ $103A60 - STRING #166 @ $11FF68
+#W32($103A60)
+//HP回復[END]
+HP Reg.[END]
+// current address: $11FF6F
+
+//POINTER #167 @ $103A64 - STRING #167 @ $11FF28
+#W32($103A64)
+//時間[END]
+Time[END]
+// current address: $11FF2D
+
+//POINTER #168 @ $103A68 - STRING #168 @ $120730
+#W32($103A68)
+//防御[END]
+Durab.[END]
+// current address: $120735
+
+//POINTER #169 @ $103A6C - STRING #169 @ $11FF50
+#W32($103A6C)
+//ヒット[END]
+Hits[END]
+// current address: $11FF57
+
+//POINTER #170 @ $103A70 - STRING #170 @ $11FF70
+#W32($103A70)
+FG[END]
+// current address: $11FF73
+
+//POINTER #171 @ $103A74 - STRING #171 @ $11FF68
+#W32($103A74)
+//HP回復[END]
+HP Reg.[END]
+// current address: $11FF6F
+
+//POINTER #172 @ $103A78 - STRING #172 @ $11FF48
+#W32($103A78)
+//詠唱[END]
+Cast[END]
+// current address: $11FF4D
+
+//POINTER #173 @ $103A7C - STRING #173 @ $1206C8
+#W32($103A7C)
+ [END]
+// current address: $1206CA
+
+//POINTER #174 @ $103A80 - STRING #174 @ $1206C8
+#W32($103A80)
+ [END]
+// current address: $1206CA
+
+//POINTER #175 @ $103A84 - STRING #175 @ $1206C8
+#W32($103A84)
+ [END]
+// current address: $1206CA

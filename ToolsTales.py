@@ -587,6 +587,55 @@ class ToolsTales:
             cwd= self.basePath,
             )
                
+   
+    def extract_abcde_text(self, filename, modify_xml = True):
+        
+        with open(filename, "r", encoding="utf-8") as f:
+            lines  = f.readlines()
+            
+            
+        final_list = []
+        pointer_offset = 0
+        text = ""
+        start=0
+        end=0
+        
+        lines = [line for line in lines if "//" not in line]
+        for index,line in enumerate(lines):
+            
+            if "#WRITE" in line or  "#W32" in line:
+                pointer_offset = int(re.findall("\$(\w+)", line)[0],16)
+                
+                start = index+1
+                
+            if "[END]" in line:
+                
+                end = index
+                text = "".join(lines[start:(end+1)])
+                text = text.replace("[LINE]","").replace("[END]\n","")
+            
+            final_list.append([pointer_offset, text])
+            
+            
+            
+        xml_file_name = "../Data/TOR/Menu/XML/SLPS_254.xml"
+        tree = etree.parse(xml_file_name)
+        root = tree.getroot()
+        
+        for pointer_offset,text in final_list:
+        
+            ele_found = [element for element in root.iter("Entry") if str(pointer_offset) in element.find("PointerOffset").text]
+            
+            if len(ele_found) > 0:
+                ele_found[0].find("EnglishText").text = text
+                ele_found[0].find("Status").text = "Done"
+        
+        if modify_xml:
+            txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
+            with open(xml_file_name, "wb") as xmlFile:
+                xmlFile.write(txt)
+        return final_list
+    
     #start_offset : where the pointers start for the section
     # nb_per_block : number of pointers per block before adding step
     # step : number of bytes before the next block

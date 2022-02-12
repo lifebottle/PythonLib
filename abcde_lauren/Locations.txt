@@ -1,0 +1,1899 @@
+//GAME NAME:		Tales of Rebirth
+
+// Define required TABLE variables and load the corresponding tables
+#VAR(Table_0, TABLE)
+#ADDTBL("C:\Users\Lauren\Downloads\abcde_Secret_Training\ToR.tbl", Table_0)
+
+//BLOCK #000 NAME:		Names
+#ACTIVETBL(Table_0) // Activate this block's starting TABLE
+
+#JMP($12A5B0, $12D0F0) // Jump to insertion point
+#HDR($-FF000) // Difference between ROM and RAM addresses for pointer value calculations
+
+//POINTER #0 @ $108380 - STRING #0 @ $12BAC0
+#W32($108380)
+//スールズ[END]
+Sulz[END]
+// current address: $12BAC9
+
+//POINTER #1 @ $108384 - STRING #1 @ $12BAB8
+#W32($108384)
+//Sulz[END]
+[END]
+// current address: $12BABD
+
+//POINTER #2 @ $108388 - STRING #2 @ $12BA80
+#W32($108388)
+//世界の北方にある、農業と牧畜が[LINE]盛んな穏やかな村。[END]
+A peaceful northern village[LINE]
+where animal husbandry[LINE]
+and agriculture thrive.[END]
+// current address: $12BAB2
+
+//POINTER #14 @ $1083B8 - STRING #14 @ $12BA70
+#W32($1083B8)
+//ペトナジャンカ[END]
+Petnadjanka[END]
+// current address: $12BA7F
+
+//POINTER #15 @ $1083BC - STRING #15 @ $12BA60
+#W32($1083BC)
+//Petnadjanka[END]
+[END]
+// current address: $12BA6C
+
+//POINTER #16 @ $1083C0 - STRING #16 @ $12BA20
+#W32($1083C0)
+//工業が盛んな比較的にぎやかな街。[LINE]街の中心に製鉄工場がある。[END]
+A lively town with lots of[LINE]
+manufacturing. In the city[LINE]
+center there's an iron factory.[END]
+// current address: $12BA5C
+
+//POINTER #28 @ $1083F0 - STRING #28 @ $12BA10
+#W32($1083F0)
+//サニイタウン[END]
+Sannytown[END]
+// current address: $12BA1D
+
+//POINTER #29 @ $1083F4 - STRING #29 @ $12BA00
+#W32($1083F4)
+//Sannytown[END]
+[END]
+// current address: $12BA0A
+
+//POINTER #30 @ $1083F8 - STRING #30 @ $12B9C8
+#W32($1083F8)
+//海に浮かぶ海抜ゼロメートルの都市。[LINE]川と海をつなぐ要所。[END]
+A city zero feet above sea[LINE]
+level, located where the[LINE]
+river and ocean meet.[END]
+// current address: $12BA00
+
+//POINTER #42 @ $108428 - STRING #42 @ $12B9B8
+#W32($108428)
+//ミナール[END]
+Minal[END]
+// current address: $12B9C1
+
+//POINTER #43 @ $10842C - STRING #43 @ $12B9B0
+#W32($10842C)
+//Minal[END]
+[END]
+// current address: $12B9B6
+
+//POINTER #44 @ $108430 - STRING #44 @ $12B950
+#W32($108430)
+//様々な施設があるにぎやかな街。[LINE]港があるため、他の街の人々も[LINE]施設を利用するために訪れる。[END]
+A bustling town with a harbor[LINE]
+that attracts many people with[LINE]
+its various amenities.[END]
+// current address: $12B9A9
+
+//POINTER #56 @ $108460 - STRING #56 @ $12B938
+#W32($108460)
+//ケケット街道沿いの小屋[END]
+Keketto Hostel[END]
+// current address: $12B94F
+
+//POINTER #57 @ $108464 - STRING #57 @ $12B928
+#W32($108464)
+//Keketto Hostel[END]
+[END]
+// current address: $12B937
+
+//POINTER #58 @ $108468 - STRING #58 @ $12B900
+#W32($108468)
+//スールズから伸びる街道沿いの小屋。[END]
+A hut built along the highway[LINE]
+that leads out of Sulz.[END]
+// current address: $12B923
+
+//POINTER #70 @ $108498 - STRING #70 @ $12B8F0
+#W32($108498)
+//アニカマル[END]
+Anikamal[END]
+// current address: $12B8FB
+
+//POINTER #71 @ $10849C - STRING #71 @ $12B8E0
+#W32($10849C)
+//Anikamal[END]
+[END]
+// current address: $12B8E9
+
+//POINTER #72 @ $1084A0 - STRING #72 @ $12B8A0
+#W32($1084A0)
+//砂漠のオアシスにある、小さな集落。[LINE]泉の水が旅人の心と体を潤す。[END]
+A small desert settlement near[LINE]
+an oasis. The fresh spring water[LINE]
+refreshes the minds and bodies of[LINE]
+travellers who pass through.[END]
+// current address: $12B8E0
+
+//POINTER #84 @ $1084D0 - STRING #84 @ $12B890
+#W32($1084D0)
+//登山洞  [END]
+Climber's Cavern[END]
+// current address: $12B899
+
+//POINTER #85 @ $1084D4 - STRING #85 @ $12B878
+#W32($1084D4)
+//Climbers' Cavern[END]
+[END]
+// current address: $12B889
+
+//POINTER #86 @ $1084D8 - STRING #86 @ $12B838
+#W32($1084D8)
+//自然の洞窟をもとに作られた登山道。[LINE]近年は老朽化が進んでいる。[END]
+A mountain road that was built[LINE]
+inside of a natural cave. In recent[LINE]
+years the upkeep has been lacking.[END]
+// current address: $12B876
+
+//POINTER #98 @ $108508 - STRING #98 @ $12B828
+#W32($108508)
+//バビログラード[END]
+Babilograd[END]
+// current address: $12B837
+
+//POINTER #99 @ $10850C - STRING #99 @ $12B818
+#W32($10850C)
+//Babilograd[END]
+[END]
+// current address: $12B823
+
+//POINTER #100 @ $108510 - STRING #100 @ $12B7C8
+#W32($108510)
+//高山に築かれた聖なる街。[LINE]街のはずれにある蒼の聖殿への[LINE]巡礼者でにぎわう。[END]
+A holy city built atop a tall[LINE]
+mountain. Many pilgrims crowd the[LINE]
+city on their way to the Shrine.[END]
+// current address: $12B811
+
+//POINTER #112 @ $108540 - STRING #112 @ $12B7B0
+#W32($108540)
+//バビログラード港[END]
+Babilograd Harbor[END]
+// current address: $12B7C1
+
+//POINTER #113 @ $108544 - STRING #113 @ $12B798
+#W32($108544)
+//Babilograd Harbor[END]
+[END]
+// current address: $12B7AA
+
+//POINTER #114 @ $108548 - STRING #114 @ $12B758
+#W32($108548)
+//巡礼者でにぎわう港町。[LINE]山の上にある街とリフトで[LINE]繋がっている。[END]
+A port crowded with pilgrims.[LINE]
+There is a lift that connects[LINE]
+the harbor to the city proper.[END]
+// current address: $12B797
+
+//POINTER #126 @ $108578 - STRING #126 @ $12B748
+#W32($108578)
+//ノルゼン[END]
+Nolzen[END]
+// current address: $12B751
+
+//POINTER #127 @ $10857C - STRING #127 @ $12B740
+#W32($10857C)
+//Nolzen[END]
+[END]
+// current address: $12B747
+
+//POINTER #128 @ $108580 - STRING #128 @ $12B700
+#W32($108580)
+//雪が降り積もる街。[LINE]港のあるこの街は、海の恩恵を[LINE]受けている。[END]
+A snowy town with a harbor[LINE]
+that benefits the city greatly.[END]
+// current address: $12B73D
+
+//POINTER #140 @ $1085B0 - STRING #140 @ $12B6F0
+#W32($1085B0)
+//ベルサス[END]
+Belsas[END]
+// current address: $12B6F9
+
+//POINTER #141 @ $1085B4 - STRING #141 @ $12B6E8
+#W32($1085B4)
+//Belsas[END]
+[END]
+// current address: $12B6EF
+
+//POINTER #142 @ $1085B8 - STRING #142 @ $12B6B8
+#W32($1085B8)
+//山と海に挟まれた街。[LINE]川を挟んでスラムがある。[END]
+A town nestled between the[LINE]
+mountains and sea. Across[LINE]
+the river are the slums.[END]
+// current address: $12B6E6
+
+//POINTER #154 @ $1085E8 - STRING #154 @ $12B6A8
+#W32($1085E8)
+//ベルサス港[END]
+Belsas Harbor[END]
+// current address: $12B6B3
+
+//POINTER #155 @ $1085EC - STRING #155 @ $12B698
+#W32($1085EC)
+//Belsas Harbor[END]
+[END]
+// current address: $12B6A6
+
+//POINTER #156 @ $1085F0 - STRING #156 @ $12B658
+#W32($1085F0)
+//山と海によって孤立した[LINE]ベルサスにとって[LINE]生命線とも言える港。[END]
+The lifeline of Belsas, which[LINE]
+would otherwise be isolated[LINE]
+by mountains and sea.[END]
+// current address: $12B695
+
+//POINTER #168 @ $108620 - STRING #168 @ $12B648
+#W32($108620)
+//ラジルダ[END]
+Razilda[END]
+// current address: $12B651
+
+//POINTER #169 @ $108624 - STRING #169 @ $12B640
+#W32($108624)
+//Razilda[END]
+[END]
+// current address: $12B648
+
+//POINTER #170 @ $108628 - STRING #170 @ $12B5E8
+#W32($108628)
+//温暖な気候で、色とりどりの花が[LINE]崎いている街。[LINE]ふたつの種族の長が、[LINE]街を仕切っている。[END]
+A city with a warm climate[LINE]
+where colorful flowers bloom.[LINE]
+The town is divided on racial[LINE]
+lines by it's two chiefs.[END]
+// current address: $12B63E
+
+//POINTER #182 @ $108658 - STRING #182 @ $12B5D8
+#W32($108658)
+//ラジルダ港[END]
+Razilda Harbor[END]
+// current address: $12B5E3
+
+//POINTER #183 @ $10865C - STRING #183 @ $12B5C8
+#W32($10865C)
+//Razilda Harbor[END]
+[END]
+// current address: $12B5D7
+
+//POINTER #184 @ $108660 - STRING #184 @ $12B568
+#W32($108660)
+//ウエスタリアの海の玄関のひとつ。[LINE]首都を訪れるためには、この港を[LINE]必ず通らなければならない。[END]
+One of the gateways to the[LINE]
+Westalia Sea. Must be passed[LINE]
+through to reach the Capital.[END]
+// current address: $12B5C3
+
+//POINTER #196 @ $108690 - STRING #196 @ $12B558
+#W32($108690)
+//ピピスタ[END]
+Pipista[END]
+// current address: $12B561
+
+//POINTER #197 @ $108694 - STRING #197 @ $12B550
+#W32($108694)
+//Pipista[END]
+[END]
+// current address: $12B558
+
+//POINTER #198 @ $108698 - STRING #198 @ $12B518
+#W32($108698)
+//岩をくり貫いて作られた村。[LINE]ガジュマだけが住んでいる。[END]
+A village built out of hollowed[LINE]
+out cliffs where only Gajuma live.[END]
+// current address: $12B54E
+
+//POINTER #210 @ $1086C8 - STRING #210 @ $12B500
+#W32($1086C8)
+//テルアラ街道沿いの小屋[END]
+Tel'Alla Hostel[END]
+// current address: $12B517
+
+//POINTER #211 @ $1086CC - STRING #211 @ $12B4F0
+#W32($1086CC)
+//Tel Alla Hostel[END]
+[END]
+// current address: $12B500
+
+//POINTER #212 @ $1086D0 - STRING #212 @ $12B4C8
+#W32($1086D0)
+//サニイタウンから伸びる[LINE]街道沿いの小屋。[END]
+A hut built along the highway[LINE]
+that leads out of Sannytown.[END]
+// current address: $12B4F0
+
+//POINTER #224 @ $108700 - STRING #224 @ $12B4B0
+#W32($108700)
+//アルヴァン山脈北部[END]
+Northern Alvan Mountains[END]
+// current address: $12B4C3
+
+//POINTER #225 @ $108704 - STRING #225 @ $12B490
+#W32($108704)
+//Northern Alvan Mountains[END]
+[END]
+// current address: $12B4A9
+
+//POINTER #226 @ $108708 - STRING #226 @ $12B470
+#W32($108708)
+//アルヴァン山脈の北側の入口。[END]
+The northern entrance to[LINE]
+the Alvan Mountain Range.[END]
+// current address: $12B48D
+
+//POINTER #238 @ $108738 - STRING #238 @ $12B458
+#W32($108738)
+//アルヴァン山脈南部[END]
+Southern Alvan Mountains[END]
+// current address: $12B46B
+
+//POINTER #239 @ $10873C - STRING #239 @ $12B438
+#W32($10873C)
+Southern Alvan Mountains[END]
+// current address: $12B451
+
+//POINTER #240 @ $108740 - STRING #240 @ $12B418
+#W32($108740)
+//アルヴァン山脈の南側の入口。[END]
+The southern entrance to[LINE]
+the Alvan Mountain Range.[END]
+// current address: $12B435
+
+//POINTER #252 @ $108770 - STRING #252 @ $12B408
+#W32($108770)
+//ラルレン大橋[END]
+Great Larulen Bridge[END]
+// current address: $12B415
+
+//POINTER #253 @ $108774 - STRING #253 @ $12B3F0
+#W32($108774)
+//Great Larulen Bridge[END]
+[END]
+// current address: $12B405
+
+//POINTER #254 @ $108778 - STRING #254 @ $12B3C8
+#W32($108778)
+//スールズとケケット街道を結ぶ大橋。[END]
+A bridge that connects Sulz[LINE]
+to the Keketto Highway.[END]
+// current address: $12B3EB
+
+//POINTER #266 @ $1087A8 - STRING #266 @ $12B3B8
+#W32($1087A8)
+//エトレー橋[END]
+Etoray Bridge[END]
+// current address: $12B3C3
+
+//POINTER #267 @ $1087AC - STRING #267 @ $12B3A8
+#W32($1087AC)
+//Etoray Bridge[END]
+[END]
+// current address: $12B3B6
+
+//POINTER #268 @ $1087B0 - STRING #268 @ $12B388
+#W32($1087B0)
+//ケケット街道の途中にかかる橋。[END]
+A bridge along the[LINE]
+Keketto Highway.[END]
+// current address: $12B3A7
+
+//POINTER #280 @ $1087E0 - STRING #280 @ $12B378
+#W32($1087E0)
+//ポクナン大橋[END]
+Great Pokunan Bridge[END]
+// current address: $12B385
+
+//POINTER #281 @ $1087E4 - STRING #281 @ $12B360
+#W32($1087E4)
+//Great Pokunan Bridge[END]
+[END]
+// current address: $12B375
+
+//POINTER #282 @ $1087E8 - STRING #282 @ $12B338
+#W32($1087E8)
+//ラジルダとキョグエンをつなぐ大橋。[END]
+A bridge that connects[LINE]
+Razilda and Kyogen.[END]
+// current address: $12B35B
+
+//POINTER #294 @ $108818 - STRING #294 @ $12B328
+#W32($108818)
+//迷いの森 北側 [END]
+Forest Labyrinth North [END]
+// current address: $12B337
+
+//POINTER #295 @ $10881C - STRING #295 @ $12B308
+#W32($10881C)
+//Forest Labyrinth north side[END]
+[END]
+// current address: $12B324
+
+//POINTER #296 @ $108820 - STRING #296 @ $12B2F0
+#W32($108820)
+//迷いの森の北側の入口。[END]
+The northern entrance to[LINE]
+the Forest Labyrinth.[END]
+// current address: $12B307
+
+//POINTER #308 @ $108850 - STRING #308 @ $12B2E0
+#W32($108850)
+//迷いの森 西側 [END]
+Forest Labyrinth West [END]
+// current address: $12B2EF
+
+//POINTER #309 @ $108854 - STRING #309 @ $12B2C0
+#W32($108854)
+Forest Labyrinth west side[END]
+// current address: $12B2DB
+
+//POINTER #310 @ $108858 - STRING #310 @ $12B2A8
+#W32($108858)
+//迷いの森の西側の入口。[END]
+The western entrance to[LINE]
+the Forest Labyrinth.[END]
+// current address: $12B2BF
+
+//POINTER #322 @ $108888 - STRING #322 @ $12B290
+#W32($108888)
+//トヨホウス河の小屋[END]
+Toyohose Hostel[END]
+// current address: $12B2A3
+
+//POINTER #323 @ $10888C - STRING #323 @ $12B280
+#W32($10888C)
+//Toyohose Hostel[END]
+[END]
+// current address: $12B290
+
+//POINTER #324 @ $108890 - STRING #324 @ $12B230
+#W32($108890)
+//『ググラの川下り便』を利用して、[LINE]サニイタウンへと移動することが[LINE]できる。[END]
+Home to Gugura's River Rafting [LINE]
+Service, which can be used to[LINE]
+travel to Sannytown.[END]
+// current address: $12B279
+
+//POINTER #336 @ $1088C0 - STRING #336 @ $12B218
+#W32($1088C0)
+//キョグエン近郊の小屋[END]
+Kyogen Hostel[END]
+// current address: $12B22D
+
+//POINTER #337 @ $1088C4 - STRING #337 @ $12B208
+#W32($1088C4)
+//Kyogen Hostel[END]
+[END]
+// current address: $12B216
+
+//POINTER #338 @ $1088C8 - STRING #338 @ $12B1E8
+#W32($1088C8)
+//キョグエンの近郊にある小屋。[END]
+A hostel on the[LINE]
+outskirts of Kyogen.[END]
+// current address: $12B205
+
+//POINTER #350 @ $1088F8 - STRING #350 @ $12B1D0
+#W32($1088F8)
+//ネレグの塔近くの小屋[END]
+Nereg Hostel[END]
+// current address: $12B1E5
+
+//POINTER #351 @ $1088FC - STRING #351 @ $12B1C0
+#W32($1088FC)
+//Nereg Hostel[END]
+[END]
+// current address: $12B1CD
+
+//POINTER #352 @ $108900 - STRING #352 @ $12B1A0
+#W32($108900)
+//ネレグの塔の近くにある小屋。[END]
+A hostel near the[LINE]
+Tower of Nereg.[END]
+// current address: $12B1BD
+
+//POINTER #364 @ $108930 - STRING #364 @ $12B190
+#W32($108930)
+//カレーズ 北側[END]
+Karez North[END]
+// current address: $12B19E
+
+//POINTER #365 @ $108934 - STRING #365 @ $12B178
+#W32($108934)
+//Karez north side[END]
+[END]
+// current address: $12B189
+
+//POINTER #366 @ $108938 - STRING #366 @ $12B160
+#W32($108938)
+//カレーズの北側の入口。[END]
+The northern entrance to[LINE]
+the Karez well complex.[END]
+// current address: $12B177
+
+//POINTER #378 @ $108968 - STRING #378 @ $12B150
+#W32($108968)
+//カレーズ 南側[END]
+Karez South[END]
+// current address: $12B15E
+
+//POINTER #379 @ $10896C - STRING #379 @ $12B138
+#W32($10896C)
+//Karez south side[END]
+[END]
+// current address: $12B149
+
+//POINTER #380 @ $108970 - STRING #380 @ $12B120
+#W32($108970)
+//カレーズの南側の入口。[END]
+The southern entrance to[LINE]
+the Karez well complex.[END]
+// current address: $12B137
+
+//POINTER #392 @ $1089A0 - STRING #392 @ $12B110
+#W32($1089A0)
+//オアシス[END]
+Oasis[END]
+// current address: $12B119
+
+//POINTER #393 @ $1089A4 - STRING #393 @ $12B108
+#W32($1089A4)
+//Oasis[END]
+[END]
+// current address: $12B10E
+
+//POINTER #394 @ $1089A8 - STRING #394 @ $12B0E8
+#W32($1089A8)
+//クロダダク砂漠にあるオアシス。[END]
+An oasis in the[LINE]
+Kurodadaku Desert.[END]
+// current address: $12B107
+
+//POINTER #406 @ $1089D8 - STRING #406 @ $12B0D8
+#W32($1089D8)
+//フェニアの聖殿[END]
+Shrine of Fenia[END]
+// current address: $12B0E7
+
+//POINTER #407 @ $1089DC - STRING #407 @ $12B0C8
+#W32($1089DC)
+//Shrine of Fenia[END]
+[END]
+// current address: $12B0D8
+
+//POINTER #408 @ $1089E0 - STRING #408 @ $12B0B0
+#W32($1089E0)
+//聖獣フェニアの塔。[END]
+The tower of the[LINE]
+Sacred Beast Fenia.[END]
+// current address: $12B0C3
+
+//POINTER #420 @ $108A10 - STRING #420 @ $12B098
+#W32($108A10)
+//イーフォンの聖殿[END]
+Shrine of Eephon[END]
+// current address: $12B0A9
+
+//POINTER #421 @ $108A14 - STRING #421 @ $12B080
+#W32($108A14)
+//Shrine of Eephon[END]
+[END]
+// current address: $12B091
+
+//POINTER #422 @ $108A18 - STRING #422 @ $12B060
+#W32($108A18)
+//聖獣イーフォンの地下迷宮。[END]
+The underground maze of[LINE]
+the Sacred Beast Eephon.[END]
+// current address: $12B07B
+
+//POINTER #434 @ $108A48 - STRING #434 @ $12B048
+#W32($108A48)
+//ウォンティガの聖殿[END]
+Shrine of Wontiga[END]
+// current address: $12B05B
+
+//POINTER #435 @ $108A4C - STRING #435 @ $12B030
+#W32($108A4C)
+//Shrine of Wontiga[END]
+[END]
+// current address: $12B042
+
+//POINTER #436 @ $108A50 - STRING #436 @ $12B018
+#W32($108A50)
+//聖獣ウォンティガの塔。[END]
+The tower of the[LINE]
+Sacred Beast Wontiga.[END]
+// current address: $12B02F
+
+//POINTER #448 @ $108A80 - STRING #448 @ $12B000
+#W32($108A80)
+//ギリオーヌの聖殿[END]
+Shrine of Gilione[END]
+// current address: $12B011
+
+//POINTER #449 @ $108A84 - STRING #449 @ $12AFE8
+#W32($108A84)
+//Shrine of Gilione[END]
+[END]
+// current address: $12AFFA
+
+//POINTER #450 @ $108A88 - STRING #450 @ $12AFC8
+#W32($108A88)
+//聖獣ギリオーヌの地下迷宮。[END]
+The underground maze of[LINE]
+the Sacred Beast Gilione.[END]
+// current address: $12AFE3
+
+//POINTER #462 @ $108AB8 - STRING #462 @ $12AFB8
+#W32($108AB8)
+//獣王山  [END]
+Mount Sovereign[END]
+// current address: $12AFC1
+
+//POINTER #463 @ $108ABC - STRING #463 @ $12AFA8
+#W32($108ABC)
+//Mount Sovereign[END]
+[END]
+// current address: $12AFB8
+
+//POINTER #464 @ $108AC0 - STRING #464 @ $12AF88
+#W32($108AC0)
+//聖獣王ゲオルギアスの眠る山。[END]
+The mountain where the[LINE]
+King of the Sacred Beasts,[LINE]
+Geyorkias, lies in slumber.[END]
+// current address: $12AFA5
+
+//POINTER #476 @ $108AF0 - STRING #476 @ $12AF78
+#W32($108AF0)
+//キョグエン[END]
+Kyogen[END]
+// current address: $12AF83
+
+//POINTER #477 @ $108AF4 - STRING #477 @ $12AF70
+#W32($108AF4)
+//Kyogen[END]
+[END]
+// current address: $12AF77
+
+//POINTER #478 @ $108AF8 - STRING #478 @ $12AF40
+#W32($108AF8)
+//美しい景観とオークションが特色の[LINE]観光の名所。[END]
+A tourist attraction well-[LINE]
+known for its beautiful[LINE]
+scenery and auction house.[END]
+// current address: $12AF6E
+
+//POINTER #490 @ $108B28 - STRING #490 @ $12AF28
+#W32($108B28)
+//レンパオ空中庭園[END]
+Lenpao Sky Garden[END]
+// current address: $12AF39
+
+//POINTER #491 @ $108B2C - STRING #491 @ $12AF10
+#W32($108B2C)
+//Lenpao Sky Garden[END]
+[END]
+// current address: $12AF22
+
+//POINTER #492 @ $108B30 - STRING #492 @ $12AEF0
+#W32($108B30)
+//七大幻のひとつ、幻の庭。[END]
+One of the Seven Wonders[LINE]
+of the World, the[LINE]
+garden of illusions.[END]
+// current address: $12AF09
+
+//POINTER #504 @ $108B60 - STRING #504 @ $12AEE0
+#W32($108B60)
+//モクラド村[END]
+Mocrado[END]
+// current address: $12AEEB
+
+//POINTER #505 @ $108B64 - STRING #505 @ $12AED0
+#W32($108B64)
+//Mocrado Village[END]
+[END]
+// current address: $12AEE0
+
+//POINTER #506 @ $108B68 - STRING #506 @ $12AEA8
+#W32($108B68)
+//他の街との交流を断絶した[LINE]岩壁の村。[END]
+A village cut into rock[LINE]
+cliffs that has cut contact[LINE]
+with other settlements.[END]
+// current address: $12AECC
+
+//POINTER #518 @ $108B98 - STRING #518 @ $12AE98
+#W32($108B98)
+//ネレグの塔[END]
+Tower of Nereg[END]
+// current address: $12AEA3
+
+//POINTER #519 @ $108B9C - STRING #519 @ $12AE88
+#W32($108B9C)
+//Tower of Nereg[END]
+[END]
+// current address: $12AE97
+
+//POINTER #520 @ $108BA0 - STRING #520 @ $12AE30
+#W32($108BA0)
+//聖なる戦い以前に、文明を発達させた[LINE]ヒューマが自分たちの力を[LINE]示すために建てた塔。[END]
+A tower built by the culturally-[LINE]
+developed Huma before the Sacred[LINE]
+War to project their power.[END]
+// current address: $12AE81
+
+//POINTER #532 @ $108BD0 - STRING #532 @ $12AE20
+#W32($108BD0)
+//うさにんの村[END]
+Rabbitz Village[END]
+// current address: $12AE2D
+
+//POINTER #533 @ $108BD4 - STRING #533 @ $12AE10
+#W32($108BD4)
+//Rabbitz Village[END]
+[END]
+// current address: $12AE20
+
+//POINTER #534 @ $108BD8 - STRING #534 @ $12ADE0
+#W32($108BD8)
+//魅惑の隠れ里。[LINE]うさにんたちが住んでいる。[END]
+The hidden Village of Enchantment[LINE]
+where the Rabbitz live.[END]
+// current address: $12AE0A
+
+//POINTER #546 @ $108C08 - STRING #546 @ $12ADD8
+#W32($108C08)
+//バルカ[END]
+Balka[END]
+// current address: $12ADDF
+
+//POINTER #547 @ $108C0C - STRING #547 @ $12ADD0
+#W32($108C0C)
+//Balka[END]
+[END]
+// current address: $12ADD6
+
+//POINTER #548 @ $108C10 - STRING #548 @ $12AD98
+#W32($108C10)
+//霧の都とも蒸気の都とも呼ばれる[LINE]カレギアの首都バルカ。[END]
+Also known as the City of[LINE]
+Fog and Steam, Balka is the[LINE]
+Royal Capitol of Callegea.[END]
+// current address: $12ADCE
+
+//POINTER #560 @ $108C40 - STRING #560 @ $12AD88
+#W32($108C40)
+//バルカ港[END]
+Balka Harbor[END]
+// current address: $12AD91
+
+//POINTER #561 @ $108C44 - STRING #561 @ $12AD78
+#W32($108C44)
+//Balka harbor[END]
+[END]
+// current address: $12AD85
+
+//POINTER #562 @ $108C48 - STRING #562 @ $12AD58
+#W32($108C48)
+//世界中の人と物が集う港。[END]
+A port where people from[LINE]
+all over the world gather.[END]
+// current address: $12AD71
+
+//POINTER #574 @ $108C78 - STRING #574 @ $12AD48
+#W32($108C78)
+//メセチナ洞窟[END]
+Mesechina Cavern[END]
+// current address: $12AD55
+
+//POINTER #575 @ $108C7C - STRING #575 @ $12AD30
+#W32($108C7C)
+Mesechina Cavern[END]
+// current address: $12AD41
+
+//POINTER #576 @ $108C80 - STRING #576 @ $12AD00
+#W32($108C80)
+//古代の痕跡が残る、[LINE]考古学的価値の高い洞窟。[END]
+An archeologically significant[LINE]
+cave with many traces of[LINE]
+ancient Callegean history.[END]
+// current address: $12AD2C
+
+//POINTER #588 @ $108CB0 - STRING #588 @ $12ACF0
+#W32($108CB0)
+//バルカ収容所[END]
+Balka Prison[END]
+// current address: $12ACFD
+
+//POINTER #589 @ $108CB4 - STRING #589 @ $12ACE0
+#W32($108CB4)
+//Balka Prison[END]
+[END]
+// current address: $12ACED
+
+//POINTER #590 @ $108CB8 - STRING #590 @ $12AC90
+#W32($108CB8)
+//古代のちからを使い、フォルスを使う[LINE]犯罪者も安全に収容することが[LINE]可能な施設。[END]
+A facility that uses an[LINE]
+ancient power to safely[LINE]
+detain Force users.[END]
+// current address: $12ACDD
+
+//POINTER #602 @ $108CE8 - STRING #602 @ $12AC88
+#W32($108CE8)
+#W32($108D20)
+#W32($108D58)
+#W32($108D90)
+#W32($108DC8)
+#W32($108E00)
+#W32($108E38)
+#W32($108E70)
+//聖火台[END]
+Flame Holder[END]
+// current address: $12AC8F
+
+//POINTER #604 @ $108CF0 - STRING #604 @ $12AC28
+#W32($108CF0)
+#W32($108D28)
+#W32($108D60)
+#W32($108D98)
+#W32($108DD0)
+#W32($108E08)
+#W32($108E40)
+#W32($108E78)
+//はるかな昔からツルベナ荒野にある[LINE]遺跡群。[LINE]頂上には火が灯せるようになって[LINE]いる。[END]
+Ancient archelogical sites with[LINE]
+flame holders that are found[LINE]
+within the Crvena Desert.[END]
+// current address: $12AC78
+
+//POINTER #603 @ $108CEC - STRING #603 @ $12AC78
+#W32($108CEC)
+#W32($108D24)
+#W32($108D5C)
+#W32($108D94)
+#W32($108DCC)
+#W32($108E04)
+#W32($108E3C)
+#W32($108E74)
+//Flame-holder[END]
+[END]
+// current address: $12AC85
+
+//POINTER #714 @ $108EA8 - STRING #714 @ $12AC18
+#W32($108EA8)
+#W32($108EE0)
+#W32($108F18)
+#W32($108F50)
+#W32($108F88)
+#W32($108FC0)
+#W32($108FF8)
+#W32($109030)
+//食材調達施設[END]
+Farm Fresh Groceries[END]
+// current address: $12AC25
+
+//POINTER #716 @ $108EB0 - STRING #716 @ $12ABC8
+#W32($108EB0)
+#W32($108EE8)
+#W32($108F20)
+#W32($108F58)
+#W32($108F90)
+#W32($108FC8)
+#W32($109000)
+#W32($109038)
+//カレギア中の様々な食材を[LINE]調達することができる施設。[END]
+A grocery chain that can[LINE]
+be found throughout Callegea.[END]
+// current address: $12ABFC
+
+//POINTER #715 @ $108EAC - STRING #715 @ $12AC00
+#W32($108EAC)
+#W32($108EE4)
+#W32($108F1C)
+#W32($108F54)
+#W32($108F8C)
+#W32($108FC4)
+#W32($108FFC)
+#W32($109034)
+//Farm Fresh Groceries[END]
+[END]
+// current address: $12AC15
+
+//POINTER #826 @ $109068 - STRING #826 @ $12ABC0
+#W32($109068)
+//嘘潮[END]
+Whirlpool[END]
+// current address: $12ABC5
+
+//POINTER #827 @ $10906C - STRING #827 @ $12ABB0
+#W32($10906C)
+//Whirlpool[END]
+[END]
+// current address: $12ABBA
+
+//POINTER #828 @ $109070 - STRING #828 @ $12AB70
+#W32($109070)
+//ここで行方知れずになった船は[LINE]数知れないという危険な場所。[END]
+A dangerous place where[LINE]
+countless ships have met[LINE]
+a mysterious fate.[END]
+// current address: $12ABAA
+
+//POINTER #840 @ $1090A0 - STRING #840 @ $12AB60
+#W32($1090A0)
+//ユリスの領域[END]
+Yuris's Realm[END]
+// current address: $12AB6D
+
+//POINTER #841 @ $1090A4 - STRING #841 @ $12AB50
+#W32($1090A4)
+//Yuris' Realm[END]
+[END]
+// current address: $12AB5D
+
+//POINTER #842 @ $1090A8 - STRING #842 @ $12AB28
+#W32($1090A8)
+//災いの獣、ユリスが作り出した空間。[END]
+A realm created by Yuris,[LINE]
+the Beast of Calamity.[END]
+// current address: $12AB4B
+
+//POINTER #854 @ $1090D8 - STRING #854 @ $12AB10
+#W32($1090D8)
+//サイグローグの館[END]
+Cyglorg's Chambers[END]
+// current address: $12AB21
+
+//POINTER #855 @ $1090DC - STRING #855 @ $12AAF8
+#W32($1090DC)
+//Cyglorg's Chambers[END]
+[END]
+// current address: $12AB0B
+
+//POINTER #856 @ $1090E0 - STRING #856 @ $12AAB0
+#W32($1090E0)
+//謎の男サイグローグが住む、[LINE]時間と空間を超越した[LINE]不可思議な迷宮。[END]
+A labyrinth that transcends[LINE]
+time and space where the[LINE]
+mysterious Cyglorg resides.[END]
+// current address: $12AAF1
+
+//POINTER #858 @ $1090E8 - STRING #858 @ $12D0F0
+#W32($1090E8)
+//紫の石碑[END]
+Purple Steele[END]
+// current address: $12D0F9
+
+//POINTER #859 @ $1090EC - STRING #859 @ $12D0B0
+#W32($1090EC)
+//世界の北西にある石碑。[LINE]聖獣・ギリオーヌを奉ったとされる。[END]
+A steele located in the northwest[LINE]
+dedicated to the Sacred Beast Gilione.[END]
+// current address: $12D0EA
+
+//POINTER #865 @ $109104 - STRING #865 @ $12D0A0
+#W32($109104)
+//白の石碑[END]
+White Steele[END]
+// current address: $12D0A9
+
+//POINTER #866 @ $109108 - STRING #866 @ $12D060
+#W32($109108)
+//世界の南西にある石碑。[LINE]聖獣・ウォンティガを奉ったとされる。[END]
+A steele located in the southwest[LINE]
+dedicated to the Sacred Beast Wontiga.[END]
+// current address: $12D09C
+
+//POINTER #872 @ $109120 - STRING #872 @ $12D050
+#W32($109120)
+//赤の石碑[END]
+Red Steele[END]
+// current address: $12D059
+
+//POINTER #873 @ $109124 - STRING #873 @ $12D018
+#W32($109124)
+//世界の南方にある石碑。[LINE]聖獣・フェニアを奉ったとされる。[END]
+A steele located in the south[LINE]
+dedicated to the Sacred Beast Fenia.[END]
+// current address: $12D050
+
+//POINTER #879 @ $10913C - STRING #879 @ $12D008
+#W32($10913C)
+//緑の石碑[END]
+Green Steele[END]
+// current address: $12D011
+
+//POINTER #880 @ $109140 - STRING #880 @ $12CFC8
+#W32($109140)
+//世界の南東にある石碑。[LINE]聖獣・イーフォンを奉ったとされる。[END]
+A steele located in the southeast[LINE]
+dedicated to the Sacred Beast Eephon.[END]
+// current address: $12D002
+
+//POINTER #886 @ $109158 - STRING #886 @ $12CFB8
+#W32($109158)
+//青の石碑[END]
+Blue Steele[END]
+// current address: $12CFC1
+
+//POINTER #887 @ $10915C - STRING #887 @ $12CF78
+#W32($10915C)
+//世界の北東にある石碑。[LINE]聖獣・シャオルーンを奉ったとされる。[END]
+A steele located in the northeast[LINE]
+dedicated to the Sacred Beast Shaorune.[END]
+// current address: $12CFB4
+
+//POINTER #893 @ $109174 - STRING #893 @ $12CF68
+#W32($109174)
+//黒の石碑[END]
+Black Steele[END]
+// current address: $12CF71
+
+//POINTER #894 @ $109178 - STRING #894 @ $12CF28
+#W32($109178)
+//世界の北方にある石碑。[LINE]聖獣・ランドグリーズを奉ったとされる。[END]
+A steele located in the north[LINE]
+dedicated to the Sacred Beast Randgriz.[END]
+// current address: $12CF66
+
+//POINTER #900 @ $109190 - STRING #900 @ $12CF18
+#W32($109190)
+//黄の石碑[END]
+Yellow Steele[END]
+// current address: $12CF21
+
+//POINTER #901 @ $109194 - STRING #901 @ $12CED8
+#W32($109194)
+//世界の中央にある石碑。[LINE]聖獣王・ゲオルギアスを奉ったとされる。[END]
+A steele located in the center of[LINE]
+the world dedicated to the King of[LINE]
+the Sacred Beasts, Geyorkias.[END]
+// current address: $12CF16
+
+//POINTER #907 @ $1091AC - STRING #907 @ $12CEC8
+#W32($1091AC)
+//マフマフ[END]
+Muff-Muff[END]
+// current address: $12CED1
+
+//POINTER #908 @ $1091B0 - STRING #908 @ $12CE80
+#W32($1091B0)
+//世界の北方に多く住むという動物。[LINE]正式名・ノースタリア ケナガリス。[END]
+An animal that is commonly found[LINE]
+in the north. Scientific Name:[LINE]
+Northtalia Kenegris.[END]
+// current address: $12CEC3
+
+//POINTER #914 @ $1091C8 - STRING #914 @ $12CE70
+#W32($1091C8)
+//スナカケワラビ[END]
+Sand-Shovelling Bracken[END]
+// current address: $12CE7F
+
+//POINTER #915 @ $1091CC - STRING #915 @ $12CE30
+#W32($1091CC)
+//近づく者に砂を投げつけるという[LINE]珍しい植物。普段は丸まっている。[END]
+A rare plant that throws[LINE]
+sand at those who approach.[LINE]
+Usually curled in on itself.[END]
+// current address: $12CE70
+
+//POINTER #921 @ $1091E4 - STRING #921 @ $12CE18
+#W32($1091E4)
+//七つ葉のクローバー[END]
+Seven-Leaf Clover[END]
+// current address: $12CE2B
+
+//POINTER #922 @ $1091E8 - STRING #922 @ $12CDC8
+#W32($1091E8)
+//見つけると、恋愛が成就するという噂の[LINE]ある植物。安産のお守りとしても使われる。[END]
+A plant that is said to bring[LINE]
+true love to those who find it.[LINE]
+It is also used as a good-luck[LINE]
+charm for a safe childbirth.[END]
+// current address: $12CE16
+
+//POINTER #928 @ $109200 - STRING #928 @ $12CDB8
+#W32($109200)
+//キノボリブタ[END]
+Tree-climbing Pig[END]
+// current address: $12CDC5
+
+//POINTER #929 @ $109204 - STRING #929 @ $12CD80
+#W32($109204)
+//機嫌がよい時には樹木に登るという[LINE]習性を持つブタ。[END]
+A pig that has a habit of[LINE]
+climbing trees when it's[LINE]
+in a good mood.[END]
+// current address: $12CDB2
+
+//POINTER #935 @ $10921C - STRING #935 @ $12CD70
+#W32($10921C)
+//レッドパンダ[END]
+Red Panda[END]
+// current address: $12CD7D
+
+//POINTER #936 @ $109220 - STRING #936 @ $12CD20
+#W32($109220)
+//体毛は白だが、目の周りや腕の体毛だけが[LINE]赤いという熊。見た目がちょっとこわい。[END]
+A bear with white fur on[LINE]
+the body but red fur near[LINE]
+the eyes and on the legs.[LINE]
+It's kinda scary looking.[END]
+// current address: $12CD6E
+
+//POINTER #942 @ $109238 - STRING #942 @ $12CD08
+#W32($109238)
+//ゴールドフィッシュ[END]
+Gold Fish[END]
+// current address: $12CD1B
+
+//POINTER #943 @ $10923C - STRING #943 @ $12CCD0
+#W32($10923C)
+//砂金を腹の中にため込んでいる魚。[LINE]ウロコの色は赤い。[END]
+A fish that stores gold[LINE]
+flecks in its stomach.[LINE]
+Its scales are red.[END]
+// current address: $12CD04
+
+//POINTER #949 @ $109254 - STRING #949 @ $12CCC0
+#W32($109254)
+//ティアの花[END]
+Tear Flower[END]
+// current address: $12CCCB
+
+//POINTER #950 @ $109258 - STRING #950 @ $12CC80
+#W32($109258)
+//白ユリに似た形をした花。[LINE]花の汁は、危険な薬の材料になる。[END]
+A flower that resembles a[LINE]
+while lily. It's nectar is[LINE]
+used in dangerous drugs.[END]
+// current address: $12CCBA
+
+//POINTER #956 @ $109270 - STRING #956 @ $12CC70
+#W32($109270)
+//エトレーの碑[END]
+Monument to Etoray[END]
+// current address: $12CC7D
+
+//POINTER #957 @ $109274 - STRING #957 @ $12CC28
+#W32($109274)
+//エトレー橋の名前のいわれについて[LINE]説明している碑。歴史のある橋らしい。[END]
+A monument that explains how[LINE]
+the Etoray bridge got its[LINE]
+name. The bridge seems to[LINE]
+have a very long history.[END]
+// current address: $12CC6E
+
+//POINTER #963 @ $10928C - STRING #963 @ $12CC18
+#W32($10928C)
+//モウソウダケ[END]
+Delusion Bamboo[END]
+// current address: $12CC25
+
+//POINTER #964 @ $109290 - STRING #964 @ $12CBC8
+#W32($109290)
+//かつて、賢者がこの竹の下で悟りを開いた[LINE]伝説がある。妄想を取り除く竹という噂。[END]
+There is a legend that a wise[LINE]
+man once found enlightenment[LINE]
+under this bamboo. It is said[LINE]
+to remove one's delusions.[END]
+// current address: $12CC16
+
+//POINTER #970 @ $1092A8 - STRING #970 @ $12CBB8
+#W32($1092A8)
+//ウソツツキ[END]
+Liepecker[END]
+// current address: $12CBC3
+
+//POINTER #971 @ $1092AC - STRING #971 @ $12CB60
+#W32($1092AC)
+//するどいくちばしを持つ鳥。「ウソツツキに[LINE]つつかれるよ」と、親は子のウソをしかる。[END]
+A bird with a pointy beak.[LINE]
+Parents tell their children[LINE]
+that if they lie, they'll[LINE]
+get pecked by this bird.[END]
+// current address: $12CBB2
+
+//POINTER #977 @ $1092C4 - STRING #977 @ $12CB50
+#W32($1092C4)
+//底なし沼[END]
+Bottomless Swamp[END]
+// current address: $12CB59
+
+//POINTER #978 @ $1092C8 - STRING #978 @ $12CAF8
+#W32($1092C8)
+//底がないと言われる沼。実際は、４メートル[LINE]程度のやわらかい土が底に積もっただけの沼。[END]
+A swamp that is said to have[LINE]
+no bottom. In actuality, it[LINE]
+has 13 feet of soft soil[LINE]
+piled up at the bottom.[END]
+// current address: $12CB4C
+
+//POINTER #984 @ $1092E0 - STRING #984 @ $12CAF0
+#W32($1092E0)
+//竜巻[END]
+Tornado[END]
+// current address: $12CAF5
+
+//POINTER #985 @ $1092E4 - STRING #985 @ $12CAB0
+#W32($1092E4)
+//空気の流れが嘘になり、上空に巻き上がる[LINE]自然現象。近寄ると危険。[END]
+A natural phenomenon where a[LINE]
+hot and cold front collide and[LINE]
+form a rotating column of air[LINE]
+that is dangerous to approach.[END]
+// current address: $12CAF0
+
+//POINTER #991 @ $1092FC - STRING #991 @ $12CAA0
+#W32($1092FC)
+//オーロラ[END]
+Aurora[END]
+// current address: $12CAA9
+
+//POINTER #992 @ $109300 - STRING #992 @ $12CA50
+#W32($109300)
+//空に浮かび上がる色鮮やかな発光現象。[LINE]吉兆という説と凶兆という説に分かれる。[END]
+A luminescent display that[LINE]
+forms in the sky. Some[LINE]
+consider it to be good luck,[LINE]
+others consider it bad luck.[END]
+// current address: $12CA9C
+
+//POINTER #998 @ $109318 - STRING #998 @ $12CA40
+#W32($109318)
+//巨大石像[END]
+Large Stone Statue[END]
+// current address: $12CA49
+
+//POINTER #999 @ $10931C - STRING #999 @ $12C9F8
+#W32($10931C)
+//キョグエンの職人が千人がかりで作ったと[LINE]言う伝説のある仙人の像。でかい。[END]
+A statue of a wizard that[LINE]
+is said to have been made[LINE]
+by one-thousand craftsmen[LINE]
+of Kyogen.It's huge.[END]
+// current address: $12CA40
+
+//POINTER #1005 @ $109334 - STRING #1005 @ $12C9E0
+#W32($109334)
+//オオツノカブトムシ[END]
+Longhorn Beetle[END]
+// current address: $12C9F3
+
+//POINTER #1006 @ $109338 - STRING #1006 @ $12C9A8
+#W32($109338)
+//身体の三倍の長さの角を持つカブトムシ。[LINE]強そうだが弱い。[END]
+A beetle with a horn three[LINE]
+times the length of the[LINE]
+body. Looks strong, is weak.[END]
+// current address: $12C9E0
+
+//POINTER #1012 @ $109350 - STRING #1012 @ $12C990
+#W32($109350)
+//エメラルドアゲハ[END]
+Emerald Swallowtail[END]
+// current address: $12C9A1
+
+//POINTER #1013 @ $109354 - STRING #1013 @ $12C950
+#W32($109354)
+//緑青色に輝く見事な羽を持つアゲハチョウ。[LINE]マニア垂涎の希少昆虫。[END]
+A swallowtail butterfly with[LINE]
+dazzling blue-green wings.[LINE]
+A rare insect that is prized[LINE]
+by collectors.[END]
+// current address: $12C990
+
+//POINTER #1019 @ $10936C - STRING #1019 @ $12C940
+#W32($10936C)
+//純白のワニ[END]
+Albino Crocodile[END]
+// current address: $12C94B
+
+//POINTER #1020 @ $109370 - STRING #1020 @ $12C900
+#W32($109370)
+//体色が白というとても変わったワニ。[LINE]見える人と見えない人がいる。[END]
+A very peculiar crocodile with[LINE]
+a white-colored body. Some can[LINE]
+see it, others are not so lucky.[END]
+// current address: $12C940
+
+//POINTER #1026 @ $109388 - STRING #1026 @ $12C8F0
+#W32($109388)
+//クレーター[END]
+Crater[END]
+// current address: $12C8FB
+
+//POINTER #1027 @ $10938C - STRING #1027 @ $12C8B0
+#W32($10938C)
+//遠い昔に天から落ちてきた石が原因で[LINE]できたとされる巨大な穴。[END]
+A huge hole that is said[LINE]
+to have been made by a stone[LINE]
+that fell from the sky.[END]
+// current address: $12C8EC
+
+//POINTER #1033 @ $1093A4 - STRING #1033 @ $12C898
+#W32($1093A4)
+//バビロオオアリの塚[END]
+Babiloant Mound[END]
+// current address: $12C8AB
+
+//POINTER #1034 @ $1093A8 - STRING #1034 @ $12C850
+#W32($1093A8)
+//バビロオオアリが土を盛り上げて作った巣。[LINE]高さは２メートル以上にもなる。[END]
+A nest of Babiloants with a[LINE]
+hill that is over six and[LINE]
+a half feet tall.[END]
+// current address: $12C898
+
+//POINTER #1040 @ $1093C0 - STRING #1040 @ $12C840
+#W32($1093C0)
+//マネーヘビの皮[END]
+Moneysnake's Skin[END]
+// current address: $12C84F
+
+//POINTER #1041 @ $1093C4 - STRING #1041 @ $12C7E8
+#W32($1093C4)
+//体長１０メートルはあると言われる大蛇の皮。[LINE]持っていると金持ちになれるという噂がある。[END]
+The shed skin of a snake said[LINE]
+to be 33 feet long. You can make[LINE]
+a pretty penny if you sell it.[END]
+// current address: $12C83E
+
+//POINTER #1047 @ $1093DC - STRING #1047 @ $12C7D8
+#W32($1093DC)
+//スノーフォール[END]
+Snowfall[END]
+// current address: $12C7E7
+
+//POINTER #1048 @ $1093E0 - STRING #1048 @ $12C798
+#W32($1093E0)
+//上空の気流の影響でできた巨大な雪玉が[LINE]地上に落下する現象。[END]
+A phenomenon where air currents[LINE]
+form a giant snowball that[LINE]
+hurtles into the ground.[END]
+// current address: $12C7D2
+
+//POINTER #1054 @ $1093F8 - STRING #1054 @ $12C780
+#W32($1093F8)
+//リキシフルーツの樹[END]
+Sumo-fruit Tree[END]
+// current address: $12C793
+
+//POINTER #1055 @ $1093FC - STRING #1055 @ $12C738
+#W32($1093FC)
+//真っ赤な実をつける樹。ウッチャリグミの[LINE]原料と噂されるが定かではない。[END]
+A tree that bears a red fruit[LINE]
+that is said to be the main ingredient[LINE]
+of Comeback gels, but no one's sure.[END]
+// current address: $12C77E
+
+//POINTER #1061 @ $109414 - STRING #1061 @ $12C728
+#W32($109414)
+//ハタラキモノ[END]
+Hustler[END]
+// current address: $12C735
+
+//POINTER #1062 @ $109418 - STRING #1062 @ $12C6E0
+#W32($109418)
+//樹から樹へ常に飛び回る忙しい動物。[LINE]じっとしていられない事情は謎。[END]
+An animal that's constantly on[LINE]
+the move from tree to tree. No[LINE]
+one's ever seen it take a breather.[END]
+// current address: $12C722
+
+//POINTER #1068 @ $109430 - STRING #1068 @ $12C6D8
+#W32($109430)
+//蜃気楼[END]
+Mirage[END]
+// current address: $12C6DF
+
+//POINTER #1069 @ $109434 - STRING #1069 @ $12C690
+#W32($109434)
+//遠くにあるオアシスや、そこにあるはずのない[LINE]建物が見えるという自然現象。[END]
+A natural phenomenon where one can[LINE]
+see an oasis that does not exist.[END]
+// current address: $12C6D8
+
+//POINTER #1075 @ $10944C - STRING #1075 @ $12C680
+#W32($10944C)
+//硫黄の泉[END]
+Sulphur Spring[END]
+// current address: $12C689
+
+//POINTER #1076 @ $109450 - STRING #1076 @ $12C630
+#W32($109450)
+//恋の病以外は何にでも効くという噂のある[LINE]ありがたい泉。ちょっとくさい。[END]
+A blessed fountain that can cure[LINE]
+one of any malady barring love-[LINE]
+sickness. Has a foul odor.[END]
+// current address: $12C67A
+
+//POINTER #1082 @ $109468 - STRING #1082 @ $12C628
+#W32($109468)
+//ワジ[END]
+Dry Riverbed[END]
+// current address: $12C62D
+
+//POINTER #1083 @ $10946C - STRING #1083 @ $12C5F0
+#W32($10946C)
+//普段は谷に見えるが、[LINE]大雨が降った時のみ川になる。[END]
+Though usually it looks like[LINE]
+a valley, come rainfall and[LINE]
+it will turn into a river.[END]
+// current address: $12C622
+
+//POINTER #1089 @ $109484 - STRING #1089 @ $12C5D8
+#W32($109484)
+//プラチナオオガメの卵[END]
+Platinum Turle Egg[END]
+// current address: $12C5ED
+
+//POINTER #1090 @ $109488 - STRING #1090 @ $12C588
+#W32($109488)
+//硬い卵。高級装飾品として密漁するものが[LINE]多いため、種の絶滅が危ぶまれている。[END]
+A hard egg. Due to its use in[LINE]
+expensive decorations, they[LINE]
+are frequently poached which[LINE]
+is threatening the species.[END]
+// current address: $12C5D4
+
+//POINTER #1096 @ $1094A0 - STRING #1096 @ $12C578
+#W32($1094A0)
+//ハリコアラ[END]
+Quilala[END]
+// current address: $12C583
+
+//POINTER #1097 @ $1094A4 - STRING #1097 @ $12C530
+#W32($1094A4)
+//「絶対に抱かせない」という強い意志を[LINE]その姿で表している動物。トゲトゲ。[END]
+An animal that won't be[LINE]
+handing out hugs anytime[LINE]
+soon. Very pokey.[END]
+// current address: $12C578
+
+//POINTER #1103 @ $1094BC - STRING #1103 @ $12C528
+#W32($1094BC)
+//流氷[END]
+Ice Floe[END]
+// current address: $12C52D
+
+//POINTER #1104 @ $1094C0 - STRING #1104 @ $12C4D8
+#W32($1094C0)
+//海上に流れ着いた氷の塊が集まったもの。[LINE]夜になると哀しげな音を立てるという。[END]
+A sheet of ice that has drifted[LINE]
+out to sea. Said to make a[LINE]
+sorrowful noise come nighttime.[END]
+// current address: $12C524
+
+//POINTER #1110 @ $1094D8 - STRING #1110 @ $12C4C8
+#W32($1094D8)
+//ウマイナゴ[END]
+Tasty Hopper[END]
+// current address: $12C4D3
+
+//POINTER #1111 @ $1094DC - STRING #1111 @ $12C478
+#W32($1094DC)
+//煮ると非常に美味と言われる虫。高級食材。[LINE]ただし、その姿が苦手な人も多い。[END]
+An insect that is said to[LINE]
+be a tasty delicacy when[LINE]
+boiled. Some people can't[LINE]
+get past its looks though.[END]
+// current address: $12C4C2
+
+//POINTER #1117 @ $1094F4 - STRING #1117 @ $12C460
+#W32($1094F4)
+//ウスバカカゲロウ[END]
+Foolish Mayfly[END]
+// current address: $12C471
+
+//POINTER #1118 @ $1094F8 - STRING #1118 @ $12C420
+#W32($1094F8)
+//炎に飛び込んでしまう習性のある虫。[LINE]その命は、とてもはかない。[END]
+A winged insect that likes[LINE]
+to jump into flames. Its[LINE]
+life is rather fleeting.[END]
+// current address: $12C45E
+
+//POINTER #1124 @ $109510 - STRING #1124 @ $12C418
+#W32($109510)
+//大断層[END]
+Large Fault[END]
+// current address: $12C41F
+
+//POINTER #1125 @ $109514 - STRING #1125 @ $12C3D0
+#W32($109514)
+//過去の大地震の際に発生したという断層。[LINE]断面に、地層の様子がうかがえる。[END]
+A fault that was created by[LINE]
+a large earthquake sometime[LINE]
+in the past. One can see the[LINE]
+strata in the cross section.[END]
+// current address: $12C418
+
+//POINTER #1131 @ $10952C - STRING #1131 @ $12C3C8
+#W32($10952C)
+//間欠泉[END]
+Geyser[END]
+// current address: $12C3CF
+
+//POINTER #1132 @ $109530 - STRING #1132 @ $12C380
+#W32($109530)
+//一定周期をおいて、温水が高く噴き出す泉。[LINE]観光のために訪れる人も多い。[END]
+A popular sightseeing spot where[LINE]
+water comes out of the ground[LINE]
+at regular intervals.[END]
+// current address: $12C3C6
+
+//POINTER #1138 @ $109548 - STRING #1138 @ $12C378
+#W32($109548)
+//塩湖[END]
+Salt Lake[END]
+// current address: $12C37D
+
+//POINTER #1139 @ $10954C - STRING #1139 @ $12C328
+#W32($10954C)
+//海だった部分が取り残されて湖となった。[LINE]塩分が非常に濃いため、魚が住めない。[END]
+A salt lake that was left behind[LINE]
+when the oceans receded. The salt[LINE]
+content is too high for fish.[END]
+// current address: $12C374
+
+//POINTER #1145 @ $109564 - STRING #1145 @ $12C310
+#W32($109564)
+//レインボーフラワー[END]
+Rainbow Flower[END]
+// current address: $12C323
+
+//POINTER #1146 @ $109568 - STRING #1146 @ $12C2C8
+#W32($109568)
+//花びらの色が一枚ごとに異なる美しい花。[LINE]非常に高値で取り引きされる。[END]
+A beautiful flower with every[LINE]
+petal a different color. It can be[LINE]
+bought and sold for a high price.[END]
+// current address: $12C30C
+
+//POINTER #1152 @ $109580 - STRING #1152 @ $12C2B8
+#W32($109580)
+//トリトリソウ[END]
+Swallow Swaddler[END]
+// current address: $12C2C5
+
+//POINTER #1153 @ $109584 - STRING #1153 @ $12C278
+#W32($109584)
+//昆虫に擬態して鳥を誘い、留まった鳥を[LINE]くっつけて離さない植物。[END]
+A plant that mimics insects to[LINE]
+lure in birds, then never lets[LINE]
+them go once they've perched.[END]
+// current address: $12C2B6
+
+//POINTER #1159 @ $10959C - STRING #1159 @ $12C270
+#W32($10959C)
+//黄砂[END]
+Golden Sand[END]
+// current address: $12C275
+
+//POINTER #1160 @ $1095A0 - STRING #1160 @ $12C238
+#W32($1095A0)
+//ピピスタ周辺の砂が飛来して、[LINE]大気が黄色く見える現象。[END]
+A phenomenon where the sky in the[LINE]
+Pipista area appears yellow due[LINE]
+the sand flying about.[END]
+// current address: $12C26E
+
+//POINTER #1166 @ $1095B8 - STRING #1166 @ $12C230
+#W32($1095B8)
+//陽の碑[END]
+Monument to the Sun[END]
+// current address: $12C237
+
+//POINTER #1167 @ $1095BC - STRING #1167 @ $12C1D8
+#W32($1095BC)
+//「世界の中央、そこから南方・北方・南東[LINE]北東・南西・北西に聖なる星あり。七星陣」[END]
+"From the center of the world,[LINE]
+there are seven holy stars[LINE]
+in all the corners of the sky."[END]
+// current address: $12C22A
+
+//POINTER #1173 @ $1095D4 - STRING #1173 @ $12C1C8
+#W32($1095D4)
+//ヤドラレギ[END]
+Resting Tree[END]
+// current address: $12C1D3
+
+//POINTER #1174 @ $1095D8 - STRING #1174 @ $12C188
+#W32($1095D8)
+//背が低く、葉の密度が濃いため[LINE]動物や旅人の雨宿りに使われる樹木。[END]
+A short tree with a dense[LINE]
+canopy that provides shelter[LINE]
+from the rain for both[LINE]
+wildlife and travellers.[END]
+// current address: $12C1C8
+
+//POINTER #1180 @ $1095F0 - STRING #1180 @ $12C178
+#W32($1095F0)
+//水晶のスカル[END]
+Crystal Skull[END]
+// current address: $12C185
+
+//POINTER #1181 @ $1095F4 - STRING #1181 @ $12C128
+#W32($1095F4)
+//ヒューマの頭骨をかたどった水晶。[LINE]信じられないほど緻密な作りになっている。[END]
+A crystal in the shape of[LINE]
+a Huma skull. The level of[LINE]
+detail is unbelievable.[END]
+// current address: $12C172
+
+//POINTER #1187 @ $10960C - STRING #1187 @ $12C110
+#W32($10960C)
+//飛行機械の黄金模型[END]
+Golden Flying Machine[END]
+// current address: $12C123
+
+//POINTER #1188 @ $109610 - STRING #1188 @ $12C0D0
+#W32($109610)
+//黄金を用いた、飛行機械の模型。[LINE]空を飛べる機械の名残と言われる。[END]
+A model of a flying machine that[LINE]
+was  made out of gold. Said to be[LINE]
+a remnant of an ancient machine [LINE]
+that could soar through the sky.[END]
+// current address: $12C110
+
+//POINTER #1194 @ $109628 - STRING #1194 @ $12C0C0
+#W32($109628)
+//銀の聖杯[END]
+Silver Holy Grail[END]
+// current address: $12C0C9
+
+//POINTER #1195 @ $10962C - STRING #1195 @ $12C070
+#W32($10962C)
+//カレギア王家に伝わっていた聖なる杯。[LINE]何者かに盗まれて行方不明になっていた。[END]
+A holy grail that was passed[LINE]
+down the Callegean royal family.[LINE]
+Someone had stolen it, and its[LINE]
+whereabouts became unknown.[END]
+// current address: $12C0BC
+
+//POINTER #1201 @ $109644 - STRING #1201 @ $12C060
+#W32($109644)
+//ヤミマチソウ[END]
+Penumbral Grass[END]
+// current address: $12C06D
+
+//POINTER #1202 @ $109648 - STRING #1202 @ $12C010
+#W32($109648)
+//新月の夜に、ぼんやり光る花を崎かせる植物。[LINE]花が崎いた様子はとても幻想的。[END]
+A plant whose flowers bloom[LINE]
+on the night of a new moon.[LINE]
+The appearance of these dimly[LINE]
+glowing flowers is mesmerizing.[END]
+// current address: $12C05A
+
+//POINTER #1208 @ $109660 - STRING #1208 @ $12C000
+#W32($109660)
+//忘れて草[END]
+Forget-me Grass[END]
+// current address: $12C009
+
+//POINTER #1209 @ $109664 - STRING #1209 @ $12BFC0
+#W32($109664)
+//恋人に別れを告げる時に贈る草花。[LINE]花言葉は「私を忘れて下さい」[END]
+Flowers given to one's lover[LINE]
+when they seperate. In the[LINE]
+language of flowers, it means:[LINE]
+Please forget about me.[END]
+// current address: $12BFFE
+
+//POINTER #1215 @ $10967C - STRING #1215 @ $12BFA8
+#W32($10967C)
+//アイフリードの墓[END]
+Aifread's Grave[END]
+// current address: $12BFB9
+
+//POINTER #1216 @ $109680 - STRING #1216 @ $12BF50
+#W32($109680)
+//海賊王の墓。宝の地図が隠されていると考えて[LINE]墓荒らしをする不謹慎な者が後を絶たない。[END]
+The tomb of the pirate king Aifread.[LINE]
+Many vandalize the tomb in the vain[LINE]
+hope that there is a map hidden within.[END]
+// current address: $12BFA4
+
+//POINTER #1222 @ $109698 - STRING #1222 @ $12BF40
+#W32($109698)
+//大顔面の石[END]
+Large Face Stone[END]
+// current address: $12BF4B
+
+//POINTER #1223 @ $10969C - STRING #1223 @ $12BEF8
+#W32($10969C)
+//大きな顔をかたどった石。[LINE]待ち合わせの目印に用いられているとか[END]
+A stone in the shape of a[LINE]
+large face. People like to[LINE]
+use it as a meeting spot.[END]
+// current address: $12BF3A
+
+//POINTER #1229 @ $1096B4 - STRING #1229 @ $12BEE8
+#W32($1096B4)
+//ホットドッグ[END]
+Hot Dog[END]
+// current address: $12BEF5
+
+//POINTER #1230 @ $1096B8 - STRING #1230 @ $12BE90
+#W32($1096B8)
+//巧みに雪山を滑り降りる犬。その技術には[LINE]「ホットドッグなドッグだ」と驚きの声多数。[END]
+A dog that skillfully skis down[LINE]
+a snowy mountain. Many who see this[LINE]
+say "What a hot dog!" in surprise.[END]
+// current address: $12BEE2
+
+//POINTER #1236 @ $1096D0 - STRING #1236 @ $12BE80
+#W32($1096D0)
+//コガネネコ[END]
+Golden Cat[END]
+// current address: $12BE8B
+
+//POINTER #1237 @ $1096D4 - STRING #1237 @ $12BE38
+#W32($1096D4)
+//金色の体毛を持つ、おとなしい猫。[LINE]この猫の居ついた商家は繁盛するという。[END]
+A docile cat with golden fur.[LINE]
+Any store where this cat lives[LINE]
+is said to become prosperous.[END]
+// current address: $12BE80
+
+//POINTER #1243 @ $1096EC - STRING #1243 @ $12BE20
+#W32($1096EC)
+//マウスチューマウス[END]
+Mouse Couple[END]
+// current address: $12BE33
+
+//POINTER #1244 @ $1096F0 - STRING #1244 @ $12BDD0
+#W32($1096F0)
+//夫婦仲がとても良いネズミ。寄り添う様子が[LINE]常にくちづけをしているように見える。[END]
+A mouse couple with a very[LINE]
+good relationship. Their[LINE]
+snuggling looks as though[LINE]
+they're always kissing.[END]
+// current address: $12BE1E
+
+//POINTER #1250 @ $109708 - STRING #1250 @ $12BDC8
+#W32($109708)
+//女王貝[END]
+Queen Shell[END]
+// current address: $12BDCF
+
+//POINTER #1251 @ $10970C - STRING #1251 @ $12BD78
+#W32($10970C)
+//大きさが４メートル以上ある巨大な貝。[LINE]この貝から美女が出てきたという伝説がある。[END]
+A huge shell that is over 13[LINE]
+feet in size. There is a myth[LINE]
+that a beautiful woman was[LINE]
+born from this shell.[END]
+// current address: $12BDC8
+
+//POINTER #1257 @ $109724 - STRING #1257 @ $12BD68
+#W32($109724)
+//３６０度眺望[END]
+360 Degree View[END]
+// current address: $12BD75
+
+//POINTER #1258 @ $109728 - STRING #1258 @ $12BD18
+#W32($109728)
+//ここに立つと、３６０度どちらを見回しても[LINE]良い景色が楽しめるという観光スポット。[END]
+If one stands here, they can[LINE]
+see a good view no matter[LINE]
+which way they look.[END]
+// current address: $12BD68
+
+//POINTER #1264 @ $109740 - STRING #1264 @ $12BD08
+#W32($109740)
+//パンチモンキー[END]
+Punch Monkey[END]
+// current address: $12BD17
+
+//POINTER #1265 @ $109744 - STRING #1265 @ $12BCC0
+#W32($109744)
+//近づく者にすごいパンチを繰り出すという[LINE]どう猛な猿。バナナが大好物。[END]
+A monkey that gives a powerful[LINE]
+punch to anyone that dares come[LINE]
+close. It loves bananas though.[END]
+// current address: $12BD04
+
+//POINTER #1271 @ $10975C - STRING #1271 @ $12BCB8
+#W32($10975C)
+//陰の碑[END]
+Monument to the Moon[END]
+// current address: $12BCBF
+
+//POINTER #1272 @ $109760 - STRING #1272 @ $12BC70
+#W32($109760)
+//「聖なる星は、相応の強さを[LINE]持つ者のみが、見る事ができるであろう」[END]
+"The holy stars are only[LINE]
+visible to those who possess[LINE]
+the proper strength."[END]
+// current address: $12BCB4
+
+//POINTER #1278 @ $109778 - STRING #1278 @ $12BC68
+#W32($109778)
+//樹氷[END]
+Treecicles[END]
+// current address: $12BC6D
+
+//POINTER #1279 @ $10977C - STRING #1279 @ $12BC10
+#W32($10977C)
+//霧氷の一種で、樹についた水滴が凍りついて[LINE]できたもの。樹に花が崎いたように見える。[END]
+A type of hoarfrost caused by frozen[LINE]
+drops of water on a tree. It looks[LINE]
+as though there are flowers blooming.[END]
+// current address: $12BC62
+
+//POINTER #1285 @ $109794 - STRING #1285 @ $12BBF8
+#W32($109794)
+//ダイヤモンドダスト[END]
+Diamond Dust[END]
+// current address: $12BC0B
+
+//POINTER #1286 @ $109798 - STRING #1286 @ $12BBA8
+#W32($109798)
+//空気中の水分が細かい氷の粒になって漂い、[LINE]太陽に照らされて輝く自然現象。美しい。[END]
+A natural phenomenon where the water[LINE]
+in the air crystalizes into fine ice[LINE]
+and shines beautifully in the sun.[END]
+// current address: $12BBF8
+
+//POINTER #1292 @ $1097B0 - STRING #1292 @ $12BB90
+#W32($1097B0)
+//キャンドルツリー[END]
+Candle Tree[END]
+// current address: $12BBA1
+
+//POINTER #1293 @ $1097B4 - STRING #1293 @ $12BB38
+#W32($1097B4)
+//樹木に色とりどりの飾りや、ロウソクなどが[LINE]付けられたもの。誰がこのようなものを[END]
+A tree adorned with colorful[LINE]
+decorations and candles. Now,[LINE]
+who would do such a thing...[END]
+// current address: $12BB8A
+
+//POINTER #1299 @ $1097CC - STRING #1299 @ $12BB28
+#W32($1097CC)
+//氷割り草[END]
+Permafrost Buster[END]
+// current address: $12BB31
+
+//POINTER #1300 @ $1097D0 - STRING #1300 @ $12BAD0
+#W32($1097D0)
+//茎が非常に硬く、氷すら突き破って伸びる草。[LINE]この草の煮汁は、滋養強壮に効果がある。[END]
+A grass with a hardy stem that[LINE]
+can grow through ice. Broth[LINE]
+made with this grass is a[LINE]
+nutritious tonic.[END]
+// current address: $12BB22
+

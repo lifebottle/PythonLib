@@ -89,8 +89,16 @@
 			"Text_End":					1222206
 		},
 		{
+			"Section":					"Locations 1",
+			"Pointer_Offset_Start":		1082240,
+			"Nb_Per_Block":				3,
+			"Step":						44,
+			"Text_Start":				1222208,
+			"Text_End":					1227470
+		},
+		{
 			"Section":					"Cooking",
-			"Pointer_Offset_Start":		1094844,
+			"Pointer_Offset_Start":		1093592,
 			"Nb_Per_Block":				1,
 			"Step":						0,
 			"Text_Start":				1236128,
