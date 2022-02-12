@@ -26,7 +26,7 @@
 		},
 		{
 			"Section":					"Skit Names and Other",
-			"Pointer_Offset_Start":		945440,
+			"Pointer_Offset_Start":		1000108,
 			"Nb_Per_Block":				1,
 			"Step":						0,
 			"Text_Start":				1126048,
@@ -108,21 +108,63 @@
 
 	},
 	{	
-		"File_Extract": "../Data/TOR/DAT/BIN/11181.bin",
-		"File_XML":		"../Data/TOR/Menu/XML/11181.xml",
-		"File_New":		"../Data/TOR/Menu/New/11181.bin",
-		"Text_Start":	60980,
-		"Text_End":		75466,
-		"Base_Offset":	58880,
+		"File_Extract": "../Data/TOR/Menu/New/11181/11181_0005.unknown",
+		"File_XML":		"../Data/TOR/Menu/XML/11181_0005.xml",
+		"File_New":		"../Data/TOR/Menu/New/11181.pak3",
+		"Text_Start":	2100,
+		"Text_End":		16585,
+		"Base_Offset":	0,
 		"Sections":
 		[
 		{
 			"Section":					"Triangle Menu",
-			"Pointer_Offset_Start":		58888,
+			"Pointer_Offset_Start":		8,
 			"Nb_Per_Block":				1,
 			"Step":						0,
-			"Text_Start":				60980,
-			"Text_End":					75466
+			"Text_Start":				2100,
+			"Text_End":					16585
+		}
+		]
+	},
+	{	
+		"File_Extract": "../Data/TOR/Menu/New/00023/00023_0000d.unknown",
+		"File_XML":		"../Data/TOR/Menu/XML/00023_0000.xml",
+		"File_New":		"../Data/TOR/Menu/New/00023.pak3",
+		"Base_Offset":	0,
+		"Sections":
+		[
+		{
+			"Section":					"Panic Mini Game 1",
+			"Pointer_Offset_Start":		6268,
+			"Nb_Per_Block":				1,
+			"Step":						28,
+			"Text_Start":				14676,
+			"Text_End":					16086
+		}
+		]
+	},
+	{	
+		"File_Extract": "../Data/TOR/Menu/New/00023/00023_0002.unknown",
+		"File_XML":		"../Data/TOR/Menu/XML/00023_0002.xml",
+		"File_New":		"../Data/TOR/Menu/New/00023.pak3",
+		"Base_Offset":	0,
+		"Sections":
+		[
+		{
+			"Section":					"Panic Mini Game 2.1",
+			"Pointer_Offset_Start":		8,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				364,
+			"Text_End":					478
+		},
+		{
+			"Section":					"Panic Mini Game 2.2",
+			"Pointer_Offset_Start":		84,
+			"Nb_Per_Block":				1,
+			"Step":						0,
+			"Text_Start":				556,
+			"Text_End":					1278
 		}
 		]
 	},

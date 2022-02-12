@@ -241,10 +241,10 @@ class ToolsTales:
                 
                 
                 offset = hex(pos).replace("0x","")
-                print(offset)
-                text = self.bytesToText(f)
+                text, hex_values = self.bytesToText(f)
                 node = etree.SubElement( root, "Entry")
                 etree.SubElement(node, "TextOffset").text = offset
+                etree.SubElement(node, "HexValues").text = hex_values
                 etree.SubElement(node, "Japanese").text = text
                 
                 
@@ -266,18 +266,20 @@ class ToolsTales:
         
 
     #Convert a bytes object to text using TAGS and TBL in the json file
-    def bytesToText(self, fileRead, end_strings = b"\x00", offset=-1):
+    def bytesToText(self, fileRead, offset=-1, end_strings = b"\x00"):
     
         finalText = ''
         TAGS = self.jsonTblTags['TAGS']
         
         if (offset > 0):
             fileRead.seek(offset, 0)
-            
+        
+        pos = fileRead.tell()
         b = fileRead.read(1)
         while b != end_strings:
-  
+            #print(hex(fileRead.tell()))
             b = ord(b)
+            
             if (b >= 0x99 and b <= 0x9F) or (b >= 0xE0 and b <= 0xEB):
                 c = (b << 8) + ord(fileRead.read(1))
                
@@ -317,10 +319,12 @@ class ToolsTales:
                 next_b = b""
                 while next_b != b"\x80":
                     
-                    if next_b != b'':
-                        finalText += "{%02X}" % ord(next_b)
-                    else:
-                        next_b = b"\x80"
+                    next_b = fileRead.read(1)
+                    finalText += "{%02X}" % ord(next_b)
+                    #if next_b != b'':
+                    
+                    #else:
+                    #    next_b = b"\x80"
             elif b == 0x81:
                 next_b = fileRead.read(1)
                 if next_b == b"\x40":
@@ -332,8 +336,13 @@ class ToolsTales:
                 finalText += "{%02X}" % b
             b = fileRead.read(1)
        
-            
-        return finalText
+        end = fileRead.tell()
+        size = fileRead.tell() - pos - 1
+        fileRead.seek(pos)
+        hex_string = fileRead.read(size).hex()
+        hex_values = ' '.join(a+b for a,b in zip(hex_string[::2], hex_string[1::2]))
+        fileRead.seek(end)
+        return finalText, hex_values
     
     #Convert text to Bytes object to reinsert text into THEIRSCE and other files
     def textToBytes(self, text):
@@ -385,7 +394,12 @@ class ToolsTales:
         
         return bytesFinal       
         
-    def create_Menu_Entry(self, strings_node, section, pointer_offset, text):
+    def search_all_files(self, japanese_text):
+        
+        #Return the bytes for that specific text
+        bytes_from_text = self.textToBytes(japanese_text)
+
+    def create_Entry(self, strings_node, section, pointer_offset, text):
         
         #Add it to the XML node
         entry_node = etree.SubElement(strings_node, "Entry")
@@ -401,9 +415,9 @@ class ToolsTales:
         etree.SubElement(entry_node,"Status").text        = statusText
         
         
-    def create_Menu_XML(self, fileName, list_informations):
+    def create_Node_XML(self, fileName, list_informations, parent):
         
-        root = etree.Element('MenuText')
+        root = etree.Element(parent)
         
         
      
@@ -417,7 +431,7 @@ class ToolsTales:
             
 
             for s, pointers_offset, text in list_section:
-                self.create_Menu_Entry( strings_node, s, pointers_offset, text)
+                self.create_Entry( strings_node, s, pointers_offset, text)
          
         return root
        
@@ -577,6 +591,8 @@ class ToolsTales:
     # nb_per_block : number of pointers per block before adding step
     # step : number of bytes before the next block
     def get_special_pointers(self, text_start, text_max, base_offset, start_offset, nb_per_block, step, section,file_path=''):
+        
+
  
         if file_path == '':
             file_path = self.elfOriginal
@@ -595,8 +611,6 @@ class ToolsTales:
             
 
             block_pointers_offset = [f.tell()+4*i for i in range(nb_per_block)]
-            if section == "Artes":
-                print( [hex(ele) for ele in block_pointers_offset])
             
             block_pointers_value = struct.unpack(f"<{nb_per_block}L", f.read(4 * nb_per_block))
             list_test.extend(block_pointers_value)
@@ -622,6 +636,7 @@ class ToolsTales:
         pointers_value = [pointers_value[i] for i in good_indexes]
 
         return [pointers_offset, pointers_value]
+   
     def extract_Menu_File(self, file_definition):
         
         
@@ -643,11 +658,10 @@ class ToolsTales:
                   
                 #Extract Pointers of the file
                 pointers_offset, pointers_value = self.get_special_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Nb_Per_Block'], section['Step'], section['Section'], file_path)
-                
+   
                 #Extract Text from the pointers
-                texts = [ self.bytesToText(f, ele + base_offset) for ele in pointers_value]
-            
-                texts_offset = [ele + base_offset for ele in pointers_value]
+                texts = [ self.bytesToText(f, ele + base_offset)[0] for ele in pointers_value]
+
                 
                 #Make a list
                 section_list.extend( [section['Section']] * len(texts)) 
@@ -658,7 +672,7 @@ class ToolsTales:
         list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
         
         #Build the XML Structure with the information
-        root = self.create_Menu_XML(file_path, list_informations)
+        root = self.create_Node_XML(file_path, list_informations, "MenuText")
         
         #Write to XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)

@@ -160,29 +160,15 @@ class ToolsTOR(ToolsTales):
         theirsce.seek(pointer_block, 0)             #Go the the start of the pointer section
         pointers_offset, texts_offset = self.extraxtStoryPointers(theirsce, strings_offset, fsize)
         
+        text_list = [self.bytesToText(theirsce, ele)[0] for ele in texts_offset]
+  
+   
+        #Remove duplicates
+        list_informations = self.remove_duplicates(["Story"] * len(pointers_offset), pointers_offset, text_list)
         
-        
-        #Extract the text from each pointers
-        textList = []
-        for i in range(len(texts_offset)):
-        
-            #Extract the text
-            theirsce.seek(texts_offset[i], 0)
-            text = self.bytesToText(theirsce)
-            
-            #Add it to the XML node
-            entry_node = etree.SubElement(stringsNode, "Entry")
-            etree.SubElement(entry_node,"PointerOffset").text = str(pointers_offset[i])
-            etree.SubElement(entry_node,"JapaneseText").text  = text
-            etree.SubElement(entry_node,"EnglishText").text   = ''
-            etree.SubElement(entry_node,"Notes").text         = ''
-            
-            if text == '':
-                statusText = 'Done'
-            else:
-                statusText = 'To Do'
-            etree.SubElement(entry_node,"Status").text        = statusText
-    
+        #Build the XML Structure with the information
+        file_path = self.storyPathXML + self.get_file_name(scpkFileName)
+        root = self.create_Node_XML(file_path, list_informations, "SceneText")
     
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)

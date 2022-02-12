@@ -177,7 +177,7 @@ def hex2bytes(tales_instance, hex_value):
     #print(bytes_value)
     f = io.BytesIO(bytes_value)
     f.seek(0)
-    txt = tales_instance.bytesToText(f, b'', -1)
+    txt, offset = tales_instance.bytesToText(f, -1, b'')
     txt = "\n\n".join([ele for ele in txt.split("{00}") if ele != ""])
     with open("text_dump.txt",  "w",encoding="utf-8") as f:
         f.write(txt)
