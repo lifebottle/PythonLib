@@ -76,7 +76,7 @@ def compress_data(input: bytes, raw: bool=False, version: int=3):
     RaiseError(error)
     
     if not raw:
-        output = struct.pack("<b", version) + struct.pack("<2L", *(input_size, output_size.value)) + output[:output_size.value]
+        output = struct.pack("<b", version) + struct.pack("<L", output_size.value) + struct.pack("<L", input_size) + output[:output_size.value]
     
     return output
 

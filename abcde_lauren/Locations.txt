@@ -987,7 +987,7 @@ time and space where the[LINE]
 mysterious Cyglorg resides.[END]
 // current address: $12AAF1
 
-//POINTER #858 @ $1090E8 - STRING #858 @ $12D0F0
+//POINTER #858 @ $1090E8 - STRING #858 @ $c
 #W32($1090E8)
 //紫の石碑[END]
 Purple Steele[END]

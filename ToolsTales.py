@@ -13,9 +13,16 @@ import re
 import collections
 import comptolib
 import lxml.etree as ET
+import string
 
 class ToolsTales:
     
+    COMMON_TAG = r"(<\w+:?\w+>)"
+    HEX_TAG    = r"(\{[0-9A-F]{2}\})"
+    PRINTABLE_CHARS = "".join(
+            (string.digits, string.ascii_letters, string.punctuation, " ")
+        )
+    VALID_FILE_NAME = r"([0-9]{2,5})(?:\.)?([1,3])?\.(\w+)$"
     
     def __init__(self, gameName, tblFile):
         
@@ -23,19 +30,21 @@ class ToolsTales:
         self.basePath = os.getcwd()
         self.miscPath = os.path.join( self.basePath, "../Data/Misc/")
         
-        #Load tbl file
-        tblList = []
-        with open(r"ToR.tbl", "r", encoding="utf-8") as tblFile:
-            lines = tblFile.readlines()
-            tblList = [ [ bytes.fromhex(ele.split("=",1)[0]), ele.split("=",1)[1].replace("\n","")]  for ele in lines]
-
-        tempDict = dict( tblList)        
-        
-        tblDict = dict()
-        for k in sorted( tempDict, key=len, reverse=True):
-            tblDict[k] = tempDict[k]
+        with open("../Data/{}/Misc/{}".format(gameName, tblFile)) as f:
+            jsonRaw = json.load(f)
+            self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
+          
+        self.itable = dict([[i, struct.pack(">H", int(j))] for j, i in self.jsonTblTags['TBL'].items()])
+        self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
+        self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAMES'].items()])
+        self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLORS'].items()])
         
         
+        with open("../Data/{}/Menu/MenuFiles.json".format(gameName)) as f:
+           self.menu_files_json = json.load(f)
+           
+           
+           
     def mkdir(self, d):
         try: os.mkdir(d)
         except: pass
@@ -63,6 +72,19 @@ class ToolsTales:
             args
             )
         
+    def comptoe(self, fileName, action):
+          
+                
+        #Run Pakcomposer with parameters
+        args = [ "comptoe", action, fileName, fileName+".res"]
+        listFile = subprocess.run(
+            args
+            )
+        
+        with open(fileName+".res", "rb") as f:
+            data = f.read()
+            return data
+        
     def get_pointers(self, start_offset):
 
         f = open(self.elfOriginal , "rb")
@@ -77,8 +99,134 @@ class ToolsTales:
     
         f.close()
         return pointers
-
     
+    def decode(self, data):
+        if not data[0]:
+            return data
+        # Be lasy and just assemble bytes.
+        sz = (data[2] << 8) | data[1]
+        d = iter(data[3:])
+        c = 1
+        out = bytearray()
+        while len(out) < sz:
+            if c == 1:
+                # Refill.
+                c = 0x10000 | next(d) | (next(d) << 8)
+            if c & 1:
+                p = next(d) | (next(d) << 8)
+                l = (p >> 11) + 3
+                p &= 0x7FF
+                p += 1
+                for i in range(l):
+                    out.append(out[-p])
+            else:
+                out.append(next(d))
+            c >>= 1
+        return bytes(out)
+
+    def _search(self, data, pos, sz):
+        ml = min(0x22, sz - pos)
+        if ml < 3:
+            return 0, 0
+        mp = max(0, pos - 0x800)
+        hitp, hitl = 0, 3
+        if mp < pos:
+            hl = data[mp:pos+hitl].find(data[pos:pos+hitl])
+            while hl < (pos - mp):
+                while (hitl < ml) and (data[pos + hitl] == data[mp + hl + hitl]):
+                    hitl += 1
+                mp += hl
+                hitp = mp
+                if hitl == ml:
+                    return hitp, hitl
+                mp += 1
+                hitl += 1
+                if mp >= pos:
+                    break
+                hl = data[mp:pos+hitl].find(data[pos:pos+hitl])
+        # If length less than 4, return miss.
+        if hitl < 4:
+            hitl = 1
+        return hitp, hitl-1
+
+    def encode(self, data):
+        """"""
+        from struct import Struct
+        HW = Struct("<H")
+    
+        cap = 0x22
+        sz = len(data)
+        out = bytearray(b'\x01')
+        out.extend(HW.pack(sz))
+        c, cmds = 0, 3
+        pos, flag = 0, 1
+        out.append(0)
+        out.append(0)
+        while pos < sz:
+            hitp, hitl = self._search(data, pos, sz)
+            if hitl < 3:
+                # Push a raw if copying isn't possible.
+                out.append(data[pos])
+                pos += 1
+            else:
+                tstp, tstl = self._search(data, pos+1, sz)
+                if (hitl + 1) < tstl:
+                    out.append(data[pos])
+                    pos += 1
+                    flag <<= 1
+                    if flag & 0x10000:
+                        HW.pack_into(out, cmds, c)
+                        c, flag = 0, 1
+                        cmds = len(out)
+                        out.append(0)
+                        out.append(0)
+                    hitl = tstl
+                    hitp = tstp
+                c |= flag
+                e = pos - hitp - 1
+                pos += hitl
+                hitl -= 3
+                e |= hitl << 11
+                out.extend(HW.pack(e))
+            # Advance the flag and refill if required.
+            flag <<= 1
+            if flag & 0x10000:
+                HW.pack_into(out, cmds, c)
+                c, flag = 0, 1
+                cmds = len(out)
+                out.append(0)
+                out.append(0)
+        # If no cmds in final word, del it.
+        if flag == 1:
+            del out[-2:]
+        else:
+            HW.pack_into(out, cmds, c)
+        return bytes(out)
+    
+    def extract_Story_Pointers(self, theirsce, strings_offset, fsize):
+        
+        
+        pointers_offset = []
+        texts_offset = []
+        
+        previous_addr = 0
+        while theirsce.tell() < strings_offset:
+            b = theirsce.read(1)
+            if b == self.story_byte_code:
+                addr = struct.unpack("<H", theirsce.read(2))[0]
+                
+                current_pos = theirsce.tell()
+                theirsce.seek( addr + strings_offset-1)
+                bValidation = theirsce.read(1)
+                theirsce.seek(current_pos)
+                
+                if (addr < fsize - strings_offset) and (addr > 0) and (bValidation == b'\x00'):
+                    
+                    pointers_offset.append(theirsce.tell() - 2)
+                    texts_offset.append(addr + strings_offset)
+                    previous_addr = addr
+                    
+        return pointers_offset, texts_offset
     
     def get_extension(self, data):
         if data[:4] == b"SCPK":
@@ -134,6 +282,8 @@ class ToolsTales:
     
         # Didn't match anything
         return "bin"
+    
+    
         def is_compressed(self, data):
             if len(data) < 0x09:
                 return False
@@ -424,7 +574,6 @@ class ToolsTales:
         sections = set([item[0] for item in list_informations])
   
         for section in sections:
-            
             strings_node = etree.SubElement(root, 'Strings')
             etree.SubElement(strings_node, "Section").text = section
             list_section = [ele for ele in list_informations if ele[0] == section]
@@ -629,7 +778,8 @@ class ToolsTales:
             if len(ele_found) > 0:
                 ele_found[0].find("EnglishText").text = text
                 ele_found[0].find("Status").text = "Done"
-        
+            else:
+                print(pointer_offset)
         if modify_xml:
             txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
             with open(xml_file_name, "wb") as xmlFile:
@@ -672,7 +822,9 @@ class ToolsTales:
                     pointers_offset.append(block_pointers_offset[i])
                     pointers_value.append(block_pointers_value[i])
                     is_bad_count = 0
-
+                    if( section == "Battle Tutorial 3"):
+                        
+                        print(block_pointers_offset[i])
                 else:
                     is_bad_count = is_bad_count = 1
             f.read(step)
@@ -701,22 +853,24 @@ class ToolsTales:
 
             for section in file_definition['Sections']:
                 
-                print("Section: {}".format(section))
+        
                 text_start = section['Text_Start']
                 text_end = section['Text_End'] 
                   
                 #Extract Pointers of the file
                 pointers_offset, pointers_value = self.get_special_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Nb_Per_Block'], section['Step'], section['Section'], file_path)
    
+              
                 #Extract Text from the pointers
                 texts = [ self.bytesToText(f, ele + base_offset)[0] for ele in pointers_value]
-
+              
                 
                 #Make a list
                 section_list.extend( [section['Section']] * len(texts)) 
                 pointers_offset_list.extend( pointers_offset)
                 texts_list.extend( texts )
        
+        print(set(section_list))
         #Remove duplicates
         list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
         
@@ -739,12 +893,7 @@ class ToolsTales:
             print("Extracting...{}".format(file_definition['File_Extract']))
             self.extract_Menu_File(file_definition)
             
-            
-             
 
-    
-    def extractAllStory(self):
-        print("Extracting Story")
         
     def extractAllSkits(self):
         print("Extracting Skits")

@@ -17,16 +17,10 @@ import io
 
 class ToolsTOR(ToolsTales):
     
-    COMMON_TAG = r"(<\w+:?\w+>)"
-    HEX_TAG    = r"(\{[0-9A-F]{2}\})"
     POINTERS_BEGIN = 0xD76B0                                            # Offset to DAT.BIN pointer list start in SLPS_254.50 file
     POINTERS_END   = 0xE60C8                                            # Offset to DAT.BIN pointer list end in SLPS_254.50 file
     HIGH_BITS      = 0xFFFFFFC0
     LOW_BITS       = 0x3F
-    PRINTABLE_CHARS = "".join(
-            (string.digits, string.ascii_letters, string.punctuation, " ")
-        )
-    VALID_FILE_NAME = r"([0-9]{2,5})(?:\.)?([1,3])?\.(\w+)$"
     
     
     #Path to used
@@ -34,7 +28,7 @@ class ToolsTOR(ToolsTales):
     datBinNew        = '../Data/TOR/Disc/New/DAT.BIN'
     elfOriginal      = '../Data/TOR/Disc/Original/SLPS_254.50'
     elfNew           = '../Data/TOR/Disc/New/SLPS_254.50'
-    storyPathArchives= '../Data/TOR/Story/SCPK/'                        #Story XML files will be extracted here                      
+    storyPathArchives= '../Data/TOR/Story/New/'                        #Story XML files will be extracted here                      
     storyPathXML     = '../Data/TOR/Story/XML/'                     #SCPK will be repacked here
     skitPathArchives = '../Data/TOR/Skits/'                        #Skits XML files will be extracted here              
     datPathExtract   = '../Data/TOR/DAT/' 
@@ -43,21 +37,11 @@ class ToolsTOR(ToolsTales):
         
         super().__init__("TOR", tbl)
         
-        print("Loading TBL json")
-        with open("TBL_All.json") as f:
-            jsonRaw = json.load(f)
-            jsonTblTags = jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
-            self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
-          
-        print("TBL json is loaded")
-          
-        with open("MenuFiles.json") as f:
-            self.menu_files_json = json.load(f)
+        
+        #byteCode 
+        self.story_byte_code = b"\xF8"
     
-        self.itable = dict([[i, struct.pack(">H", int(j))] for j, i in self.jsonTblTags['TBL'].items()])
-        self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
-        self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAMES'].items()])
-        self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLORS'].items()])
+        
         
         
     
@@ -66,15 +50,15 @@ class ToolsTOR(ToolsTales):
 
     
     # Extract the story files
-    def extractAllStory(self):
+    def extract_All_Story_Files(self,debug=False):
         
-        print("Extracting Story")
         self.mkdir( self.storyPathXML)
         listFiles = [self.datPathExtract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.datPathExtract, "SCPK"))]
         for scpkFile in listFiles:
-            self.extractTheirSceXML(scpkFile)
+
+            self.extract_TheirSce_XML(scpkFile,debug)
         
-    def get_theirsce_from_scpk(self, scpk)->bytes:
+    def get_theirsce_from_scpk(self, scpk, scpkFileName, debug=False)->bytes:
         header = scpk.read(4)
     
         if header != b"SCPK":
@@ -90,44 +74,29 @@ class ToolsTOR(ToolsTales):
     
         for i in range(nbFiles):
             data = scpk.read(filesSize[i])
-    
-            if self.is_compressed(data):
-                data = comptolib.decompress_data(data)
             
-            if data[:8] == b"THEIRSCE":
-                return io.BytesIO(data)
+
+               
+            
+            if self.is_compressed(data) and data[:8] != b"THEIRSCE":
+                data_decompressed = comptolib.decompress_data(data)
+                c_type = struct.unpack("<b", data[:1])[0]
+                
+            if data_decompressed[:8] == b"THEIRSCE":
+                
+                if debug:
+                     with open("Debug/{}.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
+                         f.write(data)
+                return io.BytesIO(data_decompressed)
     
         return None
     
-    def extraxtStoryPointers(self, theirsce, strings_offset, fsize):
-        
-        
-        pointers_offset = []
-        texts_offset = []
-        
-        previous_addr = 0
-        while theirsce.tell() < strings_offset:
-            b = theirsce.read(1)
-            if b == b"\xF8":
-                addr = struct.unpack("<H", theirsce.read(2))[0]
-                
-                current_pos = theirsce.tell()
-                theirsce.seek( addr + strings_offset-1)
-                bValidation = theirsce.read(1)
-                theirsce.seek(current_pos)
-                
-                if (addr < fsize - strings_offset) and (addr > 0) and (bValidation == b'\x00'):
-                    
-                    pointers_offset.append(theirsce.tell() - 2)
-                    texts_offset.append(addr + strings_offset)
-                    previous_addr = addr
-                    
-        return pointers_offset, texts_offset
+   
         
     
         
     # Extract THEIRSCE to XML
-    def extractTheirSceXML(self, scpkFileName):
+    def extract_TheirSce_XML(self, scpkFileName,debug=False):
      
         #Create the XML file
         root = etree.Element('SceneText')
@@ -137,11 +106,12 @@ class ToolsTOR(ToolsTales):
         
         #Open the SCPK file to grab the THEIRSCE file
         with open(scpkFileName, "rb") as scpk:
-            theirsce = self.get_theirsce_from_scpk(scpk)
+            theirsce = self.get_theirsce_from_scpk(scpk,scpkFileName,True)
             
-            if (scpkFileName.endswith(".scpk")):
-                with open("Debug/{}.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
+            if (scpkFileName.endswith(".scpk") and debug):
+                with open("Debug/{}d.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
                     f.write(theirsce.read())
+                    
         theirsce.seek(0)
         #Validate the header
         header = theirsce.read(8)
@@ -157,7 +127,7 @@ class ToolsTOR(ToolsTales):
         #File size
         fsize = theirsce.getbuffer().nbytes
         theirsce.seek(pointer_block, 0)             #Go the the start of the pointer section
-        pointers_offset, texts_offset = self.extraxtStoryPointers(theirsce, strings_offset, fsize)
+        pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize)
         
         text_list = [self.bytesToText(theirsce, ele)[0] for ele in texts_offset]
   
@@ -166,9 +136,12 @@ class ToolsTOR(ToolsTales):
         list_informations = self.remove_duplicates(["Story"] * len(pointers_offset), pointers_offset, text_list)
         
         #Build the XML Structure with the information
+        
+        
         file_path = self.storyPathXML + self.get_file_name(scpkFileName)
         root = self.create_Node_XML(file_path, list_informations, "SceneText")
     
+        
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
     
@@ -219,19 +192,25 @@ class ToolsTOR(ToolsTales):
         #Update the pointers
         for pointer_offset, text_offset in new_text_offsets.items():
             
-            theirsce.seek(int(pointer_offset))
-            theirsce.write( struct.pack("<H", text_offset - strings_offset))
+            pointers_list = pointer_offset.split(",")
+            new_value = text_offset - strings_offset
+
+
+            for pointer in pointers_list:
+                
+                theirsce.seek(int(pointer))
+                theirsce.write( struct.pack("<L", new_value))
             
         return theirsce
             
     #Repack SCPK files for Story
-    def insertStoryFile(self, scpkFileName):
+    def pack_Story_File(self, scpkFileName):
         
         #Copy the original SCPK file to the folder used for the new version
         shutil.copy( self.datPathExtract + "SCPK/" + scpkFileName, self.storyPathArchives + scpkFileName)
         
-        #Open the new SCPK file in Read+Write mode
-        with open( self.storyPathArchives + scpkFileName, 'r+b') as scpk:
+        #Open the original SCPK
+        with open( self.datPathExtract + "SCPK/" + scpkFileName, 'r+b') as scpk:
               
             
             #Get nb_files and files_size
@@ -242,19 +221,26 @@ class ToolsTOR(ToolsTales):
             file_size_dict = dict()
             for i in range(nb_files):
                 pointer_offset = scpk.tell()
-                file_size_dict[struct.unpack("<L", scpk.read(4))[0]] = pointer_offset
+                file_size = struct.unpack("<L", scpk.read(4))[0]
+                file_size_dict[pointer_offset] = file_size
                          
             #Extract each files and append to the final data_final
-            dataFinal = b''
-            pos = scpk.tell()
-            for fsize, pointer_offset in file_size_dict.items():
+            dataFinal = bytearray()
+            sizes = []
+            o = io.BytesIO()
+
+            i=0
+            for pointer_offset, fsize in file_size_dict.items():
                 
-                data = scpk.read(fsize)
-                
-                data_compressed = data
-                if self.is_compressed(data):
+                data_compressed = scpk.read(fsize)
+       
                     
-                    data_uncompressed = comptolib.decompress_data(data)
+                
+                
+                if self.is_compressed(data_compressed):
+                    c_type = struct.unpack("<b", data_compressed[:1])[0]
+                    #print("File {}   size: {}    ctype: {}".format(i, fsize,c_type))
+                    data_uncompressed = comptolib.decompress_data(data_compressed)
 
                     if data_uncompressed[:8] == b"THEIRSCE":
                         
@@ -265,44 +251,51 @@ class ToolsTOR(ToolsTales):
                         #with open("test_original.theirsce", "wb") as f:
                         #    f.write(data_uncompressed)
                             
-                        #Update THEIRSCE uncompressed file and write to a test file
+                        #Update THEIRSCE uncompressed file
                         theirsce = self.getNewTheirsce(io.BytesIO(data_uncompressed), scpkFileName)
                         
+                            
                         theirsce.seek(0)
                         data_new_uncompressed = theirsce.read()
-                        print("Size new: {}".format(len(data_new_uncompressed)))
-                        #Only for debug to have  the new THEIRSCE
-                        
-                        
-                        #Compress the new THEIRSCE file
-                        c_type = struct.unpack("<b", data[:1])[0]
-                        print(c_type)
                         data_compressed = comptolib.compress_data(data_new_uncompressed, version=c_type)
+                        
+                    else:
+                        data_compressed = comptolib.compress_data(data_uncompressed, version=c_type)
+
                     
-                        #with open("test_new_comp.theirsce", "wb") as f:               
-                        #    f.write(data_compressed)
                             
-                        #with open("test_new.theirsce", "wb") as f:
-                        #    f.write(data_uncompressed)
-                            
-                        #Updating the header of the SCPK file to adjust the size
-                        new_size = len(data_new_uncompressed)
-                        if (new_size > len(data_uncompressed)):
-                            
-                            scpk.seek( pointer_offset)
-                            scpk.write( struct.pack("<I", new_size))
+                #Updating the header of the SCPK file to adjust the size
+                new_size = len(data_compressed)  
+                #print("File recomp {}   size: {}    ctype: {}".format(i, new_size,c_type))
                             
                 dataFinal += data_compressed
+                sizes.append(new_size)
+                i=i+1
                 
-            
-            scpk.seek(pos)
-            scpk.write(dataFinal)
-            
+        
+        #Write down the new SCPK from scratch
+        o.write(b"\x53\x43\x50\x4B\x01\x00\x0F\x00")
+        o.write(struct.pack("<L", len(sizes)))
+        o.write(b"\x00" * 4)
+    
+        for i in range(len(sizes)):
+            o.write(struct.pack("<L", sizes[i]))
+        
+        o.write(dataFinal)
+        
+        with open("10247.scpk", "wb") as f:
+            f.write(o.getvalue())
+        
+        return o.getvalue()        
     
     # Extract the file DAT.BIn to the different directorties
     def extract_Main_Archive(self):
         
-     
+        #Create folder and delete everything isinde
+        shutil.rmtree("../Data/TOR/DAT")
+        self.mkdir("../Data/TOR/DAT")
+               
+        
         f = open( self.datBinOriginal, "rb")
     
         pointers = self.get_pointers(self.POINTERS_BEGIN)
@@ -321,7 +314,8 @@ class ToolsTOR(ToolsTales):
             file_name = "%05d" % i
             
             
-            if self.is_compressed(data):
+            compto_flag = True
+            if self.is_compressed(data) and compto_flag:
                 c_type = struct.unpack("<b", data[:1])[0]
                 data = comptolib.decompress_data(data)
                 extension = self.get_extension(data)
@@ -348,73 +342,100 @@ class ToolsTOR(ToolsTales):
         print("Writing file %05d/%05d..." % (i, total_files))
         f.close()
         
-    def insert_Main_Archive(self):
+    def pack_Main_Archive(self):
         sectors = [0]
         remainders = []
         buffer = 0
     
+    
+        story_file_list = [self.get_file_name(ele) for ele in os.listdir("../Data/TOR/Story/New")]
+        print(story_file_list)
         output_dat_path = self.datBinNew
-        output_dat = open(output_dat_path, "wb")
+        with open(output_dat_path, "wb") as output_dat:
     
-        print("Packing files into %s..." % os.path.basename(output_dat_path))
-        
-        #Make a list with all the files of DAT.bin
-        file_list = []
-        for path, subdir, filenames in os.walk(r"G:\TalesHacking\PythonLib_Playground\Data\DAT"):
-            if len(filenames) > 0:
-                file_list.extend( [os.path.join(path,file) for file in filenames])
+            print("Packing files into %s..." % os.path.basename(output_dat_path))
             
-            
-        list_test = [os.path.splitext(os.path.basename(ele))[0] for ele in file_list]
-        previous = -1
-        dummies = 0
-    
-        for file in sorted(file_list, key=self.get_file_name):
-            size = 0
-            remainder = 0
-            current = int(re.search(self.VALID_FILE_NAME, file).group(1))
-    
-            if current != previous + 1:
-                while previous < current - 1:
-                    remainders.append(remainder)
-                    buffer += size + remainder
-                    sectors.append(buffer)
-                    previous += 1
-                    dummies += 1
-    
-            comp_type = re.search(self.VALID_FILE_NAME, file).group(2)
-            with open(file, "rb") as f2:
-                data = f2.read()
+            #Make a list with all the files of DAT.bin
+            file_list = []
+            for path, subdir, filenames in os.walk(self.datPathExtract):
+                if len(filenames) > 0:
+                    file_list.extend( [os.path.join(path,file) for file in filenames])
                 
-            if comp_type != None:
-                data = comptolib.compress_data(data, version=int(comp_type))
+                
+            list_test = [os.path.splitext(os.path.basename(ele))[0] for ele in file_list]
+            previous = -1
+            dummies = 0
         
-            output_dat.write(data)
-            size = len(data)
-            print("file: {}   size: {}".format(file, size))
-            remainder = 0x40 - (size % 0x40)
-            if remainder == 0x40:
+    
+            for file in sorted(file_list, key=self.get_file_name):
+                size = 0
                 remainder = 0
-            output_dat.write(b"\x00" * remainder)
-          
-    
-            remainders.append(remainder)
-            buffer += size + remainder
-            sectors.append(buffer)
-            previous += 1
-    
-            print(
-                "Writing file %05d/%05d..." % (current - dummies, len(file_list)), end="\r"
-            )
-    
-        print("Writing file %05d/%05d..." % (current - dummies, len(file_list)))
+                current = int(re.search(self.VALID_FILE_NAME, file).group(1))
+        
+                if current != previous + 1:
+                    while previous < current - 1:
+                        remainders.append(remainder)
+                        buffer += size + remainder
+                        sectors.append(buffer)
+                        previous += 1
+                        dummies += 1
+                file_name = self.get_file_name(file)
+                if file_name in story_file_list:
+                    print("10247 STORY")
+                    data = self.pack_Story_File(file_name+".scpk")
+                    with open("10247.scpk","wb") as f:
+                        f.write(data)
+                      
+                else:
+                    with open(file, "rb") as f2:
+                        data = f2.read()  
+                #data = f2.read()  
+                
+                comp_type = re.search(self.VALID_FILE_NAME, file).group(2)
+                if comp_type != None:
+                    data = comptolib.compress_data(data, version=int(comp_type))
+            
+                output_dat.write(data)
+                size = len(data)
+                #print("file: {}   size: {}".format(file, size))
+                remainder = 0x40 - (size % 0x40)
+                if remainder == 0x40:
+                    remainder = 0
+                output_dat.write(b"\x00" * remainder)
+              
+        
+                remainders.append(remainder)
+                buffer += size + remainder
+                sectors.append(buffer)
+                previous += 1
+        
+                #print(
+                #    "Writing file %05d/%05d..." % (current - dummies, len(file_list)), end="\r"
+                #)
+        
+            print("Writing file %05d/%05d..." % (current - dummies, len(file_list)))
+        
         
         shutil.copy( self.elfOriginal, self.elfNew)
-        output_elf = open(self.elfNew, "r+b")
-        output_elf.seek(self.POINTERS_BEGIN)
+        
+        
+        with open(self.elfNew, "r+b") as output_elf:
+            output_elf.seek(self.POINTERS_BEGIN)
+        
+            for i in range(len(sectors) - 1):
+                output_elf.write(struct.pack("<L", sectors[i] + remainders[i]))
     
-        for i in range(len(sectors) - 1):
-            output_elf.write(struct.pack("<L", sectors[i] + remainders[i]))
-    
-        output_dat.close()
-        output_elf.close()
+        
+    def pack_All_Story_Files(self):
+        
+        print("Recreating Story files")
+        listFiles = [ele for ele in os.listdir( self.storyPathArchives)]
+        for scpkFile in listFiles:
+            self.pack_Story_File(scpkFile)
+            print("Writing file {} ...".format(scpkFile))
+            
+    def insert_All(self):
+        
+        #Updates SCPK based on XMLs data
+        
+        self.pack_Main_Archive()
