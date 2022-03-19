@@ -202,7 +202,6 @@ if __name__ == "__main__":
         if args.file == "Story":
             tales_instance.extract_All_Story_Files()
             
-        if args.file == "Skits":
-            
+        
                 
                 
