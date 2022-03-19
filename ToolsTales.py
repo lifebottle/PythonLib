@@ -5,6 +5,7 @@ import struct
 import shutil
 import os
 import re
+import fps4
 import pandas as pd
 import xml.etree.ElementTree as ET
 import lxml.etree as etree
@@ -24,13 +25,13 @@ class ToolsTales:
         )
     VALID_FILE_NAME = r"([0-9]{2,5})(?:\.)?([1,3])?\.(\w+)$"
     
-    def __init__(self, gameName, tblFile):
+    def __init__(self, gameName, tblFile, repo_name):
         
         self.gameName = gameName
+        self.repo_name = repo_name
         self.basePath = os.getcwd()
-        self.miscPath = os.path.join( self.basePath, "../Data/Misc/")
         
-        with open("../Data/{}/Misc/{}".format(gameName, tblFile)) as f:
+        with open("../{}/Data/{}/Misc/{}".format(repo_name, gameName, tblFile)) as f:
             jsonRaw = json.load(f)
             self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
           
@@ -40,7 +41,7 @@ class ToolsTales:
         self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLORS'].items()])
         
         
-        with open("../Data/{}/Menu/MenuFiles.json".format(gameName)) as f:
+        with open("../{}/Data/{}/Menu/MenuFiles.json".format(repo_name, gameName)) as f:
            self.menu_files_json = json.load(f)
            
            
@@ -59,7 +60,7 @@ class ToolsTales:
     # action is -d or -c
     # fileType : -0, -1 or -3
     # basePath is the location of the PAK file you want to compress/decompress
-    def pakComposerAndComptoe(self, fileName, action, fileType):
+    def pakComposer_Comptoe(self, fileName, action, fileType, do_comptoe, cwd):
           
         #Delete the file if already there    
         if (action == '-c'):
@@ -67,10 +68,18 @@ class ToolsTales:
                 os.remove( fileName.replace(".pak{}", fileType[1]))
                 
         #Run Pakcomposer with parameters
-        args = [ "pakcomposer", action, fileName, fileType, "-v", "-u", "-x"]
+        args = [ "pakcomposer", action, fileName, fileType]
+        if do_comptoe:
+            args.append("-u")
+        
         listFile = subprocess.run(
-            args
+            args,
+            cwd=cwd
             )
+        
+    def fps4_action(self, action, b_file, dat_file, destination):
+        
+        fps4.dump_fps4(b_file, dat_file, destination)
         
     def comptoe(self, fileName, action):
           
@@ -253,7 +262,10 @@ class ToolsTales:
     
         if data[:3] == b"MFH":
             return "mfh"
-    
+        
+        if data[:4] == b"MSCF":
+            return "cab"
+        
         if data[:4] == b"EBG\x00":
             return "ebg"
     
@@ -367,14 +379,15 @@ class ToolsTales:
         return False
 
 
-    def makeCab(self):
-        print("CAB")
+    def extract_Cab(self, cab_file_name, new_file_name):
+        subprocess.run(['expand', cab_file_name, new_file_name])
+      
     
     
     def get_file_name(self, path):
         return os.path.splitext(os.path.basename(path))[0]
 
-    def bytes_to_text_with_offset(self, file_name, start_offset):
+    def bytes_to_text_with_offset(self, file_name, start_offset, end_strings):
         
         #Open file
         f = open(file_name, "rb")
@@ -391,7 +404,7 @@ class ToolsTales:
                 
                 
                 offset = hex(pos).replace("0x","")
-                text, hex_values = self.bytesToText(f)
+                text, hex_values = self.bytes_to_text(f)
                 node = etree.SubElement( root, "Entry")
                 etree.SubElement(node, "TextOffset").text = offset
                 etree.SubElement(node, "HexValues").text = hex_values
@@ -416,7 +429,7 @@ class ToolsTales:
         
 
     #Convert a bytes object to text using TAGS and TBL in the json file
-    def bytesToText(self, fileRead, offset=-1, end_strings = b"\x00"):
+    def bytes_to_text(self, fileRead, offset=-1, end_strings = b"\x00"):
     
         finalText = ''
         TAGS = self.jsonTblTags['TAGS']
@@ -495,7 +508,7 @@ class ToolsTales:
         return finalText, hex_values
     
     #Convert text to Bytes object to reinsert text into THEIRSCE and other files
-    def textToBytes(self, text):
+    def text_to_bytes(self, text):
         
         
        
@@ -547,7 +560,7 @@ class ToolsTales:
     def search_all_files(self, japanese_text):
         
         #Return the bytes for that specific text
-        bytes_from_text = self.textToBytes(japanese_text)
+        bytes_from_text = self.text_to_bytes(japanese_text)
 
     def create_Entry(self, strings_node, section, pointer_offset, text):
         
@@ -659,7 +672,7 @@ class ToolsTales:
                         final_text = japanese_text or ''
                         
                     #Convert the text values to bytes using TBL, TAGS, COLORS, ...
-                    bytesEntry = self.textToBytes(final_text)
+                    bytesEntry = self.text_to_bytes(final_text)
                     nb_bytes = len(bytesEntry)
                     new_offset = menu_file.tell() + nb_bytes 
                     
@@ -862,7 +875,7 @@ class ToolsTales:
    
               
                 #Extract Text from the pointers
-                texts = [ self.bytesToText(f, ele + base_offset)[0] for ele in pointers_value]
+                texts = [ self.bytes_to_text(f, ele + base_offset)[0] for ele in pointers_value]
               
                 
                 #Make a list
@@ -898,7 +911,7 @@ class ToolsTales:
     def extractAllSkits(self):
         print("Extracting Skits")
         
-    def extractMainArchive(self):
+    def extract_Main_Archive(self):
         print("Main Archive")
         
         

@@ -12,7 +12,10 @@ import lxml.etree as etree
 
 
 tool = ToolsTOR.ToolsTOR("TBL_All.json")
-tool.extract_Main_Archive()
+tool.extract_All_Menu()
+
+
+
 tool.extract_All_Story_Files(debug=True)
 
 t = tool.pack_Story_File("10247.scpk")
