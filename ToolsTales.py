@@ -808,7 +808,7 @@ class ToolsTales:
  
         if file_path == '':
             file_path = self.elfOriginal
-            print("Elf changed")
+
 
         f = open(file_path , "rb")
     
@@ -835,9 +835,8 @@ class ToolsTales:
                     pointers_offset.append(block_pointers_offset[i])
                     pointers_value.append(block_pointers_value[i])
                     is_bad_count = 0
-                    if( section == "Battle Tutorial 3"):
-                        
-                        print(block_pointers_offset[i])
+      
+
                 else:
                     is_bad_count = is_bad_count = 1
             f.read(step)
@@ -883,7 +882,6 @@ class ToolsTales:
                 pointers_offset_list.extend( pointers_offset)
                 texts_list.extend( texts )
        
-        print(set(section_list))
         #Remove duplicates
         list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
         
@@ -903,7 +901,7 @@ class ToolsTales:
         texts_list = []
         for file_definition in self.menu_files_json:
            
-            print("Extracting...{}".format(file_definition['File_Extract']))
+            print("...{}".format(file_definition['File_Extract']))
             self.extract_Menu_File(file_definition)
             
 

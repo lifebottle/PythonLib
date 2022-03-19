@@ -83,38 +83,9 @@ def get_arguments(argv=None):
     )
     sp_unpack.add_argument(
         "file",
-        choices=["all", "dat", "mfh", "theirsce", "scpk"],
+        choices=["All", "Main", "Menu", "Story", "Skits"],
         metavar="FILE",
         help="Options: all, dat, mfh, theirsce, scpk",
-    )
-
-    sp_unpack.add_argument(
-        "--input",
-        metavar="input_path",
-        required=True,
-        help="Specify input file path.",
-        type=os.path.abspath,
-    )
-
-    sp_unpack.add_argument(
-        "--output",
-        metavar="output_path",
-        help="Specify output path.",
-        type=os.path.abspath,
-    )
-
-    sp_unpack.add_argument(
-        "--elf",
-        metavar="elf_path",
-        dest="elf_path",
-        help="Specify custom SLPS_254.50 (a.k.a ELF) file path.",
-        type=os.path.abspath,
-    )
-
-    sp_unpack.add_argument(
-        "--no-decompress",
-        action="store_true",
-        help="Don't decompress compto files.",
     )
 
     # PAK commands
@@ -123,7 +94,7 @@ def get_arguments(argv=None):
     
     sp_pack.add_argument(
         "file",
-        choices=["All", "Menu", "Story", "Skits"],
+        choices=["All", "Main", "Menu", "Story", "Skits"],
         metavar="FILE",
         help="Inserts files back into their containers.",
     )
@@ -184,9 +155,9 @@ def hex2bytes(tales_instance, hex_value):
 
 def getTalesInstance(game_name):
     
-    talesInstance = ToolsTOR.ToolsTOR("tbl")
-    if game_name == "TOR":
-        talesInstance = ToolsTOR.ToolsTOR("tbl")
+    talesInstance = ToolsTOR.ToolsTOR("TBL_All.json")
+    #if game_name == "TOR":
+    #    talesInstance = ToolsTOR.ToolsTOR("tbl")
 
     return talesInstance
 
@@ -215,8 +186,23 @@ if __name__ == "__main__":
         if args.file == "Menu":
             
             #SLPS
-            tales_instance.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
+            #tales_instance.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
             print("new SLPS is found inside Data/{}/Disc/New".format(game_name))
             #Other files for menu stuff
                 
+    if args.action == "unpack":
         
+        if args.file == "Main":
+            tales_instance.extract_Main_Archive()
+            
+        if args.file == "Menu":
+            print("Extracting Menu Files")
+            tales_instance.extract_All_Menu()
+            
+        if args.file == "Story":
+            tales_instance.extract_All_Story_Files()
+            
+        if args.file == "Skits":
+            
+                
+                
