@@ -4,7 +4,7 @@ on:
  workflow_dispatch
 
 env:
-  base_directory: c:/actions-runner/_work/PythonLib/
+  base_directory: c:/actions-runner/_work/
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -28,19 +28,22 @@ jobs:
     
     - name: Checkout PythonLib
       uses: actions/checkout@v3
-        
+      with:
+        repository: lifebottle/PythonLib
+        path: ${{env.base_directory}}PythonLib
+
     - name: Checkout TOR Repo
       uses: actions/checkout@v3
       with:
         repository: SymphoniaLauren/Tales-of-Rebirth
-        path: Tales-of-Rebirth
+        path: ${{env.base_directory}}Tales-of-Rebirth
       
     
 
     - name: Generate New SLPS
       working-directory: ${{env.base_directory}}
       run: 
-        python ${{env.base_directory}}/ToolsTales_Executable.py --game TOR pack SLPS
+        python ${{env.base_directory}}/PythonLib/ToolsTales_Executable.py --game TOR pack SLPS
           
   closeVM:
     runs-on: ubuntu-latest
