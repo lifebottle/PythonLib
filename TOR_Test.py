@@ -12,7 +12,7 @@ import lxml.etree as etree
 
 
 tool = ToolsTOR.ToolsTOR("TBL_All.json")
-tool.extract_All_Menu()
+tool.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
 
 
 
