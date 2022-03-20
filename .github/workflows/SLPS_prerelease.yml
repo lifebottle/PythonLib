@@ -27,12 +27,15 @@ jobs:
     steps:
     
     - name: Checkout PythonLib
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+      with:
+        path: main
         
-    - name: Checkout PythonLib
-      uses: actions/checkout@v2
+    - name: Checkout TOR Repo
+      uses: actions/checkout@v3
       with:
         repository: SymphoniaLauren/Tales-of-Rebirth
+        path: Tales-of-Rebirth
       
     
 
