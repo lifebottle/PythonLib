@@ -919,7 +919,7 @@ class ToolsTales:
     def extract_All_Menu(self):
 
         
-        
+        print("Extracting Menu Files")
         self.mkdir("../Data/{}/Menu/New".format(self.gameName))
         
         #Prepare the menu files (Unpack PAK files and use comptoe)
