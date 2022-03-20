@@ -851,6 +851,7 @@ class ToolsTales:
         #Extract if needed (PakComposer or other)
         if "pak" in file_name:
             
+            shutil.rmtree(menu_path+file_number)
             self.pakComposer_Comptoe(menu_path+file_name, "-d", "-{}".format(file_name[-1]), True, os.getcwd())
             
         

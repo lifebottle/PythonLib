@@ -12,7 +12,7 @@ import lxml.etree as etree
 
 
 tool = ToolsTOR.ToolsTOR("TBL_All.json")
-tool.extract_Main_Archive()
+tool.extract_All_Menu()
 
 
 
