@@ -60,22 +60,29 @@ class ToolsTales:
     # action is -d or -c
     # fileType : -0, -1 or -3
     # basePath is the location of the PAK file you want to compress/decompress
-    def pakComposer_Comptoe(self, fileName, action, fileType, do_comptoe, cwd):
+    def pakComposer_Comptoe(self, fileName, action, fileType, do_comptoe, working):
           
         #Delete the file if already there    
         if (action == '-c'):
             if os.path.exists(fileName):
                 os.remove( fileName.replace(".pak{}", fileType[1]))
-                
+        else:
+            shutil.rmtree(fileName.split(".")[0])
+            
         #Run Pakcomposer with parameters
         args = [ "pakcomposer", action, fileName, fileType]
+        
         if do_comptoe:
             args.append("-u")
-        
+            args.append("-x")
+            
+
         listFile = subprocess.run(
             args,
-            cwd=cwd
+            cwd=working
             )
+        
+        print(listFile)
         
     def fps4_action(self, action, b_file, dat_file, destination):
         
@@ -849,10 +856,8 @@ class ToolsTales:
         shutil.copy( file_definition['File_Original'], menu_path+file_name)
         
         #Extract if needed (PakComposer or other)
-        if "pak" in file_name:
-            
-            shutil.rmtree(menu_path+file_number)
-            self.pakComposer_Comptoe(menu_path+file_name, "-d", "-{}".format(file_name[-1]), True, os.getcwd())
+        if "pak" in file_name:          
+            self.pakComposer_Comptoe(file_name, "-d", "-{}".format(file_name[-1]), True, menu_path)
             
         
         

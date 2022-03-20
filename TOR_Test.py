@@ -12,6 +12,8 @@ import lxml.etree as etree
 
 
 tool = ToolsTOR.ToolsTOR("TBL_All.json")
+tool.pakComposer_Comptoe("11181.pak3", "-d", "-3", True, r"G:\TalesHacking\PythonLib_Playground\Data\TOR\Menu\New")
+
 tool.extract_All_Menu()
 
 
