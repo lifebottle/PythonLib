@@ -638,7 +638,7 @@ class ToolsTales:
         new_text_offsets = dict()
         file_node = [ele for ele in self.menu_files_json if ele['File_Extract'] == menu_file_path][0]
         
-        xml_file_name = "../Data/{}/Menu/XML/".format(self.gameName) + self.get_file_name(menu_file_path)+'.xml'
+        xml_file_name = "../{}/Data/{}/Menu/XML/".format(self.repo_name, self.gameName) + self.get_file_name(menu_file_path)+'.xml'
         tree = etree.parse(xml_file_name)
         root = tree.getroot()
         
@@ -646,9 +646,9 @@ class ToolsTales:
         sections_end   = [ section['Text_End'] for section in file_node['Sections'] if section['Text_Start'] > 0 ]
         base_offset = file_node['Base_Offset']
         
-        print(sections_start)
+     
         #Copy the original file 
-        new_file_path = file_node['File_New']
+        new_file_path = "../Data/TOR/Menu/New/{}".format(os.path.basename(file_node['File_Original']))
         shutil.copy( file_node['File_Extract'], new_file_path)
         
         #Open the new file with r+b
@@ -660,7 +660,7 @@ class ToolsTales:
             section_max = max( sections_end )
             
             ele = [ele for ele in root.findall("Strings") if ele.find('Section').text == "Armor"][0]
-            print(ele)
+          
             for entry_node in root.iter("Entry"):
                 
                 if menu_file.tell() < section_max: 
@@ -911,7 +911,7 @@ class ToolsTales:
         
         #Write to XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
-        with open(file_definition['File_XML'], "wb") as xmlFile:
+        with open(file_definition['File_XML'].replace("/{}".format(self.repo_name),""), "wb") as xmlFile:
             xmlFile.write(txt)
         
         
@@ -919,6 +919,7 @@ class ToolsTales:
     def extract_All_Menu(self):
 
         
+        print("Extracting Menu Files")
         self.mkdir("../Data/{}/Menu/New".format(self.gameName))
         
         #Prepare the menu files (Unpack PAK files and use comptoe)
