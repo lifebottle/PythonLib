@@ -94,7 +94,7 @@ def get_arguments(argv=None):
     
     sp_pack.add_argument(
         "file",
-        choices=["All", "Main", "Menu", "Story", "Skits"],
+        choices=["All", "Main", "Menu","SLPS", "Story", "Skits"],
         metavar="FILE",
         help="Inserts files back into their containers.",
     )
@@ -183,11 +183,11 @@ if __name__ == "__main__":
             tales_instance.bytes_to_text_with_offset( args.param1, int(args.param2))
     if args.action == "pack":
         
-        if args.file == "Menu":
+        if args.file == "SLPS":
             
             #SLPS
-            #tales_instance.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
-            print("new SLPS is found inside Data/{}/Disc/New".format(game_name))
+            tales_instance.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
+            print("new SLPS is found inside Data/{}/Menu/New".format(game_name))
             #Other files for menu stuff
                 
     if args.action == "unpack":
