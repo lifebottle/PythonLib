@@ -295,19 +295,6 @@ class ToolsTales:
         # Didn't match anything
         return "bin"
     
-    
-        def is_compressed(self, data):
-            if len(data) < 0x09:
-                return False
-        
-            expected_size = struct.unpack("<L", data[1:5])[0]
-            tail_data = abs(len(data) - (expected_size + 9))
-            if expected_size == len(data) - 9:
-                return True
-            elif tail_data <= 0x10 and data[expected_size + 9 :] == b"#" * tail_data:
-                return True # SCPK files have these trailing "#" bytes :(
-            return False
-    
     def get_pak_type(self,data):
         is_aligned = False
     
@@ -850,6 +837,25 @@ class ToolsTales:
 
         return [pointers_offset, pointers_value]
    
+    def prepare_Menu_File(self, file_definition):
+        
+        file_original = file_definition['File_Original']
+        file_name = os.path.basename(file_original)
+        file_number = file_name.split(".")[0]
+        extension = file_name.split(".")[-1]
+        
+        #Copy the files under Menu Folder
+        menu_path = "../Data/{}/Menu/New/".format(self.gameName) 
+        shutil.copy( file_definition['File_Original'], menu_path+file_name)
+        
+        #Extract if needed (PakComposer or other)
+        if "pak" in file_name:
+            
+            self.pakComposer_Comptoe(menu_path+file_name, "-d", "-{}".format(file_name[-1]), True, os.getcwd())
+            
+        
+        
+        
     def extract_Menu_File(self, file_definition):
         
         
@@ -896,12 +902,16 @@ class ToolsTales:
         
         
     def extract_All_Menu(self):
-        section_list = []
-        texts_offsets_list = []
-        texts_list = []
+
+        
+        self.mkdir("../Data/{}/Menu/New".format(self.gameName))
         for file_definition in self.menu_files_json:
            
             print("...{}".format(file_definition['File_Extract']))
+            
+            
+            self.prepare_Menu_File(file_definition)
+            
             self.extract_Menu_File(file_definition)
             
 
