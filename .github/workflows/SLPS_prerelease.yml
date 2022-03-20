@@ -26,15 +26,13 @@ jobs:
     needs: startVM
     steps:
     
-    - name: Checkout TOR Repo
+    - name: Checkout PythonLib
       uses: actions/checkout@v2
-      with:
-        repository: SymphoniaLauren/Tales-of-Rebirth
         
     - name: Checkout PythonLib
       uses: actions/checkout@v2
       with:
-        repository: lifebottle/PythonLib
+        repository: SymphoniaLauren/Tales-of-Rebirth
       
     
 
