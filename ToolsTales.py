@@ -60,23 +60,42 @@ class ToolsTales:
     # action is -d or -c
     # fileType : -0, -1 or -3
     # basePath is the location of the PAK file you want to compress/decompress
-    def pakComposer_Comptoe(self, fileName, action, fileType, do_comptoe, cwd):
+    def pakComposer_Comptoe(self, file_name, action, file_type, do_comptoe, working):
           
-        #Delete the file if already there    
+        #Delete the file if already there   
+        file_number = file_name.split(".")[0]
         if (action == '-c'):
-            if os.path.exists(fileName):
-                os.remove( fileName.replace(".pak{}", fileType[1]))
-                
+            if os.path.exists(file_name):
+                os.remove( file_name.replace(".pak{}", file_type[1]))
+        else:
+            
+            if os.path.exists(working+"/"+file_number):
+                shutil.rmtree(working+"/"+file_number)  
+            
         #Run Pakcomposer with parameters
-        args = [ "pakcomposer", action, fileName, fileType]
-        if do_comptoe:
-            args.append("-u")
-        
+        args = [ "pakcomposer", action, file_name, file_type, "-x"]
+
         listFile = subprocess.run(
             args,
-            cwd=cwd
+            cwd=working
             )
         
+        if do_comptoe:
+            
+            files = [ele for ele in os.listdir(working+"/"+file_number) if ".compress" in ele]
+            for ele in files:
+                
+                ctype=0
+                with open(working+"/{}/".format(file_number)+ele, "rb") as f:
+                    ctype = ord(f.read(1))
+            
+                args = ["comptoe", "-d{}".format(ctype), ele, ele.split(".")[0]+"d.unknown"]
+                listFile = subprocess.run(
+                args,
+                cwd=working+"/"+file_number
+                )
+            
+            
     def fps4_action(self, action, b_file, dat_file, destination):
         
         fps4.dump_fps4(b_file, dat_file, destination)
@@ -294,19 +313,6 @@ class ToolsTales:
     
         # Didn't match anything
         return "bin"
-    
-    
-        def is_compressed(self, data):
-            if len(data) < 0x09:
-                return False
-        
-            expected_size = struct.unpack("<L", data[1:5])[0]
-            tail_data = abs(len(data) - (expected_size + 9))
-            if expected_size == len(data) - 9:
-                return True
-            elif tail_data <= 0x10 and data[expected_size + 9 :] == b"#" * tail_data:
-                return True # SCPK files have these trailing "#" bytes :(
-            return False
     
     def get_pak_type(self,data):
         is_aligned = False
@@ -850,6 +856,21 @@ class ToolsTales:
 
         return [pointers_offset, pointers_value]
    
+    def prepare_Menu_File(self, file_original):
+        
+        file_name = os.path.basename(file_original)
+        
+        #Copy the files under Menu Folder
+        menu_path = "../Data/{}/Menu/New/".format(self.gameName) 
+        shutil.copy( file_original, menu_path+file_name)
+        
+        #Extract if needed (PakComposer or other)
+        if "pak" in file_name:          
+            self.pakComposer_Comptoe(file_name, "-d", "-{}".format(file_name[-1]), True, menu_path)
+            
+        
+        
+        
     def extract_Menu_File(self, file_definition):
         
         
@@ -896,12 +917,18 @@ class ToolsTales:
         
         
     def extract_All_Menu(self):
-        section_list = []
-        texts_offsets_list = []
-        texts_list = []
+
+        
+        self.mkdir("../Data/{}/Menu/New".format(self.gameName))
+        
+        #Prepare the menu files (Unpack PAK files and use comptoe)
+        files_to_prepare = list(dict.fromkeys([ele['File_Original'] for ele in self.menu_files_json]))
+        res = [ self.prepare_Menu_File(ele) for ele in files_to_prepare]
+        
         for file_definition in self.menu_files_json:
            
             print("...{}".format(file_definition['File_Extract']))
+            
             self.extract_Menu_File(file_definition)
             
 

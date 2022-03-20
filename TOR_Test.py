@@ -30,3 +30,5 @@ files = os.listdir("abcde_lauren")
 for file in files:
     
     tool.extract_abcde_text("abcde_lauren/{}".format(file))
+    
+    

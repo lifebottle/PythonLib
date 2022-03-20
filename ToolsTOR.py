@@ -341,6 +341,10 @@ class ToolsTOR(ToolsTales):
         print("Writing file %05d/%05d..." % (i, total_files))
         f.close()
         
+        #Copy File 11181
+        shutil.copy( self.datPathExtract+"BIN/11181.bin", self.datPathExtract+"PAK3/11181.pak3")
+        os.remove( self.datPathExtract+"BIN/11181.bin")
+        
     def pack_Main_Archive(self):
         sectors = [0]
         remainders = []
