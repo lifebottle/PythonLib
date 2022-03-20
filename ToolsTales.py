@@ -911,13 +911,14 @@ class ToolsTales:
         
         #Write to XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
-        with open(file_definition['File_XML'], "wb") as xmlFile:
+        with open(file_definition['File_XML'].replace("/{}".format(self.repo_name),""), "wb") as xmlFile:
             xmlFile.write(txt)
         
         
         
     def extract_All_Menu(self):
 
+        
         
         self.mkdir("../Data/{}/Menu/New".format(self.gameName))
         
