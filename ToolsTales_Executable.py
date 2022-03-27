@@ -5,8 +5,23 @@ import textwrap
 import os
 import io
 import re
+import requests
 
 SCRIPT_VERSION = "0.3"
+
+def get_All_Releases(org, repo_name):
+    
+    #git_url = "https://api.github.com/repos/SymphoniaLauren/Tales-of-Rebirth/releases"
+    git_url = "https://api.github.com/repos/{}/{}/releases".format(org, repo_name)
+    
+    header = {
+        "Accept":"application/vnd.github.v3+json" 
+    }
+
+    res = requests.get(git_url)
+    json_res = json.loads(res.text)
+    
+    return json_res
 
 def get_directory_path(path):
     return os.path.dirname(os.path.abspath(path))
