@@ -42,7 +42,7 @@ class ToolsTODDC(ToolsTales):
         #self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLORS'].items()])
         
         
-        with open("../{}/Data/{}/Menu/MenuFiles.json".format(self.repo_name, self.gameName)) as f:
+        with open("../{}/Data/Menu/MenuFiles.json".format(self.repo_name, self.gameName)) as f:
            self.menu_files_json = json.load(f)
            
         

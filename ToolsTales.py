@@ -891,12 +891,14 @@ class ToolsTales:
                 text_end = section['Text_End'] 
                   
                 #Extract Pointers of the file
+                print("Extract Pointers")
                 pointers_offset, pointers_value = self.get_special_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Nb_Per_Block'], section['Step'], section['Section'], file_path)
    
               
                 #Extract Text from the pointers
+                print("Extract Text")
                 texts = [ self.bytes_to_text(f, ele + base_offset)[0] for ele in pointers_value]
-              
+                print(texts)
                 
                 #Make a list
                 section_list.extend( [section['Section']] * len(texts)) 
