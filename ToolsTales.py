@@ -31,17 +31,21 @@ class ToolsTales:
         self.repo_name = repo_name
         self.basePath = os.getcwd()
         
-        with open("../{}/Data/{}/Misc/{}".format(repo_name, gameName, tblFile)) as f:
+        with open("../{}/Data/Misc/{}".format(repo_name, tblFile), encoding="utf-8") as f:
             jsonRaw = json.load(f)
-            self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
+            if self.repo_name == "Tales-of-Destiny-DC":
+                self.jsonTblTags ={ k1:{ int(k2) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
+            else:
+                self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
+            
           
         self.itable = dict([[i, struct.pack(">H", int(j))] for j, i in self.jsonTblTags['TBL'].items()])
         self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
-        self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAMES'].items()])
-        self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLORS'].items()])
+        self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAME'].items()])
+        self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLOR'].items()])
         
         
-        with open("../{}/Data/{}/Menu/MenuFiles.json".format(repo_name, gameName)) as f:
+        with open("../{}/Data/Menu/MenuFiles.json".format(repo_name)) as f:
            self.menu_files_json = json.load(f)
            
            
@@ -469,7 +473,7 @@ class ToolsTales:
                     tag_name = TAGS.get(b)
                     
                     tag_param = None
-                    tag_search = tag_name.upper()+'S'
+                    tag_search = tag_name.upper()
                     if (tag_search in self.jsonTblTags.keys()):
                         tags2 = self.jsonTblTags[tag_search]
                         tag_param = tags2.get(b2, None) 
@@ -913,7 +917,7 @@ class ToolsTales:
         
         #Write to XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
-        with open(file_definition['File_XML'].replace("/{}".format(self.repo_name),""), "wb") as xmlFile:
+        with open(file_definition['File_XML'].replace("/{}".format(self.repo_name),"").replace("/Data","/Data/{}".format(self.repo_name)), "wb") as xmlFile:
             xmlFile.write(txt)
         
         
@@ -922,7 +926,7 @@ class ToolsTales:
 
         
         print("Extracting Menu Files")
-        self.mkdir("../Data/{}/Menu/New".format(self.gameName))
+        self.mkdir("../Data/{}/Menu/New".format(self.repo_name))
         
         #Prepare the menu files (Unpack PAK files and use comptoe)
         files_to_prepare = list(dict.fromkeys([ele['File_Original'] for ele in self.menu_files_json]))
