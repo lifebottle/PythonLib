@@ -6,9 +6,16 @@ import os
 import io
 import re
 import requests
+import subprocess
+import ApacheAutomate
+
 
 SCRIPT_VERSION = "0.3"
 
+def generate_xdelta_patch(original_path, new_path, xdelta_name="Tales-Of-Rebirth_Patch_New.xdelta"):
+   
+    subprocess.run(["xdelta", "-s", original_path, new_path, xdelta_name])
+    
 def get_Releases(org, repo_name, latest=False):
     
     #git_url = "https://api.github.com/repos/SymphoniaLauren/Tales-of-Rebirth/releases"
@@ -205,6 +212,9 @@ if __name__ == "__main__":
             
             #SLPS
             tales_instance.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
+            
+            ApacheAutomate.apache_job(['SLPS_254.50'], "Tales-Of-Rebirth")
+            
             print("new SLPS is found inside Data/{}/Menu/New".format(game_name))
             #Other files for menu stuff
                 

@@ -4,6 +4,9 @@ from pywinauto import mouse
 from pywinauto.findwindows import find_windows
 import os
 import shutil
+import subprocess
+
+
 
 def open_apache3_iso(repo_name):
     
@@ -52,7 +55,7 @@ def browse_replace_file(file_replace_ele, new_file_path, repo_name):
     file_replace_ele.child_window(title="Replace File", auto_id="1094", control_type="Button").wrapper_object().click()
     
     
-def replace_files(files_list, app):
+def replace_files(files_list, repo_name, app):
     
     new_file_path_format = os.path.join( os.path.normpath(os.getcwd() + os.sep + os.pardir), "Data",repo_name, "Disc", "New")
     for file_name in files_list:
@@ -73,31 +76,27 @@ def replace_files(files_list, app):
         browse_replace_file(file_replace_ele, os.path.join(new_file_path_format, file_name), repo_name)
       
 
-#Files to reinsert
-#files_list = ['SLPS_254.50', 'DAT.bin']
-files_list = ['SLPS_254.50']
 
-repo_name = "Tales-Of-Rebirth"
-
-#copy original Iso
-original_path = os.path.join(os.getcwd(), "..", "Data", repo_name, "Disc", "Original", "{}.iso".format(repo_name))
-new_path = os.path.join(os.getcwd(), "..", "Data", repo_name, "Disc", "New", "{}.iso".format(repo_name))
-
-print("Copy Original Iso into New folder")
-shutil.copy( original_path, new_path)
-
-
-
-try:
-    app = application.Application(backend="uia").connect(title='Apache3 Build 3.10.6 (BETA)')
-    app.Apache3Build.close()
+def apache_job(files_list, repo_name):
     
-except:
-    print("Open Apache3 and load the iso")
-    app = open_apache3_iso(repo_name)
-
-    print("Replace the different files")
-    replace_files(files_list,app)
+    #copy original Iso
+    original_path = os.path.join(os.getcwd(), "..", "Data", repo_name, "Disc", "Original", "{}.iso".format(repo_name))
+    new_path = os.path.join(os.getcwd(), "..", "Data", repo_name, "Disc", "New", "{}.iso".format(repo_name))
     
-    print("Close Apache3")
-    app.Apache3Build.close()
+    print("Copy Original Iso into New folder")
+    shutil.copy( original_path, new_path)
+    
+    
+    try:
+        app = application.Application(backend="uia").connect(title='Apache3 Build 3.10.6 (BETA)')
+        app.Apache3Build.close()
+        
+    except:
+        print("Open Apache3 and load the iso")
+        app = open_apache3_iso(repo_name)
+    
+        print("Replace the different files")
+        replace_files(files_list,  repo_name, app)
+        
+        print("Close Apache3")
+        app.Apache3Build.close()
