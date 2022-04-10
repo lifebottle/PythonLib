@@ -8,6 +8,7 @@ import re
 import requests
 import subprocess
 import ApacheAutomate
+import RepoFunctions
 
 
 SCRIPT_VERSION = "0.3"
@@ -16,22 +17,7 @@ def generate_xdelta_patch(original_path, new_path, xdelta_name="Tales-Of-Rebirth
    
     subprocess.run(["xdelta", "-s", original_path, new_path, xdelta_name])
     
-def get_Releases(org, repo_name, latest=False):
-    
-    #git_url = "https://api.github.com/repos/SymphoniaLauren/Tales-of-Rebirth/releases"
-    git_url = "https://api.github.com/repos/{}/{}/releases".format(org, repo_name)
-    
-    if latest:
-        git_url = git_url+"/latest"
-        
-    header = {
-        "Accept":"application/vnd.github.v3+json" 
-    }
 
-    res = requests.get(git_url)
-    json_res = json.loads(res.text)
-    
-    return json_res
     
 def get_directory_path(path):
     return os.path.dirname(os.path.abspath(path))
@@ -207,6 +193,9 @@ if __name__ == "__main__":
             
             tales_instance.bytes_to_text_with_offset( args.param1, int(args.param2))
     if args.action == "pack":
+        
+        RepoFunctions.refresh_repo("PythonLib")
+        RepoFunctions.refresh_repo("Tales-Of-Rebirth")
         
         if args.file == "SLPS":
             
