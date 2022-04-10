@@ -1,5 +1,7 @@
+import os
 import requests
 import json
+import subprocess
 
 def get_Releases(org, repo_name, latest=False):
     
@@ -17,3 +19,13 @@ def get_Releases(org, repo_name, latest=False):
     json_res = json.loads(res.text)
     
     return json_res
+
+
+def refresh_repo(repo_name):   
+    
+    base_path = os.path.join(os.getcwd(), "..", repo_name)
+    print("Repo to refresh: {}".format(base_path))
+    listFile = subprocess.run(
+            ["git", "pull", repo_name],
+            cwd=base_path
+    )
