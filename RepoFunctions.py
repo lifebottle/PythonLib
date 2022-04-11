@@ -26,6 +26,6 @@ def refresh_repo(repo_name):
     base_path = os.path.join(os.getcwd(), "..", repo_name)
     print("Repo to refresh: {}".format(base_path))
     listFile = subprocess.run(
-            ["git", "pull", repo_name],
+            ["git", "pull"],
             cwd=base_path
     )

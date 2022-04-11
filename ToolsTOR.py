@@ -24,14 +24,14 @@ class ToolsTOR(ToolsTales):
     
     
     #Path to used
-    datBinOriginal   = '../Data/TOR/Disc/Original/DAT.BIN'
-    datBinNew        = '../Data/TOR/Disc/New/DAT.BIN'
-    elfOriginal      = '../Data/TOR/Disc/Original/SLPS_254.50'
-    elfNew           = '../Data/TOR/Disc/New/SLPS_254.50'
+    datBinOriginal   = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
+    datBinNew        = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
+    elfOriginal      = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
+    elfNew           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
     storyPathArchives= '../Tales-Of-Rebirth/Data/TOR/Story/New/'                        #Story XML files will be extracted here                      
     storyPathXML     = '../Tales-Of-Rebirth/Data/TOR/Story/XML/'                     #SCPK will be repacked here
     skitPathArchives = '../Tales-Of-Rebirth/Data/TOR/Skits/'                        #Skits XML files will be extracted here              
-    datPathExtract   = '../Data/TOR/DAT/' 
+    datPathExtract   = '../Data/Tales-Of-Rebirth/DAT/' 
     
     def __init__(self, tbl):
         
