@@ -11,11 +11,33 @@ import ApacheAutomate
 import RepoFunctions
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+import ezgmail
 
 
 SCRIPT_VERSION = "0.3"
 GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = "../client_secrets.json"
 
+def send_mail(drive, email, xdelta_link):
+    
+    print("Sending Email with xdelta patch")
+    os.chdir( os.path.join( os.getcwd(), ".."))
+    ezgmail.init()
+    
+    os.chdir( os.path.join( os.getcwd(),"PythonLib"))
+
+
+    ezgmail.EMAIL_ADDRESS = 'fortiersteven1@gmail.com'
+    body = """
+    Hello, 
+    
+    this is Life Bottle productions, here is your 
+    xdelta patch :
+        
+    {}
+    
+    """.format(xdelta_link)
+    ezgmail.send( 'fortiersteven1@gmail.com', 'xdelta patch', body)
+    
 def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xdelta"):
     
     print("Create xdelta patch")
@@ -23,6 +45,20 @@ def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xde
     new_path = "../Data/{}/Disc/New/{}.iso".format(repo_name, repo_name)
     subprocess.run(["xdelta", "-s", original_path, new_path, xdelta_name])
    
+def get_file(drive, file_name, folder_name):
+    
+    folder_id = get_folder(drive, folder_name)
+    
+    file_name = os.path.basename(file_name)
+    file_list = drive.ListFile({'q': "'{}' in parents and trashed=false".format(folder_id)}).GetList()
+    
+    file = [file for file in file_list if file['title'] == file_name]
+    if len(file) > 0:
+        
+        return file[0]
+    else:
+        print("File not found in gdrive folder")
+    
 def get_folder(drive, folder_name):
 
     parent_id = '1xbDBJLg4sVxbvcNFCRC-lA_YXghyKdx8'
@@ -49,10 +85,9 @@ def get_folder(drive, folder_name):
         
     return folder_id
 
-def upload_xdelta(xdelta_name, folder_name):
+def upload_xdelta(drive, xdelta_name, folder_name):
     
-    gauth = GoogleAuth()           
-    drive = GoogleDrive(gauth)  
+   
     
     xdelta_name = r"G:\TalesHacking\PythonLib_Playground\Data\Tales-Of-Rebirth\Disc\New\Tales-Of-Rebirth_patch.xdelta"
     
@@ -66,6 +101,11 @@ def upload_xdelta(xdelta_name, folder_name):
     
     gfile.SetContentFile(xdelta_name)
     gfile.Upload() # Upload the file.
+    
+    
+    file = get_file(drive, xdelta_name, folder_name)
+    
+    return file['webContentLink']
     
 def get_directory_path(path):
     return os.path.dirname(os.path.abspath(path))
@@ -252,7 +292,16 @@ if __name__ == "__main__":
             
             ApacheAutomate.apache_job(['SLPS_254.50'], "Tales-Of-Rebirth")
             
-            generate_xdelta_patch("Tales-Of-Rebirth", "../Data/Tales-Of-Rebirth/Disc/New/Tales-Of-Rebirth_patch.xdelta")
+            gauth = GoogleAuth()           
+            drive = GoogleDrive(gauth)  
+            xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/Tales-Of-Rebirth_patch.xdelta"
+            #generate_xdelta_patch("Tales-Of-Rebirth", xdelta_name)
+            
+            file_link = upload_xdelta(drive, xdelta_name, "Stewie")            #Need to add user for the folder
+            
+            send_mail(drive, 'fortiersteven1@gmail.com', file_link)
+            
+            
     if args.action == "unpack":
         
         if args.file == "Main":
