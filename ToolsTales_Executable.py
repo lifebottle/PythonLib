@@ -22,7 +22,33 @@ def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xde
     original_path = "../Data/{}/Disc/Original/{}.iso".format(repo_name, repo_name)
     new_path = "../Data/{}/Disc/New/{}.iso".format(repo_name, repo_name)
     subprocess.run(["xdelta", "-s", original_path, new_path, xdelta_name])
+   
+def get_folder(drive, folder_name):
+
+    parent_id = '1xbDBJLg4sVxbvcNFCRC-lA_YXghyKdx8'
+    list_folder = drive.ListFile({"q": "'{}' in parents and trashed=false".format(parent_id)}).GetList()
+    folder_id=''
     
+ 
+    folder_found = [ele['id'] for ele in list_folder if ele['title'] == folder_name]
+    if len(folder_found)>0:
+        folder_id = folder_found[0]
+        
+    else:
+
+     
+        file_metadata = {
+          'title': folder_name,
+          'mimeType': 'application/vnd.google-apps.folder'
+        }
+        file_metadata['parents'] = [{"kind": "drive#parentReference", "id": parent_id}]
+        folder = drive.CreateFile(file_metadata)
+
+        folder.Upload()
+        folder_id = folder['id']
+        
+    return folder_id
+
 def upload_xdelta(xdelta_name, folder_name):
     
     gauth = GoogleAuth()           
@@ -30,7 +56,7 @@ def upload_xdelta(xdelta_name, folder_name):
     
     xdelta_name = r"G:\TalesHacking\PythonLib_Playground\Data\Tales-Of-Rebirth\Disc\New\Tales-Of-Rebirth_patch.xdelta"
     
-    folder_id = '1txy2BI8tTFDPT9vmIbFELW2qmxC_ZjW0'
+    folder_id = get_folder(drive, folder_name)
     
     gfile = drive.CreateFile({'parents': [{'id': folder_id}]})
     
