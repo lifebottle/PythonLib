@@ -9,15 +9,63 @@ import requests
 import subprocess
 import ApacheAutomate
 import RepoFunctions
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 
 SCRIPT_VERSION = "0.3"
+GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = "../client_secrets.json"
 
-def generate_xdelta_patch(original_path, new_path, xdelta_name="Tales-Of-Rebirth_Patch_New.xdelta"):
-   
-    subprocess.run(["xdelta", "-s", original_path, new_path, xdelta_name])
+def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xdelta"):
     
+    print("Create xdelta patch")
+    original_path = "../Data/{}/Disc/Original/{}.iso".format(repo_name, repo_name)
+    new_path = "../Data/{}/Disc/New/{}.iso".format(repo_name, repo_name)
+    subprocess.run(["xdelta", "-s", original_path, new_path, xdelta_name])
+   
+def get_folder(drive, folder_name):
 
+    parent_id = '1xbDBJLg4sVxbvcNFCRC-lA_YXghyKdx8'
+    list_folder = drive.ListFile({"q": "'{}' in parents and trashed=false".format(parent_id)}).GetList()
+    folder_id=''
+    
+ 
+    folder_found = [ele['id'] for ele in list_folder if ele['title'] == folder_name]
+    if len(folder_found)>0:
+        folder_id = folder_found[0]
+        
+    else:
+
+     
+        file_metadata = {
+          'title': folder_name,
+          'mimeType': 'application/vnd.google-apps.folder'
+        }
+        file_metadata['parents'] = [{"kind": "drive#parentReference", "id": parent_id}]
+        folder = drive.CreateFile(file_metadata)
+
+        folder.Upload()
+        folder_id = folder['id']
+        
+    return folder_id
+
+def upload_xdelta(xdelta_name, folder_name):
+    
+    gauth = GoogleAuth()           
+    drive = GoogleDrive(gauth)  
+    
+    xdelta_name = r"G:\TalesHacking\PythonLib_Playground\Data\Tales-Of-Rebirth\Disc\New\Tales-Of-Rebirth_patch.xdelta"
+    
+    folder_id = get_folder(drive, folder_name)
+    
+    gfile = drive.CreateFile({'parents': [{'id': folder_id}]})
+    
+    
+    file_name = os.path.basename(xdelta_name)
+    gfile['title'] = file_name
+    
+    gfile.SetContentFile(xdelta_name)
+    gfile.Upload() # Upload the file.
     
 def get_directory_path(path):
     return os.path.dirname(os.path.abspath(path))
@@ -200,13 +248,11 @@ if __name__ == "__main__":
         if args.file == "SLPS":
             
             #SLPS
-            tales_instance.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
+            tales_instance.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50")
             
             ApacheAutomate.apache_job(['SLPS_254.50'], "Tales-Of-Rebirth")
             
-            print("new SLPS is found inside Data/{}/Menu/New".format(game_name))
-            #Other files for menu stuff
-                
+            generate_xdelta_patch("Tales-Of-Rebirth", "../Data/Tales-Of-Rebirth/Disc/New/Tales-Of-Rebirth_patch.xdelta")
     if args.action == "unpack":
         
         if args.file == "Main":

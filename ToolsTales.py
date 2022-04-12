@@ -31,7 +31,7 @@ class ToolsTales:
         self.repo_name = repo_name
         self.basePath = os.getcwd()
         
-        with open("../{}/Data/Misc/{}".format(repo_name, tblFile), encoding="utf-8") as f:
+        with open("../{}/Data/{}/Misc/{}".format(repo_name, gameName, tblFile), encoding="utf-8") as f:
             jsonRaw = json.load(f)
             if self.repo_name == "Tales-of-Destiny-DC":
                 self.jsonTblTags ={ k1:{ int(k2) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
@@ -45,7 +45,7 @@ class ToolsTales:
         self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLOR'].items()])
         
         
-        with open("../{}/Data/Menu/MenuFiles.json".format(repo_name)) as f:
+        with open("../{}/Data/{}/Menu/MenuFiles.json".format(repo_name, gameName)) as f:
            self.menu_files_json = json.load(f)
            
            
@@ -635,11 +635,12 @@ class ToolsTales:
     #
     #############################
     
-    def insert_Menu_File(self, menu_file_path):
+    def pack_Menu_File(self, menu_file_path):
         
         
         #Load all the banks for insertion and load XML
         new_text_offsets = dict()
+
         file_node = [ele for ele in self.menu_files_json if ele['File_Extract'] == menu_file_path][0]
         
         xml_file_name = "../{}/Data/{}/Menu/XML/".format(self.repo_name, self.gameName) + self.get_file_name(menu_file_path)+'.xml'
@@ -652,7 +653,7 @@ class ToolsTales:
         
      
         #Copy the original file 
-        new_file_path = "../Data/TOR/Menu/New/{}".format(os.path.basename(file_node['File_Original']))
+        new_file_path = "../Data/{}/Menu/New/{}".format(self.repo_name, os.path.basename(file_node['File_Original']))
         shutil.copy( file_node['File_Extract'], new_file_path)
         
         #Open the new file with r+b
