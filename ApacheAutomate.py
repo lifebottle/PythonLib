@@ -18,11 +18,11 @@ def open_apache3_iso(repo_name):
     send_keys('{ENTER}')
     
     #Get the window about Drive missing
-    if "actions-runner" not in os.getcwd():
-        drive_missing = app.Apache3Build.child_window(title="apache3", control_type="Window")
-        drive_missing.set_focus()
-        send_keys('{ENTER}')
-    
+
+    drive_missing = app.Apache3Build.child_window(title="apache3", control_type="Window")
+    drive_missing.set_focus()
+    send_keys('{ENTER}')
+
     iso_path = os.path.join( os.path.normpath(os.getcwd() + os.sep + os.pardir), "Data",repo_name,"Disc","New","{}.iso".format(repo_name))
 
     #Click on the Open Iso button

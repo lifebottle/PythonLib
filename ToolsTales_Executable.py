@@ -282,7 +282,7 @@ if __name__ == "__main__":
             tales_instance.bytes_to_text_with_offset( args.param1, int(args.param2))
     if args.action == "pack":
         
-        RepoFunctions.refresh_repo("PythonLib")
+        #RepoFunctions.refresh_repo("PythonLib")
         RepoFunctions.refresh_repo("Tales-Of-Rebirth")
         
         if args.file == "SLPS":
