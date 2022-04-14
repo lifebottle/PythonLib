@@ -100,4 +100,5 @@ def apache_job(files_list, repo_name):
         replace_files(files_list,  repo_name, app)
         
         print("Close Apache3")
-        app.Apache3Build.close()
+        app.connect(path="Apache3.exe")
+        app.kill_()
