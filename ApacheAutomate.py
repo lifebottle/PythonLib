@@ -101,4 +101,4 @@ def apache_job(files_list, repo_name):
         
         print("Close Apache3")
         app.connect(path="Apache3.exe")
-        app.kill_()
+        app.kill()
