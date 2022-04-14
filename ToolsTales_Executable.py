@@ -89,7 +89,7 @@ def upload_xdelta(drive, xdelta_name, folder_name):
     
    
     
-    xdelta_name = r"G:\TalesHacking\PythonLib_Playground\Data\Tales-Of-Rebirth\Disc\New\Tales-Of-Rebirth_patch.xdelta"
+    #xdelta_name = r"G:\TalesHacking\PythonLib_Playground\Data\Tales-Of-Rebirth\Disc\New\Tales-Of-Rebirth_patch.xdelta"
     
     folder_id = get_folder(drive, folder_name)
     
