@@ -18,7 +18,7 @@ def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xde
     print("Create xdelta patch")
     original_path = "../Data/{}/Disc/Original/{}.iso".format(repo_name, repo_name)
     new_path = "../Data/{}/Disc/New/{}.iso".format(repo_name, repo_name)
-    subprocess.run(["xdelta", "-s", original_path, new_path, xdelta_name])
+    subprocess.run(["xdelta", "-f", "-s", original_path, new_path, xdelta_name])
    
 
     
