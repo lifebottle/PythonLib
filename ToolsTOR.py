@@ -28,10 +28,10 @@ class ToolsTOR(ToolsTales):
     datBinNew        = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
     elfOriginal      = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
     elfNew           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
-    storyPathArchives= '../Tales-Of-Rebirth/Data/TOR/Story/New/'                        #Story XML files will be extracted here                      
-    storyPathXML     = '../Tales-Of-Rebirth/Data/TOR/Story/XML/'                     #SCPK will be repacked here
-    skitPathArchives = '../Tales-Of-Rebirth/Data/TOR/Skits/'                        #Skits XML files will be extracted here              
-    datPathExtract   = '../Data/Tales-Of-Rebirth/DAT/' 
+    story_XML_new    = '../Tales-Of-Rebirth/Data/Data/TOR/Story/'                        #Story XML files will be extracted here                      
+    story_XML_patch  = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
+    skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here              
+    dat_archive_extract   = '../Data/Tales-Of-Rebirth/DAT/' 
     
     def __init__(self, tbl):
         
@@ -51,8 +51,8 @@ class ToolsTOR(ToolsTales):
     # Extract the story files
     def extract_All_Story_Files(self,debug=False):
         
-        self.mkdir( self.storyPathXML)
-        listFiles = [self.datPathExtract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.datPathExtract, "SCPK"))]
+        self.mkdir( self.story_XML_patch + "XML")
+        listFiles = [self.dat_archive_extract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.dat_archive_extract, "SCPK"))]
         for scpkFile in listFiles:
 
             self.extract_TheirSce_XML(scpkFile)
@@ -134,14 +134,14 @@ class ToolsTOR(ToolsTales):
         #Build the XML Structure with the information
         
         
-        file_path = self.storyPathXML + self.get_file_name(scpkFileName)
+        file_path = self.story_XML_patch +"XML/"+ self.get_file_name(scpkFileName)
         root = self.create_Node_XML(file_path, list_informations, "SceneText")
     
         
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
     
-        with open(os.path.join( self.storyPathXML, self.get_file_name(scpkFileName)+".xml"), "wb") as xmlFile:
+        with open(os.path.join( self.story_XML_patch,"XML", self.get_file_name(scpkFileName)+".xml"), "wb") as xmlFile:
             xmlFile.write(txt)
         
     def getNewTheirsce(self, theirsce, scpkFileName):
@@ -155,7 +155,7 @@ class ToolsTOR(ToolsTales):
         print(strings_offset)
               
         #Read the XML for the corresponding THEIRSCE
-        file = self.storyPathXML+ self.get_file_name(scpkFileName)+'.xml'
+        file = self.story_XML_patch +"XML/"+ self.get_file_name(scpkFileName)+'.xml'
         print("XML : {}".format(self.get_file_name(scpkFileName)+'.xml'))
         tree = etree.parse(file)
         root = tree.getroot()
@@ -180,7 +180,7 @@ class ToolsTOR(ToolsTales):
             
 
             #Convert the text values to bytes using TBL, TAGS, COLORS, ...
-            bytesEntry = self.textToBytes(final_text)
+            bytesEntry = self.text_to_bytes(final_text)
 
             #Write to the file
             theirsce.write(bytesEntry + b'\x00')
