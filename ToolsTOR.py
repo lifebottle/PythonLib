@@ -55,7 +55,7 @@ class ToolsTOR(ToolsTales):
         listFiles = [self.datPathExtract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.datPathExtract, "SCPK"))]
         for scpkFile in listFiles:
 
-            self.extract_TheirSce_XML(scpkFile,debug)
+            self.extract_TheirSce_XML(scpkFile)
         
     def get_theirsce_from_scpk(self, scpk, scpkFileName, debug=False)->bytes:
         header = scpk.read(4)
@@ -82,10 +82,7 @@ class ToolsTOR(ToolsTales):
                 c_type = struct.unpack("<b", data[:1])[0]
                 
             if data_decompressed[:8] == b"THEIRSCE":
-                
-                if debug:
-                     with open("Debug/{}.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
-                         f.write(data)
+            
                 return io.BytesIO(data_decompressed)
     
         return None
@@ -95,7 +92,7 @@ class ToolsTOR(ToolsTales):
     
         
     # Extract THEIRSCE to XML
-    def extract_TheirSce_XML(self, scpkFileName,debug=False):
+    def extract_TheirSce_XML(self, scpkFileName):
      
         #Create the XML file
         root = etree.Element('SceneText')
@@ -107,9 +104,9 @@ class ToolsTOR(ToolsTales):
         with open(scpkFileName, "rb") as scpk:
             theirsce = self.get_theirsce_from_scpk(scpk,scpkFileName,True)
             
-            if (scpkFileName.endswith(".scpk") and debug):
-                with open("Debug/{}d.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
-                    f.write(theirsce.read())
+            #if (scpkFileName.endswith(".scpk") and debug):
+            #    with open("Debug/{}d.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
+            #        f.write(theirsce.read())
                     
         theirsce.seek(0)
         #Validate the header
@@ -128,7 +125,7 @@ class ToolsTOR(ToolsTales):
         theirsce.seek(pointer_block, 0)             #Go the the start of the pointer section
         pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize)
         
-        text_list = [self.bytesToText(theirsce, ele)[0] for ele in texts_offset]
+        text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
   
    
         #Remove duplicates
