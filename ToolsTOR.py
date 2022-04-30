@@ -95,7 +95,7 @@ class ToolsTOR(ToolsTales):
     
         
     # Extract THEIRSCE to XML
-    def extract_TheirSce_XML(self, scpkFileName,debug=False):
+    def extract_TheirSce_XML(self, scpkFileName):
      
         #Create the XML file
         root = etree.Element('SceneText')
@@ -107,9 +107,9 @@ class ToolsTOR(ToolsTales):
         with open(scpkFileName, "rb") as scpk:
             theirsce = self.get_theirsce_from_scpk(scpk,scpkFileName,True)
             
-            if (scpkFileName.endswith(".scpk") and debug):
-                with open("Debug/{}d.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
-                    f.write(theirsce.read())
+            #if (scpkFileName.endswith(".scpk") and debug):
+            #    with open("Debug/{}d.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
+            #        f.write(theirsce.read())
                     
         theirsce.seek(0)
         #Validate the header
@@ -128,7 +128,7 @@ class ToolsTOR(ToolsTales):
         theirsce.seek(pointer_block, 0)             #Go the the start of the pointer section
         pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize)
         
-        text_list = [self.bytesToText(theirsce, ele)[0] for ele in texts_offset]
+        text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
   
    
         #Remove duplicates
