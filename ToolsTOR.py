@@ -82,10 +82,7 @@ class ToolsTOR(ToolsTales):
                 c_type = struct.unpack("<b", data[:1])[0]
                 
             if data_decompressed[:8] == b"THEIRSCE":
-                
-                if debug:
-                     with open("Debug/{}.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
-                         f.write(data)
+            
                 return io.BytesIO(data_decompressed)
     
         return None
