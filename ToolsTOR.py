@@ -55,7 +55,7 @@ class ToolsTOR(ToolsTales):
         listFiles = [self.datPathExtract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.datPathExtract, "SCPK"))]
         for scpkFile in listFiles:
 
-            self.extract_TheirSce_XML(scpkFile,debug)
+            self.extract_TheirSce_XML(scpkFile)
         
     def get_theirsce_from_scpk(self, scpk, scpkFileName, debug=False)->bytes:
         header = scpk.read(4)
