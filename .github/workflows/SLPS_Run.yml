@@ -1,5 +1,5 @@
 
-name: Generate New SLPS and Release
+name: New SLPS Test
 
 on:
  workflow_dispatch
@@ -13,11 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     
-    #Test again
-    - name: Login to AZ CLI
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
-    - run:
-          az vm start -g ${{ secrets.AZURE_RESSOURCE }} -n ${{ secrets.AZURE_VM }}
+  # Name of step
+      - name: Start AWS EC2
+        # Run AWS Command on the GitHub Hosted runner which starts the instance using AWS authentication stored in GitHub Secrets (see below how to add)
+        run: |
+          aws ec2 start-instances --instance-ids ${{secrets.AWS_EC2_INSTANCE_ID }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
