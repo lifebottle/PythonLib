@@ -4,21 +4,25 @@ from pywinauto import mouse
 from pywinauto.findwindows import find_windows
 import os
 import shutil
-import subprocess
+import time
 
 
 
 def open_apache3_iso(repo_name):
     
+    print("Open Apache3")
     app = application.Application(backend="uia").start('apache3.exe')
+    
+    time.sleep(8)
     app = application.Application(backend="uia").connect(title='Apache3 Build 3.10.6 (BETA)')
     
     #Get the window about FREE license
+    print("Press Enter about Free License")
     app.Information.set_focus()
     send_keys('{ENTER}')
     
     #Get the window about Drive missing
-
+    print("Press Enter about Drive missing")
     drive_missing = app.Apache3Build.child_window(title="apache3", control_type="Window")
     drive_missing.set_focus()
     send_keys('{ENTER}')
