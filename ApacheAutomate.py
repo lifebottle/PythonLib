@@ -14,6 +14,9 @@ def open_apache3_iso(repo_name):
     app = application.Application(backend="win32").start('apache3.exe')
     
     time.sleep(8)
+    windows = application.Desktop(backend="uia").windows()
+    print([w.window_text() for w in windows])
+    
     app = application.Application(backend="win32").connect(title='Apache3 Build 3.10.6 (BETA)')
     
     #Get the window about FREE license
