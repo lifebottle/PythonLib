@@ -182,6 +182,7 @@ if __name__ == "__main__":
     args = get_arguments()
     #print(vars(args))
     
+    RepoFunctions.refresh_repo("PythonLib")
     game_name = args.game
     tales_instance = getTalesInstance(game_name)
     
