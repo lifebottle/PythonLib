@@ -26,6 +26,11 @@ jobs:
   runPython:
     runs-on: self-hosted
     steps:
+      - name: Refresh Repo
+      - uses: actions/checkout@v3
+        with:
+         ref: main
+      
       - name: Generating SLPS and creating Patch
         working-directory: ${{env.base_directory}}
         run: 
