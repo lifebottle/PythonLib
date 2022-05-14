@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     
-  # Name of step
+  
       - name: Start AWS EC2
         # Run AWS Command on the GitHub Hosted runner which starts the instance using AWS authentication stored in GitHub Secrets (see below how to add)
         run: |
@@ -23,8 +23,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
 
-
+  runPython:
+    runs-on: self-hosted
+    steps:
       - name: Generating SLPS and creating Patch
         working-directory: ${{env.base_directory}}
         run: 
-          python ToolsTales_Executable.py --game TOR pack SLPS
+          python ${{env.base_directory}}/ToolsTales_Executable.py --game TOR pack SLPS
