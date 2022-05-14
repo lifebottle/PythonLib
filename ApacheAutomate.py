@@ -11,10 +11,10 @@ import time
 def open_apache3_iso(repo_name):
     
     print("Open Apache3")
-    app = application.Application(backend="uia").start('apache3.exe')
+    app = application.Application(backend="win32").start('apache3.exe')
     
     time.sleep(8)
-    app = application.Application(backend="uia").connect(title='Apache3 Build 3.10.6 (BETA)')
+    app = application.Application(backend="win32").connect(title='Apache3 Build 3.10.6 (BETA)')
     
     #Get the window about FREE license
     print("Press Enter about Free License")
