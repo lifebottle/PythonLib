@@ -186,6 +186,10 @@ if __name__ == "__main__":
     game_name = args.game
     tales_instance = getTalesInstance(game_name)
     
+    org = 'SymphoniaLauren'
+    repo_name = 'Tales-of-Rebirth'
+    
+    
     #Utility function
     if args.action == "utility":
         
@@ -199,20 +203,20 @@ if __name__ == "__main__":
     if args.action == "pack":
         
         #RepoFunctions.refresh_repo("PythonLib")
-        RepoFunctions.refresh_repo("Tales-Of-Rebirth")
+        RepoFunctions.refresh_repo(repo_name)
         
         if args.file == "SLPS":
             
             #SLPS
             tales_instance.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50")
             
-            ApacheAutomate.apache_job(['SLPS_254.50'], "Tales-Of-Rebirth")
+            ApacheAutomate.apache_job(['SLPS_254.50'], repo_name)
             
 
             
             
             xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/Tales-Of-Rebirth_patch.xdelta"
-            generate_xdelta_patch("Tales-Of-Rebirth", xdelta_name)
+            generate_xdelta_patch(repo_name, xdelta_name)
             
             file_link = GoogleAPI.upload_xdelta(xdelta_name, "Stewie")            #Need to add user for the folder
             
@@ -222,6 +226,8 @@ Hi {},
 here is your xdelta patch : 
 {}
 """.format('fortiersteven1@gmail.com', file_link)
+
+            message_text = message_text + "<br>" + RepoFunctions.get_pull_requests_message(org, repo_name)
             GoogleAPI.send_message('fortiersteven1@gmail.com', 'fortiersteven1@gmail.com', game_name + " Patch", file_link, message_text)
             
 
