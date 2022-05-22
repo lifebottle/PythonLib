@@ -56,7 +56,7 @@ def get_pull_requests_message(org, repo_name):
     for pr in top5_prs:
     
         message = message + "<br>"
-        message += '{} - {} by {}'.format(pr['created_at'], pr['title'], pr['user']['login'])
+        message += '{} - {} by {} ... {}'.format(pr['created_at'], pr['title'], pr['user']['login'], pr['url'])
         
     return message
         
