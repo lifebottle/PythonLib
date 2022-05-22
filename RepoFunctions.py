@@ -44,13 +44,24 @@ def get_pull_requests(org, repo_name):
     #Taking Top 5 PR
     top5 = json_res[0:5]
     
-    top5_infos = pd.DataFrame([ [ele['created_at'], ele['title'], ele['state'], ele['user']['login'], ele['url']] for ele in top5], columns = ['Created', 'Title', 'Status', 'User', 'Url'])
-    
+    return top5
     
 def get_pull_requests_message(org, repo_name):
     
     #Get Datas
-    get_pull_requests(org, repo_name)
+    top5_prs = get_pull_requests(org, repo_name)
+    
+    message ='Here are the PRs recently : '
+    
+    for pr in top5_prs:
+    
+        message = message + "\n"
+        message += '{} - {} by {}'.format(pr['created_at'], pr['title'], pr['user']['login'])
+        
+    return message
+        
+        
+    
     
     
     
