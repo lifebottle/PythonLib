@@ -7,7 +7,7 @@ import io
 import re
 import requests
 import subprocess
-import ApacheAutomate
+import UIAutomate
 import RepoFunctions
 
 import GoogleAPI
@@ -210,7 +210,7 @@ if __name__ == "__main__":
             #SLPS
             tales_instance.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50")
             
-            ApacheAutomate.apache_job(['SLPS_254.50'], repo_name)
+            UIAutomate.apache_job(['SLPS_254.50'], repo_name)
             
 
             
