@@ -47,3 +47,10 @@ def get_pull_requests(org, repo_name):
     top5_infos = pd.DataFrame([ [ele['created_at'], ele['title'], ele['state'], ele['user']['login'], ele['url']] for ele in top5], columns = ['Created', 'Title', 'Status', 'User', 'Url'])
     
     
+def get_pull_requests_message(org, repo_name):
+    
+    #Get Datas
+    get_pull_requests(org, repo_name)
+    
+    
+    
