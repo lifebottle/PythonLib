@@ -222,7 +222,7 @@ Hi {},
 here is your xdelta patch : 
 {}
 """.format('fortiersteven1@gmail.com', file_link)
-            GoogleAPI.send_message('fortiersteven1@gmail.com', 'fortiersteven1@gmail.com', game_name + " Patch", file_link)
+            GoogleAPI.send_message('fortiersteven1@gmail.com', 'fortiersteven1@gmail.com', game_name + " Patch", file_link, message_text)
             
 
             
