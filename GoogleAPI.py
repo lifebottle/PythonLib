@@ -31,15 +31,10 @@ def get_credentials(): # Gets valid user credentials from disk.
     return credentials
 
 
-def send_message(sender, to, commiter_name, subject, xdelta_link):
+def send_message(sender, to, subject, xdelta_link, message_text):
     
     
-    message_text = """
-Hi {},
 
-here is your xdelta patch : 
-{}
-""".format(commiter_name, xdelta_link)
 
     credentials = get_credentials()
     #print (credentials)
