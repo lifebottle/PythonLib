@@ -2,6 +2,7 @@ from pywinauto import application
 from pywinauto.keyboard import send_keys
 from pywinauto import mouse
 from pywinauto.findwindows import find_windows
+from pywinauto import Desktop
 import os
 import shutil
 import time
@@ -105,3 +106,49 @@ def apache_job(files_list, repo_name):
         print("Close Apache3")
         app.connect(path="Apache3.exe")
         app.kill()
+
+def emulator_job(iso_file):
+    
+    print("Open Emulator")
+    app = application.Application(backend="uia").start(r'E:\Emu\PCSX2\pcsx2.exe')
+    
+    pcsx2_window = app.PCSX2
+    pcsx2_window.set_focus()
+    
+    #Open Menu and click on Burn Fast
+    mouse.click(button='left', coords=(721, 539))
+    mouse.click(button='left', coords=(775, 579))
+    
+     
+
+    game_window = app.child_window(auto_id ='8420')
+    game_window.set_focus()
+    
+    windows = Desktop(backend="uia").windows()
+    app = window.connect(title="Slot")
+    print([w.window_text() for w in windows])
+
+    #try:
+    time.sleep(6)
+    send_keys('{SPACE}')
+    print("One")
+    
+    time.sleep(12)
+    pcsx2_window.set_focus()
+    send_keys('{SPACE}')
+    print("Two")
+    
+    time.sleep(8)
+    pcsx2_window.set_focus()
+    send_keys('{SPACE}')
+    print("Three")
+        
+        
+    #except:
+    #    print("Iso is not working properly")
+    
+    app.close()
+    
+    system = pcsx2_window.Application.System.child_window(title="System", control_type="MenuItem")
+    
+    pcsx2_window.child_window(title="Update TOC", auto_id="1092", control_type="CheckBox").wrapper_object().click()
