@@ -279,8 +279,8 @@ class ToolsTOR(ToolsTales):
         
         o.write(dataFinal)
         
-        with open("10247.scpk", "wb") as f:
-            f.write(o.getvalue())
+        #with open("10247.scpk", "wb") as f:
+        #    f.write(o.getvalue())
         
         return o.getvalue()        
     
