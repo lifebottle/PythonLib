@@ -288,8 +288,8 @@ class ToolsTOR(ToolsTales):
     def extract_Main_Archive(self):
         
         #Create folder and delete everything isinde
-        shutil.rmtree("../Data/TOR/DAT")
-        self.mkdir("../Data/TOR/DAT")
+        shutil.rmtree("../Data/Tales-Of-Rebirth/DAT")
+        self.mkdir("../Data/Tales-Of-Rebirth/DAT")
                
         
         f = open( self.datBinOriginal, "rb")
@@ -348,7 +348,7 @@ class ToolsTOR(ToolsTales):
         buffer = 0
     
     
-        story_file_list = [self.get_file_name(ele) for ele in os.listdir("../Data/TOR/Story/New")]
+        story_file_list = [self.get_file_name(ele) for ele in os.listdir("../Data/Tales-Of-Rebirth/Story/New")]
         print(story_file_list)
         output_dat_path = self.datBinNew
         with open(output_dat_path, "wb") as output_dat:
