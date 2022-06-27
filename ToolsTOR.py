@@ -348,7 +348,7 @@ class ToolsTOR(ToolsTales):
         buffer = 0
     
     
-        story_file_list = [self.get_file_name(ele) for ele in os.listdir("../Data/Tales-Of-Rebirth/Story/New")]
+        story_file_list = [self.get_file_name(ele) for ele in os.listdir( self.story_XML_patch +"New")]
         print(story_file_list)
         output_dat_path = self.datBinNew
         with open(output_dat_path, "wb") as output_dat:
