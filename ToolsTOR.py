@@ -203,10 +203,10 @@ class ToolsTOR(ToolsTales):
     def pack_Story_File(self, scpkFileName):
         
         #Copy the original SCPK file to the folder used for the new version
-        shutil.copy( self.datPathExtract + "SCPK/" + scpkFileName, self.storyPathArchives + scpkFileName)
+        shutil.copy( self.dat_archive_extract + "SCPK/" + scpkFileName, self.storyPathArchives + scpkFileName)
         
         #Open the original SCPK
-        with open( self.datPathExtract + "SCPK/" + scpkFileName, 'r+b') as scpk:
+        with open( self.dat_archive_extract + "SCPK/" + scpkFileName, 'r+b') as scpk:
               
             
             #Get nb_files and files_size
@@ -315,7 +315,7 @@ class ToolsTOR(ToolsTales):
                 c_type = struct.unpack("<b", data[:1])[0]
                 data = comptolib.decompress_data(data)
                 extension = self.get_extension(data)
-                final_path = self.datPathExtract + "/%s/%s.%d.%s" % (
+                final_path = self.dat_archive_extract + "/%s/%s.%d.%s" % (
                     extension.upper(),
                     file_name,
                     c_type,
@@ -323,12 +323,12 @@ class ToolsTOR(ToolsTales):
                 )
             else:
                 extension = self.get_extension(data)
-                final_path = self.datPathExtract + "/%s/%s.%s" % (
+                final_path = self.dat_archive_extract + "/%s/%s.%s" % (
                     extension.upper(),
                     file_name,
                     extension,
                 )
-            folderPath = os.path.join( self.datPathExtract, extension.upper())
+            folderPath = os.path.join( self.dat_archive_extract, extension.upper())
             self.mkdir( folderPath )
     
             with open(final_path, "wb") as output:
@@ -339,8 +339,8 @@ class ToolsTOR(ToolsTales):
         f.close()
         
         #Copy File 11181
-        shutil.copy( self.datPathExtract+"BIN/11181.bin", self.datPathExtract+"PAK3/11181.pak3")
-        os.remove( self.datPathExtract+"BIN/11181.bin")
+        shutil.copy( self.dat_archive_extract+"BIN/11181.bin", self.dat_archive_extract+"PAK3/11181.pak3")
+        os.remove( self.dat_archive_extract+"BIN/11181.bin")
         
     def pack_Main_Archive(self):
         sectors = [0]
@@ -357,7 +357,7 @@ class ToolsTOR(ToolsTales):
             
             #Make a list with all the files of DAT.bin
             file_list = []
-            for path, subdir, filenames in os.walk(self.datPathExtract):
+            for path, subdir, filenames in os.walk(self.dat_archive_extract):
                 if len(filenames) > 0:
                     file_list.extend( [os.path.join(path,file) for file in filenames])
                 
