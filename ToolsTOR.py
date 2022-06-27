@@ -28,7 +28,7 @@ class ToolsTOR(ToolsTales):
     datBinNew        = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
     elfOriginal      = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
     elfNew           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
-    story_XML_new    = '../Tales-Of-Rebirth/Data/Data/TOR/Story/'                        #Story XML files will be extracted here                      
+    story_XML_new    = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
     story_XML_patch  = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
     skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here              
     dat_archive_extract   = '../Data/Tales-Of-Rebirth/DAT/' 
@@ -155,7 +155,7 @@ class ToolsTOR(ToolsTales):
         print(strings_offset)
               
         #Read the XML for the corresponding THEIRSCE
-        file = self.story_XML_patch +"XML/"+ self.get_file_name(scpkFileName)+'.xml'
+        file = self.story_XML_new +"XML/"+ self.get_file_name(scpkFileName)+'.xml'
         print("XML : {}".format(self.get_file_name(scpkFileName)+'.xml'))
         tree = etree.parse(file)
         root = tree.getroot()
@@ -203,7 +203,7 @@ class ToolsTOR(ToolsTales):
     def pack_Story_File(self, scpkFileName):
         
         #Copy the original SCPK file to the folder used for the new version
-        shutil.copy( self.dat_archive_extract + "SCPK/" + scpkFileName, self.storyPathArchives + scpkFileName)
+        shutil.copy( self.dat_archive_extract + "SCPK/" + scpkFileName, self.story_XML_patch + "New/" + scpkFileName)
         
         #Open the original SCPK
         with open( self.dat_archive_extract + "SCPK/" + scpkFileName, 'r+b') as scpk:
@@ -429,7 +429,7 @@ class ToolsTOR(ToolsTales):
     def pack_All_Story_Files(self):
         
         print("Recreating Story files")
-        listFiles = [ele for ele in os.listdir( self.storyPathArchives)]
+        listFiles = [ele for ele in os.listdir( self.story_XML_patch + "New/")]
         for scpkFile in listFiles:
             self.pack_Story_File(scpkFile)
             print("Writing file {} ...".format(scpkFile))
