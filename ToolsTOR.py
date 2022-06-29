@@ -24,10 +24,10 @@ class ToolsTOR(ToolsTales):
     
     
     #Path to used
-    datBinOriginal   = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
-    datBinNew        = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
-    elfOriginal      = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
-    elfNew           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
+    dat_bin_original   = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
+    dat_bin_new        = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
+    elf_original      = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
+    elf_new           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
     story_XML_new    = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
     story_XML_patch  = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
     skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here              
@@ -302,7 +302,7 @@ class ToolsTOR(ToolsTales):
         self.mkdir("../Data/Tales-Of-Rebirth/DAT")
                
         
-        f = open( self.datBinOriginal, "rb")
+        f = open( self.dat_bin_original, "rb")
     
         pointers = self.get_pointers(self.POINTERS_BEGIN)
         total_files = len(pointers)
@@ -360,7 +360,7 @@ class ToolsTOR(ToolsTales):
     
         story_file_list = [self.get_file_name(ele) for ele in os.listdir( self.story_XML_patch +"New")]
         print(story_file_list)
-        output_dat_path = self.datBinNew
+        output_dat_path = self.dat_bin_new
         with open(output_dat_path, "wb") as output_dat:
     
             print("Packing files into %s..." % os.path.basename(output_dat_path))
@@ -426,10 +426,10 @@ class ToolsTOR(ToolsTales):
             print("Writing file %05d/%05d..." % (current - dummies, len(file_list)))
         
         
-        shutil.copy( self.elfOriginal, self.elfNew)
+        shutil.copy( self.elf_original, self.elf_new)
         
         
-        with open(self.elfNew, "r+b") as output_elf:
+        with open(self.elf_new, "r+b") as output_elf:
             output_elf.seek(self.POINTERS_BEGIN)
         
             for i in range(len(sectors) - 1):
