@@ -40,6 +40,7 @@ class ToolsTOR(ToolsTales):
         
         #byteCode 
         self.story_byte_code = b"\xF8"
+        self.list_status_insertion = ['Done']
     
     
         
