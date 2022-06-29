@@ -165,7 +165,7 @@ class ToolsTOR(ToolsTales):
         
         return bytes_entry   
     
-    def getNewTheirsce(self, theirsce, scpkFileName):
+    def get_New_Theirsce(self, theirsce, scpkFileName):
         
         #To store the new text_offset and pointers to update
         new_text_offsets = dict()
@@ -181,6 +181,8 @@ class ToolsTOR(ToolsTales):
         tree = etree.parse(file)
         root = tree.getroot()
         
+        #Go at the start of the dialog
+        #Loop on every Entry and reinsert
         theirsce.seek(strings_offset+1)
         for entry_node in root.iter("Entry"):
             
@@ -193,7 +195,7 @@ class ToolsTOR(ToolsTales):
             #Write to the file
             theirsce.write(bytes_entry + b'\x00')
             
-        #Update the pointers
+        #Update the pointers based on the new text_offset of  the entries
         for pointer_offset, text_offset in new_text_offsets.items():
             
             pointers_list = pointer_offset.split(",")
@@ -256,7 +258,7 @@ class ToolsTOR(ToolsTales):
                         #    f.write(data_uncompressed)
                             
                         #Update THEIRSCE uncompressed file
-                        theirsce = self.getNewTheirsce(io.BytesIO(data_uncompressed), scpkFileName)
+                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpkFileName)
                         
                             
                         theirsce.seek(0)
