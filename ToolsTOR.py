@@ -187,24 +187,11 @@ class ToolsTOR(ToolsTales):
             #Add the PointerOffset and TextOffset
             new_text_offsets[entry_node.find("PointerOffset").text] = theirsce.tell()
             
-            #Grab the fields from the Entry in the XML
-            status = entry_node.find("Status").text
-            japanese_text = entry_node.find("JapaneseText").text
-            english_text = entry_node.find("EnglishText").text
-            
-            #Use the values only for Status = Done and use English if non empty
-            final_text = ''
-            if (status == "Done"):
-                final_text = english_text or japanese_text or ''
-            else:
-                final_text = japanese_text or ''
-            
-
-            #Convert the text values to bytes using TBL, TAGS, COLORS, ...
-            bytesEntry = self.text_to_bytes(final_text)
+            #Use the node to get the new bytes
+            bytes_entry = self.get_Node_Bytes(entry_node)
 
             #Write to the file
-            theirsce.write(bytesEntry + b'\x00')
+            theirsce.write(bytes_entry + b'\x00')
             
         #Update the pointers
         for pointer_offset, text_offset in new_text_offsets.items():
