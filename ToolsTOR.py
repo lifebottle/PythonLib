@@ -195,7 +195,7 @@ class ToolsTOR(ToolsTales):
             for pointer in pointers_list:
                 
                 theirsce.seek(int(pointer))
-                theirsce.write( struct.pack("<L", new_value))
+                theirsce.write( struct.pack("<H", new_value))
             
         return theirsce
             
