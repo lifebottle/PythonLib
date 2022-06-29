@@ -21,10 +21,10 @@ def open_apache3_iso(repo_name):
     send_keys('{ENTER}')
     
     #Get the window about Drive missing
-    print("Press Enter about Drive missing")
-    drive_missing = app.Apache3Build.child_window(title="apache3", control_type="Window")
-    drive_missing.set_focus()
-    send_keys('{ENTER}')
+    #print("Press Enter about Drive missing")
+    #drive_missing = app.Apache3Build.child_window(title="apache3", control_type="Window")
+    #drive_missing.set_focus()
+    #send_keys('{ENTER}')
 
     iso_path = os.path.join( os.path.normpath(os.getcwd() + os.sep + os.pardir), "Data",repo_name,"Disc","New","{}.iso".format(repo_name))
 
@@ -50,7 +50,7 @@ def locate_right_click(file_name, app):
 def browse_replace_file(file_replace_ele, new_file_path, repo_name):
     
     #Browse the file and put the new file path
-    new_file_path = os.path.join( os.path.normpath(os.getcwd() + os.sep + os.pardir), "Data",repo_name, "Menu", "New", "SLPS_254.50")
+    new_file_path = os.path.join( os.path.normpath(os.getcwd() + os.sep + os.pardir), "Data",repo_name, "Disc", "New", "SLPS_254.50")
     file_replace_ele.child_window(auto_id="1095").wrapper_object().click()
     file_replace_ele.Dialog.child_window(title="File name:", auto_id="1152", control_type="Edit").wrapper_object().type_keys(new_file_path)
     file_replace_ele.Dialog.child_window(title="Open", auto_id="1", control_type="Button").wrapper_object().click()
