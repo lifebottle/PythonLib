@@ -119,7 +119,7 @@ class ToolsTales:
         
     def get_pointers(self, start_offset):
 
-        f = open(self.elfOriginal , "rb")
+        f = open(self.elf_original , "rb")
     
         f.seek(start_offset, 0)
         pointers = []
@@ -818,7 +818,7 @@ class ToolsTales:
 
  
         if file_path == '':
-            file_path = self.elfOriginal
+            file_path = self.elf_original
 
 
         f = open(file_path , "rb")
