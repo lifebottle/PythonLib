@@ -24,10 +24,10 @@ class ToolsTOR(ToolsTales):
     
     
     #Path to used
-    datBinOriginal   = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
-    datBinNew        = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
-    elfOriginal      = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
-    elfNew           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
+    dat_bin_original   = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
+    dat_bin_new        = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
+    elf_original      = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
+    elf_new           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
     story_XML_new    = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
     story_XML_patch  = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
     skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here              
@@ -40,6 +40,7 @@ class ToolsTOR(ToolsTales):
         
         #byteCode 
         self.story_byte_code = b"\xF8"
+        self.list_status_insertion = ['Done']
     
     
         
@@ -53,11 +54,11 @@ class ToolsTOR(ToolsTales):
         
         self.mkdir( self.story_XML_patch + "XML")
         listFiles = [self.dat_archive_extract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.dat_archive_extract, "SCPK"))]
-        for scpkFile in listFiles:
+        for scpk_file in listFiles:
 
-            self.extract_TheirSce_XML(scpkFile)
+            self.extract_TheirSce_XML(scpk_file)
         
-    def get_theirsce_from_scpk(self, scpk, scpkFileName, debug=False)->bytes:
+    def get_theirsce_from_scpk(self, scpk, scpk_file_name, debug=False)->bytes:
         header = scpk.read(4)
     
         if header != b"SCPK":
@@ -92,20 +93,20 @@ class ToolsTOR(ToolsTales):
     
         
     # Extract THEIRSCE to XML
-    def extract_TheirSce_XML(self, scpkFileName):
+    def extract_TheirSce_XML(self, scpk_file_name):
      
         #Create the XML file
         root = etree.Element('SceneText')
-        etree.SubElement(root, "OriginalName").text = scpkFileName
+        etree.SubElement(root, "OriginalName").text = scpk_file_name
         
         stringsNode = etree.SubElement(root, "Strings")
         
         #Open the SCPK file to grab the THEIRSCE file
-        with open(scpkFileName, "rb") as scpk:
-            theirsce = self.get_theirsce_from_scpk(scpk,scpkFileName,True)
+        with open(scpk_file_name, "rb") as scpk:
+            theirsce = self.get_theirsce_from_scpk(scpk,scpk_file_name,True)
             
-            #if (scpkFileName.endswith(".scpk") and debug):
-            #    with open("Debug/{}d.theirsce".format( self.get_file_name(scpkFileName)), "wb") as f:
+            #if (scpk_file_name.endswith(".scpk") and debug):
+            #    with open("Debug/{}d.theirsce".format( self.get_file_name(scpk_file_name)), "wb") as f:
             #        f.write(theirsce.read())
                     
         theirsce.seek(0)
@@ -134,17 +135,37 @@ class ToolsTOR(ToolsTales):
         #Build the XML Structure with the information
         
         
-        file_path = self.story_XML_patch +"XML/"+ self.get_file_name(scpkFileName)
+        file_path = self.story_XML_patch +"XML/"+ self.get_file_name(scpk_file_name)
         root = self.create_Node_XML(file_path, list_informations, "SceneText")
     
         
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
     
-        with open(os.path.join( self.story_XML_patch,"XML", self.get_file_name(scpkFileName)+".xml"), "wb") as xmlFile:
+        with open(os.path.join( self.story_XML_patch,"XML", self.get_file_name(scpk_file_name)+".xml"), "wb") as xmlFile:
             xmlFile.write(txt)
         
-    def getNewTheirsce(self, theirsce, scpkFileName):
+    def get_Node_Bytes(self, entry_node):
+        
+        #Grab the fields from the Entry in the XML
+        status = entry_node.find("Status").text
+        japanese_text = entry_node.find("JapaneseText").text
+        english_text = entry_node.find("EnglishText").text
+        
+        #Use the values only for Status = Done and use English if non empty
+        final_text = ''
+        if (status in self.list_status_insertion):
+            final_text = english_text or japanese_text or ''
+        else:
+            final_text = japanese_text or ''
+        
+
+        #Convert the text values to bytes using TBL, TAGS, COLORS, ...
+        bytes_entry = self.text_to_bytes(final_text)
+        
+        return bytes_entry   
+    
+    def get_New_Theirsce(self, theirsce, scpk_file_name):
         
         #To store the new text_offset and pointers to update
         new_text_offsets = dict()
@@ -155,37 +176,26 @@ class ToolsTOR(ToolsTales):
         print(strings_offset)
               
         #Read the XML for the corresponding THEIRSCE
-        file = self.story_XML_new +"XML/"+ self.get_file_name(scpkFileName)+'.xml'
-        print("XML : {}".format(self.get_file_name(scpkFileName)+'.xml'))
+        file = self.story_XML_new +"XML/"+ self.get_file_name(scpk_file_name)+'.xml'
+        print("XML : {}".format(self.get_file_name(scpk_file_name)+'.xml'))
         tree = etree.parse(file)
         root = tree.getroot()
         
+        #Go at the start of the dialog
+        #Loop on every Entry and reinsert
         theirsce.seek(strings_offset+1)
         for entry_node in root.iter("Entry"):
             
             #Add the PointerOffset and TextOffset
             new_text_offsets[entry_node.find("PointerOffset").text] = theirsce.tell()
             
-            #Grab the fields from the Entry in the XML
-            status = entry_node.find("Status").text
-            japanese_text = entry_node.find("JapaneseText").text
-            english_text = entry_node.find("EnglishText").text
-            
-            #Use the values only for Status = Done and use English if non empty
-            final_text = ''
-            if (status == "Done"):
-                final_text = english_text or japanese_text or ''
-            else:
-                final_text = japanese_text or ''
-            
-
-            #Convert the text values to bytes using TBL, TAGS, COLORS, ...
-            bytesEntry = self.text_to_bytes(final_text)
+            #Use the node to get the new bytes
+            bytes_entry = self.get_Node_Bytes(entry_node)
 
             #Write to the file
-            theirsce.write(bytesEntry + b'\x00')
+            theirsce.write(bytes_entry + b'\x00')
             
-        #Update the pointers
+        #Update the pointers based on the new text_offset of  the entries
         for pointer_offset, text_offset in new_text_offsets.items():
             
             pointers_list = pointer_offset.split(",")
@@ -200,13 +210,13 @@ class ToolsTOR(ToolsTales):
         return theirsce
             
     #Repack SCPK files for Story
-    def pack_Story_File(self, scpkFileName):
+    def pack_Story_File(self, scpk_file_name):
         
         #Copy the original SCPK file to the folder used for the new version
-        shutil.copy( self.dat_archive_extract + "SCPK/" + scpkFileName, self.story_XML_patch + "New/" + scpkFileName)
+        shutil.copy( self.dat_archive_extract + "SCPK/" + scpk_file_name, self.story_XML_patch + "New/" + scpk_file_name)
         
         #Open the original SCPK
-        with open( self.dat_archive_extract + "SCPK/" + scpkFileName, 'r+b') as scpk:
+        with open( self.dat_archive_extract + "SCPK/" + scpk_file_name, 'r+b') as scpk:
               
             
             #Get nb_files and files_size
@@ -248,7 +258,7 @@ class ToolsTOR(ToolsTales):
                         #    f.write(data_uncompressed)
                             
                         #Update THEIRSCE uncompressed file
-                        theirsce = self.getNewTheirsce(io.BytesIO(data_uncompressed), scpkFileName)
+                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpk_file_name)
                         
                             
                         theirsce.seek(0)
@@ -292,7 +302,7 @@ class ToolsTOR(ToolsTales):
         self.mkdir("../Data/Tales-Of-Rebirth/DAT")
                
         
-        f = open( self.datBinOriginal, "rb")
+        f = open( self.dat_bin_original, "rb")
     
         pointers = self.get_pointers(self.POINTERS_BEGIN)
         total_files = len(pointers)
@@ -338,9 +348,6 @@ class ToolsTOR(ToolsTales):
         print("Writing file %05d/%05d..." % (i, total_files))
         f.close()
         
-        #Copy File 11181
-        shutil.copy( self.dat_archive_extract+"BIN/11181.bin", self.dat_archive_extract+"PAK3/11181.pak3")
-        os.remove( self.dat_archive_extract+"BIN/11181.bin")
         
     def pack_Main_Archive(self):
         sectors = [0]
@@ -350,7 +357,7 @@ class ToolsTOR(ToolsTales):
     
         story_file_list = [self.get_file_name(ele) for ele in os.listdir( self.story_XML_patch +"New")]
         print(story_file_list)
-        output_dat_path = self.datBinNew
+        output_dat_path = self.dat_bin_new
         with open(output_dat_path, "wb") as output_dat:
     
             print("Packing files into %s..." % os.path.basename(output_dat_path))
@@ -416,10 +423,10 @@ class ToolsTOR(ToolsTales):
             print("Writing file %05d/%05d..." % (current - dummies, len(file_list)))
         
         
-        shutil.copy( self.elfOriginal, self.elfNew)
+        shutil.copy( self.elf_original, self.elf_new)
         
         
-        with open(self.elfNew, "r+b") as output_elf:
+        with open(self.elf_new, "r+b") as output_elf:
             output_elf.seek(self.POINTERS_BEGIN)
         
             for i in range(len(sectors) - 1):
@@ -430,9 +437,9 @@ class ToolsTOR(ToolsTales):
         
         print("Recreating Story files")
         listFiles = [ele for ele in os.listdir( self.story_XML_patch + "New/")]
-        for scpkFile in listFiles:
-            self.pack_Story_File(scpkFile)
-            print("Writing file {} ...".format(scpkFile))
+        for scpk_file in listFiles:
+            self.pack_Story_File(scpk_file)
+            print("Writing file {} ...".format(scpk_file))
             
     def insert_All(self):
         
