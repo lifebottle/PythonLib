@@ -48,7 +48,12 @@ class ToolsTales:
         with open("../{}/Data/{}/Menu/MenuFiles.json".format(repo_name, gameName)) as f:
            self.menu_files_json = json.load(f)
            
-           
+    def generate_xdelta_patch(repo_name, xdelta_name):
+    
+        print("Create xdelta patch")
+        original_path = "../Data/{}/Disc/Original/{}.iso".format(repo_name, repo_name)
+        new_path = "../Data/{}/Disc/New/{}.iso".format(repo_name, repo_name)
+        subprocess.run(["xdelta", "-f", "-s", original_path, new_path, xdelta_name])
            
     def mkdir(self, d):
         try: os.mkdir(d)
