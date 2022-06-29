@@ -50,14 +50,13 @@ def locate_right_click(file_name, app):
 def browse_replace_file(file_replace_ele, new_file_path, repo_name):
     
     #Browse the file and put the new file path
-    new_file_path = os.path.join( os.path.normpath(os.getcwd() + os.sep + os.pardir), "Data",repo_name, "Disc", "New", "SLPS_254.50")
     file_replace_ele.child_window(auto_id="1095").wrapper_object().click()
     file_replace_ele.Dialog.child_window(title="File name:", auto_id="1152", control_type="Edit").wrapper_object().type_keys(new_file_path)
     file_replace_ele.Dialog.child_window(title="Open", auto_id="1", control_type="Button").wrapper_object().click()
     
     #Click on the Replace File button
-    file_replace_ele.child_window(title="Replace File", auto_id="1094", control_type="Button").wrapper_object().click()
-    
+    #file_replace_ele.child_window(title="Replace File", auto_id="21608", control_type="Button").wrapper_object().click()
+    mouse.click(button='left', coords=(1399, 655)) 
     
 def replace_files(files_list, repo_name, app):
     
@@ -87,8 +86,8 @@ def apache_job(files_list, repo_name):
     original_path = os.path.join(os.getcwd(), "..", "Data", repo_name, "Disc", "Original", "{}.iso".format(repo_name))
     new_path = os.path.join(os.getcwd(), "..", "Data", repo_name, "Disc", "New", "{}.iso".format(repo_name))
     
-    print("Copy Original Iso into New folder")
-    shutil.copy( original_path, new_path)
+    #print("Copy Original Iso into New folder")
+    #shutil.copy( original_path, new_path)
     
     
     try:
