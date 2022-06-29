@@ -144,6 +144,26 @@ class ToolsTOR(ToolsTales):
         with open(os.path.join( self.story_XML_patch,"XML", self.get_file_name(scpkFileName)+".xml"), "wb") as xmlFile:
             xmlFile.write(txt)
         
+    def get_Node_Bytes(self, entry_node, list_rules):
+        
+        #Grab the fields from the Entry in the XML
+        status = entry_node.find("Status").text
+        japanese_text = entry_node.find("JapaneseText").text
+        english_text = entry_node.find("EnglishText").text
+        
+        #Use the values only for Status = Done and use English if non empty
+        final_text = ''
+        if (status in list_rules):
+            final_text = english_text or japanese_text or ''
+        else:
+            final_text = japanese_text or ''
+        
+
+        #Convert the text values to bytes using TBL, TAGS, COLORS, ...
+        bytes_entry = self.text_to_bytes(final_text)
+        
+        return bytes_entry   
+    
     def getNewTheirsce(self, theirsce, scpkFileName):
         
         #To store the new text_offset and pointers to update
