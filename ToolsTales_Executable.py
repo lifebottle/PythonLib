@@ -55,7 +55,7 @@ def get_arguments(argv=None):
         help="Options: TOR, TOPX, TOH",
         
     )
-    sp = parser.add_subparsers(title="Available actions", required=True, dest="action")
+    sp = parser.add_subparsers(title="Available actions", required=False, dest="action")
     
   
     
@@ -63,8 +63,7 @@ def get_arguments(argv=None):
     # Utility commands
     sp_utility = sp.add_parser(
         "utility",
-        description="Usefull functions to be called from Translation App",
-        formatter_class=argparse.RawTextHelpFormatter,
+        description="Usefull functions to be called from Translation App"
     )
     
    
@@ -78,13 +77,11 @@ def get_arguments(argv=None):
     
     sp_utility.add_argument(
         "param1",
-        metavar="param1",
         help="First parameter of a function",
     )
     
     sp_utility.add_argument(
         "param2",
-        metavar="param2",
         help="Second parameter of a function",
     )
     
@@ -102,7 +99,13 @@ def get_arguments(argv=None):
         help="Options: all, dat, mfh, theirsce, scpk",
     )
 
-    # PAK commands
+    sp_updateiso = sp.add_parser(
+        "updateiso",
+        description="Update the iso using Apache",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+
+
     sp_pack = sp.add_parser("pack", help="Packs some file types into the originals.")
     
     
@@ -175,14 +178,18 @@ def getTalesInstance(game_name):
 
     return talesInstance
 
-
+def replace_Files_Apache(files_list, repo):
+    
+    ApacheAutomate.apache_job(files_list, repo)
+    
+    
 if __name__ == "__main__":
  
         
     args = get_arguments()
     #print(vars(args))
     
-    RepoFunctions.refresh_repo("PythonLib")
+    #RepoFunctions.refresh_repo("PythonLib")
     game_name = args.game
     tales_instance = getTalesInstance(game_name)
     
@@ -200,9 +207,12 @@ if __name__ == "__main__":
         if args.function == "dumptext":
             
             tales_instance.bytes_to_text_with_offset( args.param1, int(args.param2))
+            
+            
+            
     if args.action == "pack":
         
-        #RepoFunctions.refresh_repo("PythonLib")
+
         RepoFunctions.refresh_repo(repo_name)
         
         if args.file == "SLPS":
@@ -210,9 +220,6 @@ if __name__ == "__main__":
             #SLPS
             tales_instance.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50")
             
-            ApacheAutomate.apache_job(['SLPS_254.50'], repo_name)
-            
-
             
             
             xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/Tales-Of-Rebirth_patch.xdelta"
@@ -231,7 +238,8 @@ here is your xdelta patch :
             GoogleAPI.send_message('fortiersteven1@gmail.com', 'fortiersteven1@gmail.com', game_name + " Patch", file_link, message_text)
             
 
-            
+    if args.action == "updateiso":
+        replace_Files_Apache( ['SLPS_254.50', 'DAT.BIN'], repo_name)
     if args.action == "unpack":
         
         if args.file == "Main":
@@ -244,6 +252,3 @@ here is your xdelta patch :
         if args.file == "Story":
             tales_instance.extract_All_Story_Files()
             
-        
-                
-                
