@@ -1,0 +1,37 @@
+
+name: Story Patch
+
+on:
+ workflow_dispatch
+
+env:
+  base_directory: c:/actions-runner/_work/PythonLib
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  startVM:
+    runs-on: ubuntu-latest
+    steps:
+    
+  
+      - name: Start AWS EC2
+        # Run AWS Command on the GitHub Hosted runner which starts the instance using AWS authentication stored in GitHub Secrets (see below how to add)
+        run: |
+          aws ec2 start-instances --instance-ids ${{secrets.AWS_EC2_INSTANCE_ID }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+
+  runPython:
+    runs-on: self-hosted
+    steps:
+      - name: Refresh Repo
+      - uses: actions/checkout@v3
+        with:
+         ref: main
+      
+      - name: Apache
+        run:
+          schtasks /Run /TN "Run Apache"
+
