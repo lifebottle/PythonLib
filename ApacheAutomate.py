@@ -45,6 +45,7 @@ def locate_right_click(file_name, app):
     pos_x = item.rectangle().mid_point().x
     pos_y = item.rectangle().mid_point().y
     app.Apache3Build.set_focus()
+    #app.Apache3Build.child_window(title="Replace File  ", auto_id="24228", control_type="Button").wrapper_object().click()
     mouse.click(button='right', coords=(pos_x, pos_y))
     
 def browse_replace_file(file_replace_ele, new_file_path, repo_name):
@@ -55,8 +56,9 @@ def browse_replace_file(file_replace_ele, new_file_path, repo_name):
     file_replace_ele.Dialog.child_window(title="Open", auto_id="1", control_type="Button").wrapper_object().click()
     
     #Click on the Replace File button
-    #file_replace_ele.child_window(title="Replace File", auto_id="21608", control_type="Button").wrapper_object().click()
-    mouse.click(button='left', coords=(1399, 655)) 
+    file_replace_ele.child_window(title="Replace File", auto_id="1094", control_type="Button").wrapper_object().click()
+    #file_replace_ele.set_focus()
+    #mouse.click(button='left', coords=(1399, 655)) 
     
 def replace_files(files_list, repo_name, app):
     
@@ -68,6 +70,7 @@ def replace_files(files_list, repo_name, app):
 
         #Click on the option "Replace Selected File"
         replace_file_pos = app.Context.child_window(title="Replace Selected File", auto_id="32782", control_type="MenuItem").wrapper_object().rectangle().mid_point()
+        
         mouse.click(button='left', coords=(replace_file_pos.x, replace_file_pos.y))
         
         file_replace_ele = app.Apache3Build.Apache3FileReplacer
