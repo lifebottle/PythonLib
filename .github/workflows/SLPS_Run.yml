@@ -34,4 +34,10 @@ jobs:
       - name: Generating SLPS and creating Patch
         working-directory: ${{env.base_directory}}
         run: 
-          python ${{env.base_directory}}/ToolsTales_Executable.py --game TOR pack SLPS
+          python ${{env.base_directory}}/ToolsTales_Executable.py --game TOR pack Main
+          
+      
+      - name: Apache
+        run:
+          schtasks /Run /TN "Run Apache"
+
