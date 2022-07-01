@@ -195,7 +195,7 @@ if __name__ == "__main__":
     
     org = 'SymphoniaLauren'
     repo_name = 'Tales-of-Rebirth'
-    
+    RepoFunctions.refresh_repo(repo_name)
     
     #Utility function
     if args.action == "utility":
@@ -213,7 +213,7 @@ if __name__ == "__main__":
     if args.action == "pack":
         
 
-        RepoFunctions.refresh_repo(repo_name)
+        
         
         if args.file == "SLPS":
             
@@ -238,6 +238,11 @@ here is your xdelta patch :
             GoogleAPI.send_message('fortiersteven1@gmail.com', 'fortiersteven1@gmail.com', game_name + " Patch", file_link, message_text)
             
 
+
+        if args.file == "Main":
+            
+            tales_instance.pack_Main_Archive()
+            
     if args.action == "updateiso":
         replace_Files_Apache( ['SLPS_254.50', 'DAT.BIN'], repo_name)
     if args.action == "unpack":
