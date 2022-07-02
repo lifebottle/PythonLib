@@ -489,15 +489,11 @@ class ToolsTales:
                     if tag_param != None:
                         finalText += tag_param
                     else:
-                        
-                        
                         #Pad the tag to be even number of characters
                         hex_value = self.hex2(b2)
                         if len(hex_value) < 4 and tag_name not in ['icon','speed']:
                             hex_value = "0"*(4-len(hex_value)) + hex_value
                         
-                    
-                            
                         finalText += '<{}:{}>'.format(tag_name, hex_value)
                         #finalText += ("<%s:%08X>" % (tag_name, b2))
                 else:
@@ -507,7 +503,7 @@ class ToolsTales:
             elif b >= 0xA1 and b < 0xE0:
                 finalText += struct.pack("B", b).decode("cp932")
             elif b in (0x13, 0x17, 0x1A):
-                tag_name = f"unk{b:02X}"
+                tag_name = f"Unk{b:02X}"
                 hex_value = ""
                 
                 while fileRead.read(1) != b"\x80":
@@ -520,10 +516,9 @@ class ToolsTales:
                 finalText += '<{}:{}>'.format(tag_name, hex_value)
                 
             elif b in (0x18, 0x19):
-                tag_name = f"unk{b:02X}"
+                tag_name = f"Unk{b:02X}"
                 hex_value = ""
-                
-            
+ 
                 while fileRead.read(1) != b"\x80":
                     fileRead.seek(fileRead.tell()-1)
                     hex_value += fileRead.read(1).hex()
@@ -578,6 +573,11 @@ class ToolsTales:
                                 if split[0][1:] in self.itags.keys():
                                     bytesFinal += struct.pack("B", self.itags[split[0][1:]])
                                     bytesFinal += struct.pack("<I", int(split[1][:8], 16))
+                                elif split[0][1:4] == "Unk":
+                                    bytesFinal += struct.pack("B", int(split[0][4:], 16))
+                                    for i in [split[1][i:i+2] for i in range(0, len(split[1]) - 2, 2)]:
+                                        bytesFinal += struct.pack("B", int(i, 16))
+                                    bytesFinal += struct.pack("B", 0x80)
                                 else:
                                     bytesFinal += struct.pack("B", int(split[0][1:], 16))
                                     bytesFinal += struct.pack("<I", int(split[1][:8], 16))
