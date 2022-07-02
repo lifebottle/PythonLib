@@ -509,20 +509,25 @@ class ToolsTales:
             elif b in (0x13, 0x17, 0x1A):
                 tag_name = f"unk{b:02X}"
                 hex_value = ""
-                while fileRead.peek(1)[:1] != b"\x80":
+                
+                while fileRead.read(1) != b"\x80":
+                    fileRead.seek(fileRead.tell()-1)
                     mark = fileRead.read(1)
                     hex_value += mark.hex()
                     if mark == "\x38":
                         hex_value += f"{struct.unpack('<H', fileRead.read(2))[0]:04X}"
-                fileRead.read(1) # skip the 0x80 byte
+         
                 finalText += '<{}:{}>'.format(tag_name, hex_value)
                 
             elif b in (0x18, 0x19):
                 tag_name = f"unk{b:02X}"
                 hex_value = ""
-                while fileRead.peek(1)[:1] != b"\x80":
+                
+            
+                while fileRead.read(1) != b"\x80":
+                    fileRead.seek(fileRead.tell()-1)
                     hex_value += fileRead.read(1).hex()
-                fileRead.read(1) # skip the 0x80 byte
+         
                 finalText += '<{}:{}>'.format(tag_name, hex_value)
 
             elif b == 0x81:
