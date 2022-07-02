@@ -443,6 +443,9 @@ class ToolsTales:
         with open('test.xml', "wb") as xmlFile:
             xmlFile.write(txt)
         
+    def hex2(self, n):
+        x = '%x' % (n,)
+        return ('0' * (len(x) % 2)) + x
 
     #Convert a bytes object to text using TAGS and TBL in the json file
     def bytes_to_text(self, fileRead, offset=-1, end_strings = b"\x00"):
@@ -486,7 +489,17 @@ class ToolsTales:
                     if tag_param != None:
                         finalText += tag_param
                     else:
-                        finalText += ("<%s:%08X>" % (tag_name, b2))
+                        
+                        
+                        #Pad the tag to be even number of characters
+                        hex_value = self.hex2(b2)
+                        if len(hex_value) < 4 and tag_name not in ['icon','speed']:
+                            hex_value = "0"*(4-len(hex_value)) + hex_value
+                        
+                    
+                            
+                        finalText += '<{}:{}>'.format(tag_name, hex_value)
+                        #finalText += ("<%s:%08X>" % (tag_name, b2))
                 else:
                     finalText += "<%02X:%08X>" % (b, b2)
             elif chr(b) in self.PRINTABLE_CHARS:
