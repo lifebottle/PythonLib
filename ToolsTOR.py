@@ -375,6 +375,7 @@ class ToolsTOR(ToolsTales):
         
     
             for file in sorted(file_list, key=self.get_file_name):
+             
                 size = 0
                 remainder = 0
                 current = int(re.search(self.VALID_FILE_NAME, file).group(1))
@@ -387,11 +388,10 @@ class ToolsTOR(ToolsTales):
                         previous += 1
                         dummies += 1
                 file_name = self.get_file_name(file)
-                if file_name in story_file_list:
-                    print("10247 STORY")
+                
+                if ".scpk" in file:
+                  
                     data = self.pack_Story_File(file_name+".scpk")
-                    with open("10247.scpk","wb") as f:
-                        f.write(data)
                       
                 else:
                     with open(file, "rb") as f2:
