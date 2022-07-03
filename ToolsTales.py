@@ -559,7 +559,7 @@ class ToolsTales:
         for line in splitLineBreak:
             string_hex = re.split(self.HEX_TAG, line)
             string_hex = [sh for sh in string_hex if sh]
-        
+    
             for s in string_hex:
                 if re.match(self.HEX_TAG, s):
                     bytesFinal += struct.pack("B", int(s[1:3], 16))
@@ -567,12 +567,13 @@ class ToolsTales:
                     s_com = re.split(self.COMMON_TAG, s)
                     s_com = [sc for sc in s_com if sc]
                     for c in s_com:
+                      
                         if re.match(self.COMMON_TAG, c):
                             if ":" in c:
                                 split = c.split(":")
                                 if split[0][1:] in self.itags.keys():
                                     bytesFinal += struct.pack("B", self.itags[split[0][1:]])
-                                    bytesFinal += struct.pack("<I", int(split[1][:8], 16))
+                                    bytesFinal += struct.pack("<I", int(split[1][:-1], 16))
                                 elif split[0][1:4] == "Unk":
                                     bytesFinal += struct.pack("B", int(split[0][4:], 16))
                                     for i in [split[1][i:i+2] for i in range(0, len(split[1]) - 2, 2)]:
@@ -593,7 +594,7 @@ class ToolsTales:
                                     bytesFinal += self.itable[c2]
                                 else:
                                     bytesFinal += c2.encode("cp932")
-            i=i+1
+           
             if (nb >=2 and i<nb):
                 bytesFinal += b'\x01'
         
