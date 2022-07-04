@@ -40,7 +40,7 @@ class ToolsTOR(ToolsTales):
         
         #byteCode 
         self.story_byte_code = b"\xF8"
-        self.list_status_insertion = ['Done']
+        self.list_status_insertion = ['Done', 'Proofreading']
     
     
         
@@ -57,6 +57,7 @@ class ToolsTOR(ToolsTales):
         for scpk_file in listFiles:
 
             self.extract_TheirSce_XML(scpk_file)
+            self.id = 1
         
     def get_theirsce_from_scpk(self, scpk, scpk_file_name, debug=False)->bytes:
         header = scpk.read(4)
@@ -130,13 +131,14 @@ class ToolsTOR(ToolsTales):
   
    
         #Remove duplicates
-        list_informations = self.remove_duplicates(["Story"] * len(pointers_offset), pointers_offset, text_list)
+        #list_informations = self.remove_duplicates(["Story"] * len(pointers_offset), pointers_offset, text_list)
         
+        list_informations = ( ['Story', pointers_offset[i], text_list[i]] for i in range(len(text_list)))
         #Build the XML Structure with the information
         
         
         file_path = self.story_XML_patch +"XML/"+ self.get_file_name(scpk_file_name)
-        root = self.create_Node_XML(file_path, list_informations, "SceneText")
+        root = self.create_Node_XML(file_path, list_informations, "Story", "SceneText")
     
         
         #Write the XML file
@@ -173,11 +175,12 @@ class ToolsTOR(ToolsTales):
         #Grab strings_offset for pointers
         theirsce.read(12)
         strings_offset = struct.unpack("<L", theirsce.read(4))[0]
-        print(strings_offset)
+        
               
         #Read the XML for the corresponding THEIRSCE
         file = self.story_XML_new +"XML/"+ self.get_file_name(scpk_file_name)+'.xml'
-        print("XML : {}".format(self.get_file_name(scpk_file_name)+'.xml'))
+        #print("XML : {}".format(self.get_file_name(scpk_file_name)+'.xml'))
+        
         tree = etree.parse(file)
         root = tree.getroot()
         
@@ -355,8 +358,7 @@ class ToolsTOR(ToolsTales):
         buffer = 0
     
     
-        story_file_list = [self.get_file_name(ele) for ele in os.listdir( self.story_XML_patch +"New")]
-        print(story_file_list)
+   
         output_dat_path = self.dat_bin_new
         with open(output_dat_path, "wb") as output_dat:
     
@@ -375,10 +377,11 @@ class ToolsTOR(ToolsTales):
         
     
             for file in sorted(file_list, key=self.get_file_name):
+             
                 size = 0
                 remainder = 0
                 current = int(re.search(self.VALID_FILE_NAME, file).group(1))
-        
+                
                 if current != previous + 1:
                     while previous < current - 1:
                         remainders.append(remainder)
@@ -387,11 +390,10 @@ class ToolsTOR(ToolsTales):
                         previous += 1
                         dummies += 1
                 file_name = self.get_file_name(file)
-                if file_name in story_file_list:
-                    print("10247 STORY")
+                
+                if ".scpk" in file:
+                    print(file)
                     data = self.pack_Story_File(file_name+".scpk")
-                    with open("10247.scpk","wb") as f:
-                        f.write(data)
                       
                 else:
                     with open(file, "rb") as f2:
