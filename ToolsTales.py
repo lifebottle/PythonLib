@@ -43,7 +43,7 @@ class ToolsTales:
         self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
         self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAME'].items()])
         self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLOR'].items()])
-        
+        self.id = 1
         
         with open("../{}/Data/{}/Menu/MenuFiles.json".format(repo_name, gameName)) as f:
            self.menu_files_json = json.load(f)
@@ -559,7 +559,7 @@ class ToolsTales:
         for line in splitLineBreak:
             string_hex = re.split(self.HEX_TAG, line)
             string_hex = [sh for sh in string_hex if sh]
-    
+            #print(string_hex)
             for s in string_hex:
                 if re.match(self.HEX_TAG, s):
                     bytesFinal += struct.pack("B", int(s[1:3], 16))
@@ -576,8 +576,8 @@ class ToolsTales:
                                     bytesFinal += struct.pack("<I", int(split[1][:-1], 16))
                                 elif split[0][1:4] == "Unk":
                                     bytesFinal += struct.pack("B", int(split[0][4:], 16))
-                                    for i in [split[1][i:i+2] for i in range(0, len(split[1]) - 2, 2)]:
-                                        bytesFinal += struct.pack("B", int(i, 16))
+                                    for j in [split[1][j:j+2] for j in range(0, len(split[1]) - 2, 2)]:
+                                        bytesFinal += struct.pack("B", int(j, 16))
                                     bytesFinal += struct.pack("B", 0x80)
                                 else:
                                     bytesFinal += struct.pack("B", int(split[0][1:], 16))
@@ -593,8 +593,10 @@ class ToolsTales:
                                 if c2 in self.itable.keys():
                                     bytesFinal += self.itable[c2]
                                 else:
+                                   
                                     bytesFinal += c2.encode("cp932")
            
+            i=i+1
             if (nb >=2 and i<nb):
                 bytesFinal += b'\x01'
         
@@ -605,7 +607,7 @@ class ToolsTales:
         #Return the bytes for that specific text
         bytes_from_text = self.text_to_bytes(japanese_text)
 
-    def create_Entry(self, strings_node, section, pointer_offset, text):
+    def create_Entry(self, strings_node, pointer_offset, text):
         
         #Add it to the XML node
         entry_node = etree.SubElement(strings_node, "Entry")
@@ -613,6 +615,9 @@ class ToolsTales:
         etree.SubElement(entry_node,"JapaneseText").text  = text
         etree.SubElement(entry_node,"EnglishText").text   = ''
         etree.SubElement(entry_node,"Notes").text         = ''
+        etree.SubElement(entry_node,"Id").text            = str(self.id)
+        
+        self.id = self.id + 1
         
         if text == '':
             statusText = 'Done'
@@ -621,22 +626,15 @@ class ToolsTales:
         etree.SubElement(entry_node,"Status").text        = statusText
         
         
-    def create_Node_XML(self, fileName, list_informations, parent):
+    def create_Node_XML(self, fileName, list_informations, section, parent):
         
         root = etree.Element(parent)
+        strings_node = etree.SubElement(root, 'Strings')
+        etree.SubElement(strings_node, 'Section').text = section
         
-        
-     
-        sections = set([item[0] for item in list_informations])
-  
-        for section in sections:
-            strings_node = etree.SubElement(root, 'Strings')
-            etree.SubElement(strings_node, "Section").text = section
-            list_section = [ele for ele in list_informations if ele[0] == section]
-            
 
-            for s, pointers_offset, text in list_section:
-                self.create_Entry( strings_node, s, pointers_offset, text)
+        for s, pointers_offset, text in list_informations:
+            self.create_Entry( strings_node,  pointers_offset, text)
          
         return root
        
