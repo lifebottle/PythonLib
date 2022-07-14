@@ -34,6 +34,9 @@ class ToolsTOPX(ToolsTales):
         self.all_original     = '../Data/{}/Disc/Original/PSP_GAME/USRDIR/all.dat'.format(self.repo_name)
         self.all_new          = '../Data/{}/Disc/New/PSP_GAME/USRDIR/all.dat'.format(self.repo_name)                  #File is all.dat
         
+        self.story_struct_byte_code = b'\x18\x00\x0C\x04'
+        self.story_string_byte_code = b'\x00\x00\x82\x02'
+        
         self.make_dirs()
     #############################
     #
@@ -142,7 +145,10 @@ class ToolsTOPX(ToolsTales):
         #File size
         fsize = tss.getbuffer().nbytes
         tss.seek(pointer_block, 0)             #Go the the start of the pointer section
-        pointers_offset, texts_offset = self.extract_Story_Pointers(tss, strings_offset, fsize)
+        
+        
+        #Struct
+        pointers_offset, texts_offset = self.extract_Story_Pointers(tss, strings_offset, fsize, self.story_string_byte_code)
         
         text_list = [self.bytes_to_text(tss, ele)[0] for ele in texts_offset]
   

@@ -241,7 +241,7 @@ class ToolsTales:
             HW.pack_into(out, cmds, c)
         return bytes(out)
     
-    def extract_Story_Pointers(self, theirsce, strings_offset, fsize):
+    def extract_Story_Pointers(self, theirsce, strings_offset, fsize, bytecode):
         
         
         pointers_offset = []
@@ -250,7 +250,7 @@ class ToolsTales:
         previous_addr = 0
         while theirsce.tell() < strings_offset:
             b = theirsce.read(1)
-            if b == self.story_byte_code:
+            if b == bytecode:
                 addr = struct.unpack("<H", theirsce.read(2))[0]
                 
                 current_pos = theirsce.tell()
