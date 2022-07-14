@@ -706,9 +706,10 @@ class ToolsTales:
                     japanese_text = entry_node.find("JapaneseText").text
                     english_text = entry_node.find("EnglishText").text
                     
+                    print(english_text)
                     #Use the values only for Status = Done and use English if non empty
                     final_text = ''
-                    if (status == "Done"):
+                    if (status not in ['Problematic', 'To Do']):
                         final_text = english_text or japanese_text or ''
                     else:
                         final_text = japanese_text or ''
@@ -783,13 +784,7 @@ class ToolsTales:
     #
     #############################
     
-    def extractDecryptedEboot(self):
-        print("Extracting Eboot")
-        args = ["deceboot", os.path.join(self.basePath,"../Data/Disc/Original/PSP_GAME/SYSDIR/EBOOT.BIN"), os.path.join("../Data/Misc/EBOOT_DEC.BIN")]
-        listFile = subprocess.run(
-            args,
-            cwd= self.basePath,
-            )
+    
                
    
     def extract_abcde_text(self, filename, modify_xml = True):
