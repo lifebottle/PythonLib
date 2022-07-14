@@ -125,7 +125,7 @@ class ToolsTOR(ToolsTales):
         #File size
         fsize = theirsce.getbuffer().nbytes
         theirsce.seek(pointer_block, 0)             #Go the the start of the pointer section
-        pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize)
+        pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize, self.story_byte_code)
         
         text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
   
