@@ -6,6 +6,7 @@ import struct
 import shutil
 import os
 import re
+import io
 import pandas as pd
 import xml.etree.ElementTree as ET
 import lxml.etree as etree
@@ -89,13 +90,79 @@ class ToolsTOPX(ToolsTales):
         for f in os.listdir( path ):
             if os.path.isfile( path+f) and '.cab' in f:
                 
-                #Unpack the CAB into PAK3 file
-                fileName = self.story_XML_extract+f.replace(".cab", ".pak3")
-                subprocess.run(['expand', path+f, fileName])
                 
-                #Decompress using PAKCOMPOSER + Comptoe
-                #super().pakComposerAndComptoe(fileName, "-d", "-3")
+                file_name = self.story_XML_extract+'New/'+f.replace(".cab", ".pak3")
+                self.extract_Story_File(path+f, file_name)
                 
+                
+                
+                
+        
+                    #super().pakComposerAndComptoe(fileName, "-d", "-3")
+        
+    # Extract one single CAB file to the XML format
+    def extract_Story_File(self,original_cab_file, file_name):
+        
+        #1) Extract CAB file to the PAK3 format
+        #subprocess.run(['expand', original_cab_file, file_name])
+        
+        #2) Decompress PAK3 to a folder
+        #self.pakcomposer("-d", file_name, os.path.join( self.story_XML_extract, "New"))
+        
+        #3) Grab TSS file from PAK3 folder
+        tss = self.get_tss_from_pak3(  file_name.replace(".pak3", ""))
+        
+        #4) Extract TSS to XML
+    def get_tss_from_pak3(self, pak3_folder):
+          
+        if os.path.isdir(pak3_folder):
+            folder_name = os.path.basename(pak3_folder)
+            file_list = [os.path.dirname(pak3_folder) + "/" + folder_name + "/" + ele for ele in os.listdir(pak3_folder)]
+         
+            for file in file_list:
+                with open(file, "rb") as f:
+                    data = f.read()
+                  
+                    if data[0:3] == b'TSS':
+                        print("Extract TSS for file {}".format(folder_name))
+                        return io.BytesIO(data)
+ 
+    def extract_tss_XML(self, tss, cab_file_name):
+        
+        root = etree.Element('SceneText')
+        
+        stringsNode = etree.SubElement(root, "Strings")
+                           
+        #Start of the pointer
+        pointer_block = struct.unpack("<L", tss.read(4))[0]
+        
+        #Start of the text and baseOffset
+        strings_offset = struct.unpack("<L", tss.read(4))[0]
+        
+        #File size
+        fsize = tss.getbuffer().nbytes
+        tss.seek(pointer_block, 0)             #Go the the start of the pointer section
+        pointers_offset, texts_offset = self.extract_Story_Pointers(tss, strings_offset, fsize)
+        
+        text_list = [self.bytes_to_text(tss, ele)[0] for ele in texts_offset]
+  
+   
+        #Remove duplicates
+        #list_informations = self.remove_duplicates(["Story"] * len(pointers_offset), pointers_offset, text_list)
+        
+        list_informations = ( ['Story', pointers_offset[i], text_list[i]] for i in range(len(text_list)))
+        #Build the XML Structure with the information
+        
+        
+        file_path = self.story_XML_patch +"XML/"+ self.get_file_name(cab_file_name)
+        root = self.create_Node_XML(file_path, list_informations, "Story", "SceneText")
+    
+        
+        #Write the XML file
+        txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
+    
+        with open(os.path.join( self.story_XML_patch,"XML", self.get_file_name(cab_file_name)+".xml"), "wb") as xmlFile:
+            xmlFile.write(txt)
     def extract_All_Skit(self):
         
         print("Extracting Skits")
@@ -164,3 +231,10 @@ class ToolsTOPX(ToolsTales):
             cwd= os.getcwd(),
             )
         
+    def pakcomposer(action, file_name, working_directory):
+        
+        args = [ "pakcomposer", action, os.path.basename(file_name), "-3", "-x", "-u", "-v"]
+        listFile = subprocess.run(
+            args,
+            cwd=working_directory
+            )
