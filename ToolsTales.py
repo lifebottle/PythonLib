@@ -15,8 +15,6 @@ import collections
 import comptolib
 import lxml.etree as ET
 import string
-import pygsheets
-from googleapiclient.errors import HttpError
 
 class ToolsTales:
     
@@ -661,7 +659,7 @@ class ToolsTales:
         final_list.sort()
 
         return final_list
-    
+
     def extract_Google_Sheets(self, googlesheet_id, sheet_name):
         
         creds_path = "..\gsheet.json"
