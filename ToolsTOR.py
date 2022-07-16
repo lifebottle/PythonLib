@@ -37,6 +37,21 @@ class ToolsTOR(ToolsTales):
         
         super().__init__("TOR", tbl, "Tales-of-Rebirth")
         
+        with open("../{}/Data/Misc/{}".format(self.repo_name, self.tblFile), encoding="utf-8") as f:
+                       
+            jsonRaw = json.load(f)       
+            self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
+            
+          
+            
+        self.itable = dict([[i, struct.pack(">H", int(j))] for j, i in self.jsonTblTags['TBL'].items()])
+        self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
+        if "NAME" in self.jsonTblTags.keys():
+            self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAME'].items()])
+        
+        if "COLOR" in self.jsonTblTags.keys():
+            self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLOR'].items()])
+        self.id = 1
         
         #byteCode 
         self.story_byte_code = b"\xF8"
@@ -146,7 +161,104 @@ class ToolsTOR(ToolsTales):
     
         with open(os.path.join( self.story_XML_patch,"XML", self.get_file_name(scpk_file_name)+".xml"), "wb") as xmlFile:
             xmlFile.write(txt)
+    
+    #Convert a bytes object to text using TAGS and TBL in the json file
+    def bytes_to_text(self, fileRead, offset=-1, end_strings = b"\x00"):
+    
+        finalText = ''
+        TAGS = self.jsonTblTags['TAGS']
         
+        if (offset > 0):
+            fileRead.seek(offset, 0)
+        
+        pos = fileRead.tell()
+        b = fileRead.read(1)
+        while b != end_strings:
+            #print(hex(fileRead.tell()))
+            b = ord(b)
+            
+            if (b >= 0x99 and b <= 0x9F) or (b >= 0xE0 and b <= 0xEB):
+                c = (b << 8) + ord(fileRead.read(1))
+               
+                # if str(c) not in json_data.keys():
+                #    json_data[str(c)] = char_index[decode(c)]
+                try:
+                    finalText += (self.jsonTblTags['TBL'][str(c)])
+                except KeyError:
+                    b_u = (c >> 8) & 0xff
+                    b_l = c & 0xff
+                    finalText += ("{%02X}" % b_u)
+                    finalText += ("{%02X}" % b_l)
+            elif b == 0x1:
+                finalText += ("\n")
+            elif b in (0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xB, 0xC, 0xD, 0xE, 0xF):
+                b2 = struct.unpack("<L", fileRead.read(4))[0]
+                if b in TAGS:
+                    tag_name = TAGS.get(b)
+                    
+                    tag_param = None
+                    tag_search = tag_name.upper()
+                    if (tag_search in self.jsonTblTags.keys()):
+                        tags2 = self.jsonTblTags[tag_search]
+                        tag_param = tags2.get(b2, None) 
+                    if tag_param != None:
+                        finalText += tag_param
+                    else:
+                        #Pad the tag to be even number of characters
+                        hex_value = self.hex2(b2)
+                        if len(hex_value) < 4 and tag_name not in ['icon','speed']:
+                            hex_value = "0"*(4-len(hex_value)) + hex_value
+                        
+                        finalText += '<{}:{}>'.format(tag_name, hex_value)
+                        #finalText += ("<%s:%08X>" % (tag_name, b2))
+                else:
+                    finalText += "<%02X:%08X>" % (b, b2)
+            elif chr(b) in self.PRINTABLE_CHARS:
+                finalText += chr(b)
+            elif b >= 0xA1 and b < 0xE0:
+                finalText += struct.pack("B", b).decode("cp932")
+            elif b in (0x13, 0x17, 0x1A):
+                tag_name = f"Unk{b:02X}"
+                hex_value = ""
+                
+                while fileRead.read(1) != b"\x80":
+                    fileRead.seek(fileRead.tell()-1)
+                    mark = fileRead.read(1)
+                    hex_value += mark.hex()
+                    if mark == "\x38":
+                        hex_value += f"{struct.unpack('<H', fileRead.read(2))[0]:04X}"
+         
+                finalText += '<{}:{}>'.format(tag_name, hex_value)
+                
+            elif b in (0x18, 0x19):
+                tag_name = f"Unk{b:02X}"
+                hex_value = ""
+ 
+                while fileRead.read(1) != b"\x80":
+                    fileRead.seek(fileRead.tell()-1)
+                    hex_value += fileRead.read(1).hex()
+         
+                finalText += '<{}:{}>'.format(tag_name, hex_value)
+
+            elif b == 0x81:
+                next_b = fileRead.read(1)
+                if next_b == b"\x40":
+                    finalText += "　"
+                else:
+                    finalText += "{%02X}" % b
+                    finalText += "{%02X}" % ord(next_b)
+            else:
+                finalText += "{%02X}" % b
+            b = fileRead.read(1)
+       
+        end = fileRead.tell()
+        size = fileRead.tell() - pos - 1
+        fileRead.seek(pos)
+        hex_string = fileRead.read(size).hex()
+        hex_values = ' '.join(a+b for a,b in zip(hex_string[::2], hex_string[1::2]))
+        fileRead.seek(end)
+        return finalText, hex_values
+    
     def get_Node_Bytes(self, entry_node):
         
         #Grab the fields from the Entry in the XML
