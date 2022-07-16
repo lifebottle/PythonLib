@@ -16,7 +16,28 @@ class ToolsTOPX(ToolsTales):
     
     def __init__(self, tbl):
         
-        #super().__init__("TOPX", tbl, "Narikiri-Dungeon-X")
+        super().__init__("NDX", tbl, "Narikiri-Dungeon-X")
+        
+        with open("../{}/Data/Misc/{}".format(self.repo_name, self.tblFile), encoding="utf-8") as f:
+                       
+            jsonRaw = json.load(f)       
+            self.jsonTblTags ={ k1:{ int(k2,16) if (k1 not in ["TBL", "NAME"]) else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
+            
+            
+        self.itable = dict([[i, struct.pack(">H", int(j))] for j, i in self.jsonTblTags['TBL'].items()])
+        self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
+        if "NAME" in self.jsonTblTags.keys():
+            self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAME'].items()])
+        
+        if "COLOR" in self.jsonTblTags.keys():
+            self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLOR'].items()])
+        
+        
+        self.id = 1
+        self.struct_id = 1
+        
+        
+        
         
         #Load the hash table for the files
         json_file = open('../Data/Narikiri-Dungeon-X/Misc/hashes.json', 'r')
@@ -27,7 +48,7 @@ class ToolsTOPX(ToolsTales):
         self.misc               = '../Data/{}/Misc'.format(self.repo_name)
         self.disc_path          = '../Data/{}/Disc'.format(self.repo_name)
         self.story_XML_extract  = '../Data/{}/Story/'.format(self.repo_name)                       #Files are the result of PAKCOMPOSER + Comptoe here
-        self.story_XML_new      = '../{}/Data/NDX/Story/XML/All/'.format(self.repo_name)                 #Files need to be .CAB here
+        self.story_XML_new      = '../{}/Data/NDX/Story/XML'.format(self.repo_name)
         self.skit_extract       = '../Data/{}/Skit/'.format(self.repo_name)                                      #Files are the result of PAKCOMPOSER + Comptoe here
         
         self.all_extract      = '../Data/{}/All/'.format(self.repo_name)
@@ -93,7 +114,7 @@ class ToolsTOPX(ToolsTales):
         for f in os.listdir( path ):
             if os.path.isfile( path+f) and '.cab' in f:
                 
-                
+               
                 file_name = self.story_XML_extract+'New/'+f.replace(".cab", ".pak3")
                 self.extract_Story_File(path+f, file_name)
                 
@@ -112,63 +133,263 @@ class ToolsTOPX(ToolsTales):
         #2) Decompress PAK3 to a folder
         #self.pakcomposer("-d", file_name, os.path.join( self.story_XML_extract, "New"))
         
-        #3) Grab TSS file from PAK3 folder
-        tss = self.get_tss_from_pak3(  file_name.replace(".pak3", ""))
+        if os.path.isdir(file_name.replace(".pak3", "")):
+            
+            #3) Grab TSS file from PAK3 folder
+            tss = self.get_tss_from_pak3(  file_name.replace(".pak3", ""))
+     
+            #4) Extract TSS to XML
+            self.extract_tss_XML(tss, original_cab_file)
         
-        #4) Extract TSS to XML
     def get_tss_from_pak3(self, pak3_folder):
           
+        
         if os.path.isdir(pak3_folder):
             folder_name = os.path.basename(pak3_folder)
+          
             file_list = [os.path.dirname(pak3_folder) + "/" + folder_name + "/" + ele for ele in os.listdir(pak3_folder)]
-         
+            
             for file in file_list:
                 with open(file, "rb") as f:
                     data = f.read()
                   
                     if data[0:3] == b'TSS':
-                        print("Extract TSS for file {}".format(folder_name))
+                        print("... Extract TSS for file {} of size: {}".format(folder_name, len(data)))
                         return io.BytesIO(data)
- 
+    
     def extract_tss_XML(self, tss, cab_file_name):
         
         root = etree.Element('SceneText')
-        
-        stringsNode = etree.SubElement(root, "Strings")
-                           
-        #Start of the pointer
-        pointer_block = struct.unpack("<L", tss.read(4))[0]
-        
-        #Start of the text and baseOffset
-        strings_offset = struct.unpack("<L", tss.read(4))[0]
-        
-        #File size
-        fsize = tss.getbuffer().nbytes
-        tss.seek(pointer_block, 0)             #Go the the start of the pointer section
-        
-        
-        #Struct
-        pointers_offset, texts_offset = self.extract_Story_Pointers(tss, strings_offset, fsize, self.story_string_byte_code)
-        
-        text_list = [self.bytes_to_text(tss, ele)[0] for ele in texts_offset]
-  
    
-        #Remove duplicates
-        #list_informations = self.remove_duplicates(["Story"] * len(pointers_offset), pointers_offset, text_list)
         
-        list_informations = ( ['Story', pointers_offset[i], text_list[i]] for i in range(len(text_list)))
-        #Build the XML Structure with the information
+        tss.read(12)
+        strings_offset = struct.unpack('<I', tss.read(4))[0]
+        print(hex(strings_offset))
+        
+        tss.read(4)
+        pointer_block_size = struct.unpack('<I', tss.read(4))[0]
+        print(hex(pointer_block_size))
+        block_size = struct.unpack('<I', tss.read(4))[0]
+        #print(pointer_block_size)
+        #print(block_size)
         
         
-        file_path = self.story_XML_patch +"XML/"+ self.get_file_name(cab_file_name)
-        root = self.create_Node_XML(file_path, list_informations, "Story", "SceneText")
-    
+        #Create all the Nodes for Struct and grab the Person offset
+        strings_node = etree.SubElement(root, 'Strings')
+        etree.SubElement(strings_node, 'Section').text = "Story"
+        texts_offset, pointers_offset = self.extract_Story_Pointers(tss, self.story_struct_byte_code, strings_offset, pointer_block_size)
+        person_offset = [ self.extract_From_Struct(tss, strings_offset, pointer_offset, struct_offset, strings_node) for pointer_offset, struct_offset in zip(pointers_offset, texts_offset)]
         
+
+        #Create all the Nodes for Strings and grab the minimum offset
+        strings_node = etree.SubElement(root, 'Strings')
+        etree.SubElement(strings_node, 'Section').text = "Other Strings"
+        tss.seek(16)
+        texts_offset, pointers_offset = self.extract_Story_Pointers(tss, self.story_string_byte_code, strings_offset, pointer_block_size)
+        [ self.extract_From_String(tss, strings_offset, pointer_offset, text_offset, strings_node) for pointer_offset, text_offset in zip(pointers_offset, texts_offset)]
+        
+        text_start = min( min(person_offset), min(texts_offset))
+        etree.SubElement(root, "TextStart").text = str(text_start)
+  
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
-    
-        with open(os.path.join( self.story_XML_patch,"XML", self.get_file_name(cab_file_name)+".xml"), "wb") as xmlFile:
+        xml_path = os.path.join(self.story_XML_extract,"XML", self.get_file_name(cab_file_name)+".xml")
+        print(xml_path)
+        with open(xml_path, "wb") as xmlFile:
             xmlFile.write(txt)
+    
+    
+
+    def extract_From_Struct(self, f,strings_offset, pointer_offset, struct_offset, root):
+        
+        
+        
+        #print("Offset: {}".format(hex(struct_offset)))
+        f.seek(struct_offset, 0)
+       
+        #Unknown first pointer
+        f.read(4)
+        
+
+        unknown_pointer  = struct.unpack('<I', f.read(4))[0]
+        self.create_Entry(root, pointer_offset, unknown_pointer,0, "Struct")
+        
+        person_offset    = struct.unpack('<I', f.read(4))[0] + strings_offset
+        text_offset      = struct.unpack('<I', f.read(4))[0] + strings_offset
+        unknown1_offset  = struct.unpack('<I', f.read(4))[0] + strings_offset
+        unknown2_offset  = struct.unpack('<I', f.read(4))[0] + strings_offset
+        
+        
+        
+        person_text      = self.bytes_to_text(f, person_offset)[0]
+        self.create_Entry(root, pointer_offset, person_text,1, "Struct")
+        #print("Person offset: {}".format(hex(person_offset)))
+        #print("Text offset: {}".format(hex(text_offset)))
+        #print("Unknown1 offset: {}".format(hex(unknown1_offset)))
+        japText         = self.bytes_to_text(f, text_offset)[0]
+        self.create_Entry(root, pointer_offset, japText,1, "Struct")
+        
+        unknown1Text     = self.bytes_to_text(f, unknown1_offset)[0]
+        self.create_Entry(root, pointer_offset, unknown1Text,0, "Struct")
+        #print(unknown1Text)
+        unknown2Text     = self.bytes_to_text(f, unknown2_offset)[0]
+        self.create_Entry(root, pointer_offset, unknown2Text,0, "Struct")
+        
+        
+        self.struct_id += 1
+        
+        return person_offset
+    
+    def extract_From_String(self, f, strings_offset, pointer_offset, text_offset, root):
+        
+        
+        f.seek(text_offset, 0)
+        japText = self.bytes_to_text(f, text_offset)[0]
+        self.create_Entry(root, pointer_offset, japText,1, "Other Strings")
+    
+    def extract_Story_Pointers(self, f, bytecode, strings_offset, pointer_block_size):
+
+        read = 0
+        text_offset = []
+        pointer_offset = []
+        while read < pointer_block_size:
+            b = f.read(4)
+            if b == bytecode:
+                
+                pointer_offset.append(f.tell())
+                text_offset.append(struct.unpack('<I', f.read(4))[0] + strings_offset)
+                read += 4
+            else:
+                read += 4
+        
+        return text_offset, pointer_offset
+    
+    
+    def create_Entry(self, strings_node, pointer_offset, text, to_translate, entry_type):
+        
+        #Add it to the XML node
+        entry_node = etree.SubElement(strings_node, "Entry")
+        etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset)
+        etree.SubElement(entry_node,"JapaneseText").text  = str(text)
+        etree.SubElement(entry_node,"EnglishText").text   = ''
+        etree.SubElement(entry_node,"Notes").text         = ''
+        etree.SubElement(entry_node,"Id").text            = str(self.id)
+        
+        if entry_type == "Struct":
+            etree.SubElement(entry_node,"StructId").text      = str(self.struct_id)
+        
+        etree.SubElement(entry_node,"ToTranslate").text   = str(to_translate)
+        
+        
+        # Status for Unknown_Pointer, UnknownText1 and UnknownText2 should always be Done
+        if (text == '') or (entry_type == "Struct" and self.id in [1,4,5])  :
+            statusText = 'Done'
+        else:
+            statusText = 'To Do'
+            
+        etree.SubElement(entry_node,"Status").text        = statusText
+        
+        self.id += 1
+        
+        
+        
+        
+    
+    
+    
+    def bytes_to_text(self, fileRead, offset=-1, end_strings = b"\x00"):
+    
+        final_text = ''
+        TAGS = self.jsonTblTags['TAGS']
+        
+        if (offset > 0):
+            fileRead.seek(offset, 0)
+        
+        pos = fileRead.tell()
+        b = fileRead.read(1)
+     
+       
+        while b != end_strings:
+            #print(hex(fileRead.tell()))
+            
+            b = ord(b)
+            
+            #Normal character
+            if (b >= 0x80 and b <= 0x9F) or (b >= 0xE0 and b <= 0xE9):
+                c = (b << 8) + ord(fileRead.read(1))
+               
+                # if str(c) not in json_data.keys():
+                #    json_data[str(c)] = char_index[decode(c)]
+                try:
+                    final_text += (self.jsonTblTags['TBL'][str(c)])
+                except KeyError:
+                    b_u = (c >> 8) & 0xff
+                    b_l = c & 0xff
+                    final_text += ("{%02X}" % b_u)
+                    final_text += ("{%02X}" % b_l)
+                    
+            #Line break
+            elif b == 0x0A:
+                final_text += ("\n")
+            
+            #Find a possible Color or Pointer
+            elif b == 0x1:
+                
+                next_byte = fileRead.read(1)
+                #print("0x1 next byte: {}".format(next_byte))
+                ord_byte = ord(next_byte)
+                if ord_byte >= 0x1 and ord_byte <= 0x9:
+              
+                    tag_name = TAGS.get(b)
+                    
+                    tags2 = self.jsonTblTags['COLOR']
+                    tag_param = tags2.get(ord_byte, None) 
+                
+                    if tag_param != None:
+                        final_text += tag_param
+                    else:
+                        #Pad the tag to be even number of characters
+                        hex_value = self.hex2(b2)
+                        final_text += '<{}:{}>'.format(tag_name, hex_value)
+                    #Color detected
+                else:
+                    fileRead.seek( fileRead.tell()-2)
+                    b2 = struct.unpack("<L", fileRead.read(4))[0]
+                    #print(b2)
+                    val = ("<%02X:%08X>" % (b, b2))
+                    #print(val)
+                    final_text += val
+                    
+            #Found a name tag
+            elif b in [0x4, 0x9]:
+                
+             
+                val=""
+                while fileRead.read(1) != b"\x29":
+                    fileRead.seek(fileRead.tell()-1)
+                    val += fileRead.read(1).decode('shift-jis')
+                val += ')'
+                val = val.replace('(','<').replace(')','>')
+                
+                final_text += val
+                
+            elif chr(b) in self.PRINTABLE_CHARS:
+                final_text += chr(b)
+           
+            elif b >= 0xA1 and b < 0xE0:
+                final_text += struct.pack("B", b).decode("cp932")
+                
+            b = fileRead.read(1)
+            
+        return final_text, pos
+                
+
+    
+        
+
+        
+        
+    
     def extract_All_Skit(self):
         
         print("Extracting Skits")
