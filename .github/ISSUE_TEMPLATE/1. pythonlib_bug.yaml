@@ -1,0 +1,45 @@
+name: "Bug: Pythonlib"
+description: When Pythonlib is not working as expected
+title: "[Bug]: Pythonlib"
+labels: ["pythonlib", "bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        Here are some usecases when you should use this template :
+        - Function is crashing when used inside Python
+        - Function is not working as expected
+        
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: Is it related to a specific Tales of game?
+      multiple: false
+      options:
+        - All games
+        - Tales of Rebirth (PS2)
+    validations:
+      required: true
+
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: Discord name
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+
