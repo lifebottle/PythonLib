@@ -1,0 +1,41 @@
+name: "Feature request: Pythonlib"
+description: "When a developer wants a new feature inside Pythonlib"
+title: "[Feature]: Your short description here"
+labels: ["feature","pythonlib"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature request!
+
+        This template should be used when you want a new feature available
+        in Pythonlib.
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: Is it related to a specific Tales of game?
+      multiple: false
+      options:
+        - All games
+        - Tales of Rebirth (PS2)
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: Discord name
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What is your request?
+      description: Insert any screenshots/diagrams that might be usefull
+      placeholder: "Describe the new feature here"
+    validations:
+      required: true
+
