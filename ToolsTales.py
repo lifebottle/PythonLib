@@ -625,6 +625,7 @@ class ToolsTales:
         
         sections_start = [ section['Text_Start'] for section in file_node['Sections'] if section['Text_Start'] > 0 ]
         sections_end   = [ section['Text_End'] for section in file_node['Sections'] if section['Text_Start'] > 0 ]
+        sections = [ section for section in file_node['Sections'] if section['Text_Start'] > 0 ]
         base_offset = file_node['Base_Offset']
         
         new_file_path = file_node['File_Extract']
@@ -634,8 +635,8 @@ class ToolsTales:
         with open(new_file_path, "r+b") as menu_file:
         
             
-            menu_file.seek(sections_start[section_id])
-            section_max = max( sections_end )
+            menu_file.seek( int(sections[section_id]["Text_Start"]) )
+            section_max = max( [int(ele['Text_End']) for ele in sections] )
           
             for entry_node in root.iter("Entry"):
                 
@@ -659,16 +660,16 @@ class ToolsTales:
                     new_offset = menu_file.tell() + nb_bytes 
                     
                     pos=0
-                    if new_offset < sections_end[section_id]:
+                    if new_offset < int(sections[section_id]['Text_End']):
                         
                         pos = menu_file.tell()
                     else:
                         
                         section_id = section_id+1
                         
-                        if (section_id < len( sections_start )): 
-                            #print("Going at : {} ({})".format( sections_start[section_id] ,  hex( sections_start[section_id] )))
-                            menu_file.seek( sections_start[section_id] )
+                        if (section_id < len( sections )): 
+                            print("Going at : {} ({})".format( sections[section_id]['Section'],  hex( int(sections[section_id]['Text_Start']) )))
+                            menu_file.seek( int(sections[section_id]['Text_Start']) )
                             pos = menu_file.tell()
                         else:
                             break;
