@@ -12,15 +12,15 @@ import lxml.etree as etree
 
 
 tool = ToolsTOR.ToolsTOR("TBL_All.json")
-tool.insert_Menu_File("../Data/TOR/Disc/Original/SLPS_254.50")
-
+tool.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50")
+tool.pack_Main_Archive()
 
 
 tool.extract_All_Story_Files(debug=True)
 
 t = tool.pack_Story_File("10247.scpk")
 
-tool.pack_Main_Archive()
+
 
 
 
