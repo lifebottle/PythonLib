@@ -539,11 +539,8 @@ class ToolsTOR(ToolsTales):
         
             print("Writing file %05d/%05d..." % (current - dummies, len(file_list)))
         
-        
-        shutil.copy( self.elf_original, self.elf_new)
-        
-        
-        with open(self.elf_new, "r+b") as output_elf:
+        #Use the new SLPS updated and update the pointers for the SCPK
+        with open("../Data/{}/Menu/New/SLPS_254.50".format(self.repo), "r+b") as output_elf:
             output_elf.seek(self.POINTERS_BEGIN)
         
             for i in range(len(sectors) - 1):
