@@ -15,6 +15,8 @@ import collections
 import comptolib
 import lxml.etree as ET
 import string
+import pygsheets
+from googleapiclient.errors import HttpError
 
 class ToolsTales:
     
@@ -659,6 +661,38 @@ class ToolsTales:
         final_list.sort()
 
         return final_list
+    
+    def extract_Google_Sheets(self, googlesheet_id, sheet_name):
+        
+        creds_path = "..\gsheet.json"
+        
+        if os.path.exists(creds_path):      
+            
+            try:
+                gc = pygsheets.authorize(service_file=creds_path)
+                sh = gc.open_by_key(googlesheet_id)
+                sheets = sh.worksheets()
+                id_sheet = [ ele.index for ele in sheets if ele.title == sheet_name ]
+                
+                if len(id_sheet) > 0:
+                    wks = sh[id_sheet[0]]
+                    df = pd.DataFrame(wks.get_all_records())
+                    
+                    if len(df) > 0:
+                        return df
+                    else:
+                        print("Python didn't find any table with rows in this sheet")
+                            
+                else:
+                    print("{} was not found in the googlesheet {}".format(sheet_name, googlesheet_id))
+                        
+            except HttpError as e:
+                print("The Service Account doesn't seem to have acces to that googlesheet.\nMake sure that you added the email of the service account if the googlesheet is private.")               
+        
+        else:
+            print("{} was not found to authenticate to Googlesheet API".format(creds_path))
+            
+    
 
     #############################
     #
