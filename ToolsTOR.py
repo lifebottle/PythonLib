@@ -103,7 +103,7 @@ class ToolsTOR(ToolsTales):
                 return io.BytesIO(data_decompressed)
     
         return None
-    
+
     def clean_text(self, text):
         text = re.sub(r"\n ", "\n", text)
         text = re.sub(r"\n", "", text)
@@ -207,10 +207,25 @@ class ToolsTOR(ToolsTales):
             else:
                 print("File {} skipped because file is not found".format(file))
             
- 
-            
-            
+    #Extract/Transform Lauren translation
+    def extract_Lauren_Translation(self):
         
+        #Load Lauren's googlesheet data inside a dataframe
+        df = self.extract_Google_Sheets("1-XwzS7F0SaLlXwv1KS6RcTEYYORH2DDb1bMRy5VM5oo", "Story")
+        
+        #1) Make some renaming and transformations
+        df = df.rename(columns = {"KEY":"File", "Japanese":"JapaneseText","Lauren's Script":"EnglishText"})
+        
+        #2) Filter only relevant rows and columns from the googlesheet
+        df = df.loc[ (df['EnglishText'] != ""),:]
+        df = df[ ['File', 'JapaneseText', 'EnglishText']]
+        
+        #3) Make some transformations to the JapaneseText so we can better match with XML
+        df['File'] = df['File'].apply( lambda x: x.split("_")[0]+".xml")
+        df['JapaneseText'] = df['JapaneseText'].apply( lambda x: re.sub(r"(<\w+:?\w+>)", "", x))
+        df['JapaneseText'] = df['JapaneseText'].apply( lambda x: re.sub(r"\[\w+\]", "", x))
+        
+        return df
             
     # Extract THEIRSCE to XML
     def extract_TheirSce_XML(self, scpk_file_name):
