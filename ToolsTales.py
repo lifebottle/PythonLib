@@ -633,8 +633,6 @@ class ToolsTales:
         #Open the new file with r+b
         section_id = 0
         with open(new_file_path, "r+b") as menu_file:
-        
-            
             menu_file.seek( int(sections[section_id]["Text_Start"]) )
             section_max = max( [int(ele['Text_End']) for ele in sections] )
           
