@@ -384,6 +384,11 @@ class ToolsTales:
         # Didn't match anything
         return None
     
+    #Replace n occurences of a string starting from the right
+    def rreplace(self, s, old, new, occurrence):
+        li = s.rsplit(old, occurrence)
+        return new.join(li)
+    
     def is_compressed(self,data):
         if len(data) < 0x09:
             return False
