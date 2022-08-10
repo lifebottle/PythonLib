@@ -129,7 +129,7 @@ class ToolsTOR(ToolsTales):
             else:
                 temp = temp + '\n' + word + ' '
                 currentLineSize = 0
-                
+
         temp = temp.replace(" \n", "\n")
         temp = self.rreplace(temp, " ", "", 1)
         
@@ -205,7 +205,7 @@ class ToolsTOR(ToolsTales):
                 
             else:
                 print("File {} skipped because file is not found".format(file))
-    
+
         temp = temp.replace(" \n", "\n")
         temp = self.rreplace(temp, " ", "", 1)
 
@@ -228,7 +228,7 @@ class ToolsTOR(ToolsTales):
         df['File'] = df['File'].apply( lambda x: x.split("_")[0]+".xml")
         df['JapaneseText'] = df['JapaneseText'].apply( lambda x: self.clean_text(x) )
         return df
-            
+
     # Extract THEIRSCE to XML
     def extract_TheirSce_XML(self, scpk_file_name):
      
