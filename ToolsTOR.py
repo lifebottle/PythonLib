@@ -104,6 +104,36 @@ class ToolsTOR(ToolsTales):
     
         return None
     
+    def clean_text(self, text):
+        text = re.sub(r"\n ", "\n", text)
+        text = re.sub(r"\n", "", text)
+        text = re.sub(r"(<\w+:?\w+>)", "", text)
+        text = re.sub(r"\[\w+=*\w+\]", "", text)
+        text = re.sub(r" ", "", text)
+        text = re.sub(u'\u3000', '', text)
+        text = re.sub(r" ", "", text)
+    
+        return text
+    
+    def add_line_break(self, text):
+        temp = "";
+        currentLineSize = 0;
+        text_size = len(text)
+        max_size = 32
+        split_space = text.split(" ")
+        
+        for word in split_space:
+            currentLineSize += (len(word)+1)
+            
+            if currentLineSize <= max_size:      
+                temp = temp + word + ' '
+    
+            else:
+                temp = temp + '\n' + word + ' '
+                currentLineSize = 0
+    
+        return temp
+    
     #Extract/Transform Lauren translation
     def extract_Lauren_Translation(self):
         
