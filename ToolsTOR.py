@@ -153,6 +153,64 @@ class ToolsTOR(ToolsTales):
         df['File'] = df['File'].apply( lambda x: x.split("_")[0]+".xml")
         df['JapaneseText'] = df['JapaneseText'].apply( lambda x: self.clean_text(x) )
         return df
+
+    #Transfer Lauren translation
+    def transfer_Lauren_Translation(self):
+        
+        df_lauren = self.extract_Lauren_Translation()
+        
+        #Distinct list of XMLs file
+        xml_files = list(set(df_lauren['File'].tolist()))
+        
+    
+        for file in xml_files:       
+            cond = df_lauren['File'] == file
+            lauren_translations = dict(df_lauren[cond][['JapaneseText', 'EnglishText']].values)         
+            file_path = self.story_XML_new + 'XML/' + file
+            
+            if os.path.exists(file_path):
+                tree = etree.parse(file_path)
+                root = tree.getroot()
+                need_save = False
+                       
+                for key,item in lauren_translations.items():
+                                 
+                    for entry_node in root.iter("Entry"):
+                        xml_jap = entry_node.find("JapaneseText").text or ''
+                        xml_eng = entry_node.find("EnglishText").text or ''
+                        xml_jap_cleaned = self.clean_text(xml_jap)
+                        
+                        
+                        if key == xml_jap_cleaned:                     
+                            split_text = re.split(r"(<voice:\w+>)", xml_eng)
+                            item = self.add_line_break(item)
+                            
+                            if len(split_text) >= 2:                         
+                                item = split_text[1] + item
+                                
+                            if xml_eng != item:                            
+                                entry_node.find("EnglishText").text = item
+                                need_save = True
+                                
+                                if entry_node.find("Status").text == "To Do":
+                                    entry_node.find("Status").text = "Proofreading"
+          
+                        #else:
+                        #    print("File: {} - {}".format(file, key))
+            
+                if need_save:
+                    txt=etree.tostring(root, encoding="UTF-8", pretty_print=True, xml_declaration=False)
+                    
+                    with open(file_path, 'wb') as xml_file:
+                        xml_file.write(txt)
+                
+            else:
+                print("File {} skipped because file is not found".format(file))
+            
+ 
+            
+            
+        
             
     # Extract THEIRSCE to XML
     def extract_TheirSce_XML(self, scpk_file_name):
