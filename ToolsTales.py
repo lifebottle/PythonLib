@@ -729,7 +729,7 @@ class ToolsTales:
             menu_file.seek(sections_start[section_id])
             section_max = max( sections_end )
             
-            ele = [ele for ele in root.findall("Strings") if ele.find('Section').text == "Armor"][0]
+
           
             for entry_node in root.iter("Entry"):
                 
