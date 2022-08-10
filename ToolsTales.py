@@ -687,7 +687,7 @@ class ToolsTales:
                     print("{} was not found in the googlesheet {}".format(sheet_name, googlesheet_id))
                         
             except HttpError as e:
-                print("The Service Account doesn't seem to have acces to that googlesheet.\nMake sure that you added the email of the service account if the googlesheet is private.")               
+                print(e)         
         
         else:
             print("{} was not found to authenticate to Googlesheet API".format(creds_path))
