@@ -219,14 +219,12 @@ class ToolsTOR(ToolsTales):
         df = df.rename(columns = {"KEY":"File", "Japanese":"JapaneseText","Lauren's Script":"EnglishText"})
         
         #2) Filter only relevant rows and columns from the googlesheet
-        df = df.loc[ (df['EnglishText'] != ""),:]
+        df = df.loc[ (df['EnglishText'] != "") & (df['JapaneseText'] != ""),:]
         df = df[ ['File', 'JapaneseText', 'EnglishText']]
         
         #3) Make some transformations to the JapaneseText so we can better match with XML
         df['File'] = df['File'].apply( lambda x: x.split("_")[0]+".xml")
-        df['JapaneseText'] = df['JapaneseText'].apply( lambda x: re.sub(r"(<\w+:?\w+>)", "", x))
-        df['JapaneseText'] = df['JapaneseText'].apply( lambda x: re.sub(r"\[\w+\]", "", x))
-        
+        df['JapaneseText'] = df['JapaneseText'].apply( lambda x: self.clean_text(x) )
         return df
             
     # Extract THEIRSCE to XML
