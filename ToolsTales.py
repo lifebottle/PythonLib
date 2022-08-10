@@ -672,7 +672,7 @@ class ToolsTales:
         with open(new_file_path, "r+b") as menu_file:
             menu_file.seek( int(sections[section_id]["Text_Start"]) )
             section_max = max( [int(ele['Text_End']) for ele in sections] )
-          
+            
             for entry_node in root.iter("Entry"):
                 
                 if menu_file.tell() < section_max: 
