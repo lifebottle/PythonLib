@@ -117,7 +117,6 @@ class ToolsTOR(ToolsTales):
     def add_line_break(self, text):
         temp = "";
         currentLineSize = 0;
-        text_size = len(text)
         max_size = 32
         split_space = text.split(" ")
         
@@ -130,7 +129,7 @@ class ToolsTOR(ToolsTales):
             else:
                 temp = temp + '\n' + word + ' '
                 currentLineSize = 0
-
+                
         temp = temp.replace(" \n", "\n")
         temp = self.rreplace(temp, " ", "", 1)
         
@@ -207,6 +206,9 @@ class ToolsTOR(ToolsTales):
             else:
                 print("File {} skipped because file is not found".format(file))
     
+        temp = temp.replace(" \n", "\n")
+        temp = self.rreplace(temp, " ", "", 1)
+
         return temp
     
     #Extract/Transform Lauren translation
