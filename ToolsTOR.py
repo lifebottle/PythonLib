@@ -67,13 +67,17 @@ class ToolsTOR(ToolsTales):
     
     # Extract the story files
     def extract_All_Story_Files(self,debug=False):
-        
+        i = 1
         self.mkdir( self.story_XML_patch + "XML")
         listFiles = [self.dat_archive_extract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.dat_archive_extract, "SCPK"))]
         for scpk_file in listFiles:
-
-            self.extract_TheirSce_XML(scpk_file)
+            
+            theirsce = self.get_theirsce_from_scpk(scpk_file)
+            self.extract_TheirSce_XML(theirsce, scpk_file, self.story_XML_patch, "Story")
             self.id = 1
+            print("Writing file %05d.." % i, end="\r") # Not healthy
+            i += 1
+        print("Writing file %05d..." % (i-1))
             
     # Extract all the skits files
     def extract_Skits(self):
@@ -112,52 +116,27 @@ class ToolsTOR(ToolsTales):
         
             for i in range(nbFiles):
                 data = scpk.read(filesSize[i])
+    
+                if self.is_compressed(data) and data[:8] != b"THEIRSCE":
+                    data_decompressed = comptolib.decompress_data(data)
+                    
+                if data_decompressed[:8] == b"THEIRSCE":
                 
+                    return io.BytesIO(data_decompressed)
     
-        scpk.read(4)
-        nbFiles = struct.unpack("<L", scpk.read(4))[0]
-        scpk.read(4)
-        filesSize = []
-        for i in range(nbFiles):
-            filesSize.append(struct.unpack("<L", scpk.read(4))[0])
-    
-        for i in range(nbFiles):
-            data = scpk.read(filesSize[i])
-            
-
-               
-            
-            if self.is_compressed(data) and data[:8] != b"THEIRSCE":
-                data_decompressed = comptolib.decompress_data(data)
-                c_type = struct.unpack("<b", data[:1])[0]
-                
-            if data_decompressed[:8] == b"THEIRSCE":
-            
-                return io.BytesIO(data_decompressed)
-    
-        return None
+            return None
     
    
         
     
         
     # Extract THEIRSCE to XML
-    def extract_TheirSce_XML(self, scpk_file_name):
+    def extract_TheirSce_XML(self, theirsce, file_name, destination, section):
      
         #Create the XML file
         root = etree.Element('SceneText')
-        etree.SubElement(root, "OriginalName").text = scpk_file_name
-        
-        stringsNode = etree.SubElement(root, "Strings")
-        
-        #Open the SCPK file to grab the THEIRSCE file
-        with open(scpk_file_name, "rb") as scpk:
-            theirsce = self.get_theirsce_from_scpk(scpk,scpk_file_name,True)
-            
-            #if (scpk_file_name.endswith(".scpk") and debug):
-            #    with open("Debug/{}d.theirsce".format( self.get_file_name(scpk_file_name)), "wb") as f:
-            #        f.write(theirsce.read())
-                    
+        etree.SubElement(root, "OriginalName").text = file_name      
+        stringsNode = etree.SubElement(root, "Strings")                   
         theirsce.seek(0)
         #Validate the header
         header = theirsce.read(8)
@@ -177,22 +156,19 @@ class ToolsTOR(ToolsTales):
         
         text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
   
-   
         #Remove duplicates
         #list_informations = self.remove_duplicates(["Story"] * len(pointers_offset), pointers_offset, text_list)
         
         list_informations = ( ['Story', pointers_offset[i], text_list[i]] for i in range(len(text_list)))
-        #Build the XML Structure with the information
+        #Build the XML Structure with the information  
         
-        
-        file_path = self.story_XML_patch +"XML/"+ self.get_file_name(scpk_file_name)
-        root = self.create_Node_XML(file_path, list_informations, "Story", "SceneText")
-    
+        file_path = destination +"XML/"+ self.get_file_name(file_name)
+        root = self.create_Node_XML(file_path, list_informations, section, "SceneText") 
         
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
     
-        with open(os.path.join( self.story_XML_patch,"XML", self.get_file_name(scpk_file_name)+".xml"), "wb") as xmlFile:
+        with open(os.path.join( destination,"XML", self.get_file_name(file_name)+".xml"), "wb") as xmlFile:
             xmlFile.write(txt)
     
     #Convert a bytes object to text using TAGS and TBL in the json file
