@@ -74,12 +74,25 @@ class ToolsTOR(ToolsTales):
             self.extract_TheirSce_XML(scpk_file)
             self.id = 1
         
-    def get_theirsce_from_scpk(self, scpk, scpk_file_name, debug=False)->bytes:
-        header = scpk.read(4)
-    
-        if header != b"SCPK":
-            # sys.exit(f"{file} is not a .scpk file!")
-            raise ValueError("File is not a .scpk file!")
+    def get_theirsce_from_scpk(self, scpk_file_name, debug=False)->bytes:
+        
+        with open(scpk_file_name,"rb") as scpk:
+            header = scpk.read(4)
+        
+            if header != b"SCPK":
+                # sys.exit(f"{file} is not a .scpk file!")
+                raise ValueError("File is not a .scpk file!")
+        
+            scpk.read(4)
+            nbFiles = struct.unpack("<L", scpk.read(4))[0]
+            scpk.read(4)
+            filesSize = []
+            for i in range(nbFiles):
+                filesSize.append(struct.unpack("<L", scpk.read(4))[0])
+        
+            for i in range(nbFiles):
+                data = scpk.read(filesSize[i])
+                
     
         scpk.read(4)
         nbFiles = struct.unpack("<L", scpk.read(4))[0]
