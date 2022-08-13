@@ -14,6 +14,7 @@ from xml.dom import minidom
 from pathlib import Path
 import string
 import io
+import pak2
 
 class ToolsTOR(ToolsTales):
     
@@ -73,6 +74,25 @@ class ToolsTOR(ToolsTales):
 
             self.extract_TheirSce_XML(scpk_file)
             self.id = 1
+            
+    # Extract all the skits files
+    def extract_Skits(self):
+        i = 1
+        os.makedirs( self.skit_XML_patch + "XML", exist_ok=True)
+        list_pak2_files = [ self.dat_archive_extract + "PAK2/" + ele for ele in os.listdir(self.dat_archive_extract + "PAK2")]
+        for file_path in list_pak2_files:
+           
+            if os.path.isfile(file_path) and file_path.endswith(".pak2"):
+                with open(file_path, "rb") as pak:
+                    data = pak.read()
+                theirsce = io.BytesIO(pak2.get_theirsce_from_pak2(data))
+                self.extract_TheirSce_XML(theirsce, re.sub("\.\d+", "", file_path), self.skit_XML_patch, "Skits")
+                
+                print("Writing file %05d" % i, end="\r")
+                i += 1
+    
+        print("Writing file %05d..." % (i-1))
+        return
         
     def get_theirsce_from_scpk(self, scpk_file_name, debug=False)->bytes:
         
