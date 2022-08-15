@@ -68,7 +68,7 @@ def get_data(file: bytes)->pak2_file:
         )
     )
     del blob_offsets[1::2] #Yeet all the odd offset, they be useless
-
+    data.chunks.image_blobs = []
     for blob in blob_offsets:
         blob_size = struct.unpack("<I", file[blob : blob + 4])[0]
         if blob_size == 0:
