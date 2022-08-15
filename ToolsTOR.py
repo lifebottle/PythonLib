@@ -382,7 +382,7 @@ class ToolsTOR(ToolsTales):
                         #    f.write(data_uncompressed)
                             
                         #Update THEIRSCE uncompressed file
-                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpk_file_name)
+                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpk_file_name, self.story_XML_patch)
                         
                             
                         theirsce.seek(0)
@@ -540,7 +540,10 @@ class ToolsTOR(ToolsTales):
                 if ".scpk" in file:
                     print(file)
                     data = self.pack_Story_File(file_name+".scpk")
-                      
+                     
+                if ".pak2" in file:
+                    print(file)
+                    data = self.pack_Skit_File(file_name+".pak2")
                 else:
                     with open(file, "rb") as f2:
                         data = f2.read()  
