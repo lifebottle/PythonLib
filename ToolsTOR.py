@@ -281,14 +281,13 @@ class ToolsTOR(ToolsTales):
             final_text = english_text or japanese_text or ''
         else:
             final_text = japanese_text or ''
-        
-
+            
         #Convert the text values to bytes using TBL, TAGS, COLORS, ...
         bytes_entry = self.text_to_bytes(final_text)
         
         return bytes_entry   
     
-    def get_New_Theirsce(self, theirsce, scpk_file_name):
+    def get_New_Theirsce(self, theirsce, scpk_file_name, destination):
         
         #To store the new text_offset and pointers to update
         new_text_offsets = dict()
@@ -296,10 +295,9 @@ class ToolsTOR(ToolsTales):
         #Grab strings_offset for pointers
         theirsce.read(12)
         strings_offset = struct.unpack("<L", theirsce.read(4))[0]
-        
               
         #Read the XML for the corresponding THEIRSCE
-        file = self.story_XML_new +"XML/"+ self.get_file_name(scpk_file_name)+'.xml'
+        file = destination +"XML/"+ self.get_file_name(scpk_file_name)+'.xml'
         #print("XML : {}".format(self.get_file_name(scpk_file_name)+'.xml'))
         
         tree = etree.parse(file)
