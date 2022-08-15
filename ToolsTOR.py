@@ -418,6 +418,28 @@ class ToolsTOR(ToolsTales):
         
         return o.getvalue()        
     
+    def pack_Skit_File(self, pak2_file):
+        
+        pak2_file_path = os.path.join(self.dat_archive_extract, "PAK2", pak2_file)
+        with open(pak2_file_path,"rb") as f_pak2:
+            pak2_data = f_pak2.read()
+        
+        #Create the pak2 object
+        pak2_obj = pak2lib.pak2_file()
+        pak2_obj = pak2lib.get_data(pak2_data)
+        
+        #Generate the new Theirsce based on the XML and replace the original one
+        theirsce_io = self.get_New_Theirsce(io.BytesIO(pak2_obj.chunks.theirsce), os.path.basename(pak2_file_path).split(".")[0], self.skit_XML_patch)
+        theirsce_io.seek(0)
+        new_data = theirsce_io.read()
+        pak2_obj.chunks.theirsce = new_data
+        
+        self.mkdir(self.skit_XML_patch+ "New")
+        #with open(self.skit_XML_patch+ "New/" + pak2_file, "wb+") as f2:
+        #    f2.write(pak2lib.create_pak2(pak2_obj))
+            
+        return pak2lib.create_pak2(pak2_obj)
+    
     # Extract the file DAT.BIn to the different directorties
     def extract_Main_Archive(self):
         
