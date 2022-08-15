@@ -14,7 +14,7 @@ from xml.dom import minidom
 from pathlib import Path
 import string
 import io
-import pak2
+import pak2 as pak2lib
 
 class ToolsTOR(ToolsTales):
     
@@ -89,7 +89,7 @@ class ToolsTOR(ToolsTales):
             if os.path.isfile(file_path) and file_path.endswith(".pak2"):
                 with open(file_path, "rb") as pak:
                     data = pak.read()
-                theirsce = io.BytesIO(pak2.get_theirsce_from_pak2(data))
+                theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
                 self.extract_TheirSce_XML(theirsce, re.sub("\.\d+", "", file_path), self.skit_XML_patch, "Skits")
                 
                 print("Writing file %05d" % i, end="\r")
