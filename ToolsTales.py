@@ -97,9 +97,17 @@ class ToolsTales:
                 )
             
             
-    def fps4_action(self, action, b_file, dat_file, destination):
+    def fps4_action(self, action, b_file, destination):
         
-        fps4.dump_fps4(b_file, dat_file, destination)
+        if action == "-d":
+            dat_files = [destination + '/' + ele for ele in os.listdir(os.path.dirname(b_file)) if '.dat' in ele]
+
+            if len(dat_files) > 0:
+                fps4.dump_fps4(b_file, dat_files[0], destination)
+                
+        if action == "-c":
+            fps4.pack_folder(b_file)
+        
         
     def comptoe(self, fileName, action):
           
