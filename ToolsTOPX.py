@@ -571,6 +571,15 @@ class ToolsTOPX(ToolsTales):
                 #Decompress using PAKCOMPOSER + Comptoe
                 self.pakComposerAndComptoe(fileName, "-d", "-3")
                 
+    # Extract each of the file from the all.dat
+    def extract_files(self, start, size, file_name, all_read):
+
+            all_read.seek(start, 0)
+            data = all_read.read(size)
+            
+            with open( os.path.join(self.all_extract, file_name), mode='wb') as output_file:
+                output_file.write(data)
+
     # Extract the file all.dat to the different directorties
     def extract_Main_Archive(self):
         
