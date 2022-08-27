@@ -68,6 +68,12 @@ class ToolsTOPX(ToolsTales):
     
     # Make the basic directories for extracting all.dat
     def make_dirs(self):
+        self.mkdir('../Data')
+        self.mkdir('../Data/{}'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc/Original'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Misc'.format(self.repo_name))
         self.mkdir('../Data/{}/All'.format(self.repo_name))
         self.mkdir('../Data/{}/Story'.format(self.repo_name))
         self.mkdir('../Data/{}/Story/New'.format(self.repo_name))
