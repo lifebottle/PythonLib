@@ -624,16 +624,51 @@ class ToolsTOPX(ToolsTales):
             json.dump(order, order_json, indent = 4)
             order_json.close()
         
+    def pack_Main_Archive(self):
+        addrs = []
+        sizes = []
+        buffer = 0
         
-        while True:
-            file_info = struct.unpack('<3I', eboot.read(12))
-            if(file_info[2] == 0):
-                break
-            hash_ = '%08X' % file_info[2]
-            self.extract_files(file_info[0], file_info[1], hash_)
-            order['order'].append(hash_)
-        json.dump(order, order_json, indent = 4)
-        order_json.close()
+        print("Updating all.dat archive")
+        with open( os.path.join( self.misc, 'order.json'), 'r') as order_file:
+            order_hash = json.load(order_file)
+   
+        elf = open( self.elf_new, 'r+b')
+        elf.seek(0x1FF624)
+        
+        #Menu files to reinsert
+        menu_files = [ele['Hashes_Name'] for ele in self.menu_files_json if ele['Hashes_Name'] != '']
+        with open(self.all_new , 'wb') as all_file:
+            for name in order_hash['order']:
+                if name in self.hashes.keys():
+                    name = self.hashes[name]
+                   
+                data = b''
+                if os.path.dirname(name) in menu_files:               
+                    with open( os.path.join( '../Data/{}/Menu/New'.format(self.repo_name), name), 'rb') as new_f:
+                        data = new_f.read()
+                else:
+                    with open( os.path.join( self.all_extract, name), 'rb') as orig_f:
+                        data = orig_f.read()
+
+                size = len(data)
+                sizes.append(size)
+                remainder = 0x800 - (size % 0x800)
+                if remainder == 0x800:
+                    remainder = 0
+                addrs.append(buffer)
+                buffer += size + remainder
+                all_file.write(data)
+                all_file.write(b'\x00' * remainder)
+                
+            for i in range(len(sizes)):
+                elf.write(struct.pack('<I', addrs[i]))
+                elf.write(struct.pack('<I', sizes[i]))
+                elf.write(struct.pack('<I', int(order_hash['order'][i], 16)))
+        elf.close()
+        all_file.close()
+        
+        
         
     def extract_Decripted_Eboot(self):
         print("Extracting Eboot")
