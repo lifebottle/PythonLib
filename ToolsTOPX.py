@@ -402,21 +402,18 @@ class ToolsTOPX(ToolsTales):
         
         pos = fileRead.tell()
         b = fileRead.read(1)
-     
-       
+      
         while b != end_strings:
             #print(hex(fileRead.tell()))
             
             b = ord(b)
             
             #Normal character
-            if (b >= 0x80 and b <= 0x9F) or (b >= 0xE0 and b <= 0xE9):
+            if (b >= 0x80 and b <= 0x9F) or (b >= 0xE0 and b <= 0xEA):
                 c = (b << 8) + ord(fileRead.read(1))
                
-                # if str(c) not in json_data.keys():
-                #    json_data[str(c)] = char_index[decode(c)]
                 try:
-                    final_text += (self.jsonTblTags['TBL'][str(c)])
+                    final_text += self.jsonTblTags['TBL'][c]
                 except KeyError:
                     b_u = (c >> 8) & 0xff
                     b_l = c & 0xff
@@ -426,35 +423,34 @@ class ToolsTOPX(ToolsTales):
             #Line break
             elif b == 0x0A:
                 final_text += ("\n")
-            
-            #Find a possible Color or Pointer
-            elif b == 0x1:
                 
-                next_byte = fileRead.read(1)
-                #print("0x1 next byte: {}".format(next_byte))
-                ord_byte = ord(next_byte)
-                if ord_byte >= 0x1 and ord_byte <= 0x9:
-              
+            elif b == 0x0C:
+                final_text += "<Bubble>"
+                           
+            #Find a possible Color, Icon
+            elif b in (0x1, 0xB):
+                b2 = struct.unpack("<B", fileRead.read(1))[0]
+                if b in TAGS:
+                    
                     tag_name = TAGS.get(b)
                     
-                    tags2 = self.jsonTblTags['COLOR']
-                    tag_param = tags2.get(ord_byte, None) 
-                
+                    tag_param = None
+                    tag_search = tag_name.upper()
+                    if (tag_search in self.jsonTblTags.keys()):
+                        tags2 = self.jsonTblTags[tag_search]
+                        tag_param = tags2.get(b2, None) 
                     if tag_param != None:
                         final_text += tag_param
                     else:
                         #Pad the tag to be even number of characters
                         hex_value = self.hex2(b2)
+                        if len(hex_value) < 4 and tag_name not in ['icon','speed']:
+                            hex_value = "0"*(4-len(hex_value)) + hex_value
+                        
                         final_text += '<{}:{}>'.format(tag_name, hex_value)
-                    #Color detected
                 else:
-                    fileRead.seek( fileRead.tell()-2)
-                    b2 = struct.unpack("<L", fileRead.read(4))[0]
-                    #print(b2)
-                    val = ("<%02X:%08X>" % (b, b2))
-                    #print(val)
-                    final_text += val
-                    
+                    final_text += "<%02X:%08X>" % (b, b2)
+                 
             #Found a name tag
             elif b in [0x4, 0x9]:
                 
@@ -462,7 +458,7 @@ class ToolsTOPX(ToolsTales):
                 val=""
                 while fileRead.read(1) != b"\x29":
                     fileRead.seek(fileRead.tell()-1)
-                    val += fileRead.read(1).decode('shift-jis')
+                    val += fileRead.read(1).decode("cp932")
                 val += ')'
                 val = val.replace('(','<').replace(')','>')
                 
