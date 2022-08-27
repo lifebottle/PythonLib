@@ -634,8 +634,6 @@ class ToolsTales:
             
             menu_file.seek(sections_start[section_id])
             section_max = max( sections_end )
-            
-            ele = [ele for ele in root.findall("Strings") if ele.find('Section').text == "Armor"][0]
           
             for entry_node in root.iter("Entry"):
                 
@@ -646,7 +644,6 @@ class ToolsTales:
                     japanese_text = entry_node.find("JapaneseText").text
                     english_text = entry_node.find("EnglishText").text
                     
-                    print(english_text)
                     #Use the values only for Status = Done and use English if non empty
                     final_text = ''
                     if (status not in ['Problematic', 'To Do']):
@@ -668,7 +665,7 @@ class ToolsTales:
                         section_id = section_id+1
                         
                         if (section_id < len( sections_start )): 
-                            print("Going at : {} ({})".format( sections_start[section_id] ,  hex( sections_start[section_id] )))
+                            #print("Going at : {} ({})".format( sections_start[section_id] ,  hex( sections_start[section_id] )))
                             menu_file.seek( sections_start[section_id] )
                             pos = menu_file.tell()
                         else:
@@ -692,12 +689,7 @@ class ToolsTales:
                     
                     menu_file.seek(int(pointer))
                     menu_file.write( struct.pack("<L", new_value))
-                
 
-        
-    def insertAllMenu(self):
-        print("Inserting Menus")
-    
     
     def insertStoryFile(fileName):
         print("Inserting story file: {}".format(fileName))
@@ -851,6 +843,7 @@ class ToolsTales:
 
          
         base_offset = file_definition['Base_Offset']
+        print("BaseOffset:{}".format(base_offset))
         file_path   = file_definition['File_Extract']
         
         with open(file_path, "rb") as f:
@@ -864,7 +857,7 @@ class ToolsTales:
                 #Extract Pointers of the file
                 print("Extract Pointers")
                 pointers_offset, pointers_value = self.get_special_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Nb_Per_Block'], section['Step'], section['Section'], file_path)
-   
+          
               
                 #Extract Text from the pointers
                 print("Extract Text")
@@ -880,7 +873,7 @@ class ToolsTales:
         list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
         
         #Build the XML Structure with the information
-        root = self.create_Node_XML(file_path, list_informations, "MenuText")
+        root = self.create_Node_XML(file_path, list_informations, "Menu", "MenuText")
         
         #Write to XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
@@ -905,7 +898,7 @@ class ToolsTales:
             
             self.extract_Menu_File(file_definition)
             
-
+    
         
     def extractAllSkits(self):
         print("Extracting Skits")
