@@ -413,7 +413,10 @@ class ToolsTOR(ToolsTales):
     def extract_Main_Archive(self):
         
         #Create folder and delete everything isinde
-        shutil.rmtree("../Data/Tales-Of-Rebirth/DAT")
+        #shutil.rmtree("../Data/Tales-Of-Rebirth/DAT")
+        for file in os.scandir("../Data/Tales-Of-Rebirth/DAT"):
+            os.remove(file.path)
+        
         self.mkdir("../Data/Tales-Of-Rebirth/DAT")
                
         
