@@ -40,7 +40,7 @@ class ToolsTOPX(ToolsTales):
         
         
         #Load the hash table for the files
-        json_file = open('../Data/Narikiri-Dungeon-X/Misc/hashes.json', 'r')
+        json_file = open('../{}/Data/{}/Misc/hashes.json'.format(self.repo_name, self.gameName), 'r')
         self.hashes = json.load(json_file)
         json_file.close()
         
@@ -68,6 +68,11 @@ class ToolsTOPX(ToolsTales):
     
     # Make the basic directories for extracting all.dat
     def make_dirs(self):
+        self.mkdir('../Data')
+        self.mkdir('../Data/{}'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc/Original'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc/New'.format(self.repo_name))
         self.mkdir('../Data/{}/All'.format(self.repo_name))
         self.mkdir('../Data/{}/Story'.format(self.repo_name))
         self.mkdir('../Data/{}/Story/New'.format(self.repo_name))
