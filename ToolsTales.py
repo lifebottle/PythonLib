@@ -15,6 +15,8 @@ import collections
 import comptolib
 import lxml.etree as ET
 import string
+import pygsheets
+from googleapiclient.errors import HttpError
 
 class ToolsTales:
     
