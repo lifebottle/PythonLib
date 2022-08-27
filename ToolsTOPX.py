@@ -583,18 +583,47 @@ class ToolsTOPX(ToolsTales):
     # Extract the file all.dat to the different directorties
     def extract_Main_Archive(self):
         
-      
+        #Clean files and folders
+        shutil.rmtree("../Data/{}/Menu/New".format(self.repo_name))
+        for file in os.scandir("../Data/{}/All".format(self.repo_name)):
+            if os.path.isfile(file.path):
+                os.remove(file.path,)
+        self.mkdir("../Data/{}/All".format(self.repo_name))
+        self.mkdir("../Data/{}/Menu/New".format(self.repo_name))
+        
         order = {}
         order['order'] = []
         order_json = open( os.path.join( self.misc, 'order.json'), 'w')
+        files_to_prepare = [ele['Hashes_Name'] for ele in self.menu_files_json if ele['Hashes_Name'] != '']
         
         #Extract decrypted eboot
         self.extract_Decripted_Eboot()
         
-        print("Extract All.dat")
+        
         #Open the eboot
-        eboot = open( os.path.join( self.misc, 'EBOOT_DEC.BIN'), 'rb')
+        eboot = open( os.path.join( self.misc, 'EBOOT.BIN'), 'rb')
         eboot.seek(0x1FF624)
+        print("Extract All.dat")
+        with open(self.all_original, "rb") as all_read:
+            while True:
+                file_info = struct.unpack('<3I', eboot.read(12))
+                if(file_info[2] == 0):
+                    break
+                hash_ = '%08X' % file_info[2]
+                final_name = hash_
+                if hash_ in self.hashes.keys():
+                    final_name = self.hashes[hash_]
+                self.extract_files(file_info[0], file_info[1], final_name, all_read)
+                
+                if len( [ele for ele in files_to_prepare if ele in final_name]) > 0:
+                    copy_path = os.path.join("../Data/{}/Menu/New/{}".format(self.repo_name, final_name))
+                    Path(os.path.dirname(copy_path)).mkdir(parents=True, exist_ok=True)
+                    shutil.copy( os.path.join(self.all_extract, final_name), copy_path)
+                
+                order['order'].append(hash_)
+            json.dump(order, order_json, indent = 4)
+            order_json.close()
+        
         
         while True:
             file_info = struct.unpack('<3I', eboot.read(12))
