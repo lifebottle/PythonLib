@@ -625,11 +625,8 @@ class ToolsTales:
         sections_end   = [ section['Text_End'] for section in file_node['Sections'] if section['Text_Start'] > 0 ]
         base_offset = file_node['Base_Offset']
         
-     
-        #Copy the original file 
-        new_file_path = "../Data/{}/Menu/New/{}".format(self.repo_name, os.path.basename(file_node['File_Original']))
-        shutil.copy( file_node['File_Extract'], new_file_path)
-        
+        new_file_path = file_node['File_Extract']
+
         #Open the new file with r+b
         section_id = 0
         with open(new_file_path, "r+b") as menu_file:
