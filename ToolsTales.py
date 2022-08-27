@@ -397,8 +397,11 @@ class ToolsTales:
         return False
 
 
-    def extract_Cab(self, cab_file_name, new_file_name):
-        subprocess.run(['expand', cab_file_name, new_file_name])
+    def extract_Cab(self, cab_file_name, new_file_name, working_dir):
+        
+        folder_name = os.path.basename(new_file_name).split('.')[0].lower()
+        os.mkdir( os.path.join(working_dir, folder_name.upper()))
+        subprocess.run(['expand', os.path.basename(cab_file_name), folder_name + '/{}.dat'.format(folder_name)], cwd=working_dir)
       
     
     
