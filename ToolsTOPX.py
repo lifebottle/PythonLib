@@ -295,16 +295,45 @@ class ToolsTOPX(ToolsTales):
         self.id += 1
         
         
+    def create_Node_XML(self, fileName, list_informations, parent):
         
-        # Status for Unknown_Pointer, UnknownText1 and UnknownText2 should always be Done
-        if (text == '') or (entry_type == "Struct" and self.id in [1,4,5])  :
-            statusText = 'Done'
-        else:
-            statusText = 'To Do'
+        root = etree.Element(parent)
+        sections = list(set([s for s, pointers_offset, text, to_translate in list_informations]))
+        
+        for section in sections:    
+            strings_node = etree.SubElement(root, 'Strings')
+            etree.SubElement(strings_node, 'Section').text = section
+            list_informations_filtered = [(s, pointers_offset, text, to_translate) for s, pointers_offset, text, to_translate in list_informations if s == section]
             
-        etree.SubElement(entry_node,"Status").text        = statusText
+            for s, pointers_offset, text, to_translate in list_informations_filtered:
+                self.create_Entry( strings_node,  pointers_offset, text, to_translate, "Menu", -1, -1)
+         
+        return root
+     
+    def unpack_Folder(self, folder_path):
         
-        self.id += 1
+        files = [folder_path+ '/' + ele for ele in os.listdir(folder_path)]
+        
+        for file in files:
+            
+            with open(file, 'rb') as f:
+                file_data = f.read(12)
+                extension = self.get_extension(file_data)
+                folder_name = os.path.basename(file).split(".")[0].upper()
+                
+                #Unpack FPS4
+                if extension == 'fps4':
+                    self.fps4_action('-d', file, folder_path)
+                    self.unpack_Folder( os.path.join( folder_path, folder_name))
+                    
+                #Unpack CAB
+                if extension== 'cab' and '.dat' not in file:
+                    
+                    #print('cab')
+                    folder_name = os.path.basename(file).split(".")[0].upper()
+                    #print('Destination {}'.format(os.path.join(folder_path, folder_name, os.path.basename(file))))
+                    self.extract_Cab(file, file, folder_path)
+            
     def prepare_Menu_File(self, hashes_folder):
         
         menu_file_path = "../Data/{}/Menu/New/{}".format(self.repo_name, hashes_folder)
