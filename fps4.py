@@ -2,56 +2,54 @@ import os, struct, sys
 
 def dump_fps4(name, name2, base_path):
 
-    f = open(name, 'rb')
+    with open(name, 'rb') as f:
     
-    head, tail = os.path.split(name)
-    file_name = tail.split(".")[0]
-    
-    fps4 = f.read(4)
-    if fps4 != b'FPS4':
-        #print("Wrong file.")
-        return
+        head, tail = os.path.split(name)
+        file_name = tail.split(".")[0]
         
-    file_number = struct.unpack('<L', f.read(4))[0]
-    header_size = struct.unpack('<L', f.read(4))[0]
-    offset = struct.unpack('<L', f.read(4))[0]
-    block_size = struct.unpack('<H', f.read(2))[0]
-    
-    if block_size == 0x2C:
-        f.seek(header_size, 0)
-        files_offsets = []
-        files_sizes = []
-        files_names = []
+        fps4 = f.read(4)
+        if fps4 != b'FPS4':
+            #print("Wrong file.")
+            return
+            
+        file_number = struct.unpack('<L', f.read(4))[0]
+        header_size = struct.unpack('<L', f.read(4))[0]
+        offset = struct.unpack('<L', f.read(4))[0]
+        block_size = struct.unpack('<H', f.read(2))[0]
         
-        for i in range(file_number-1):
-            files_offsets.append(struct.unpack('<L', f.read(4))[0])
-            files_sizes.append(struct.unpack('<L', f.read(4))[0])
-            f.read(4) # File size
-            fname = f.read(block_size-0xC).decode("ASCII").strip('\x00')
-            files_names.append(fname)
+        if block_size == 0x2C:
+            f.seek(header_size, 0)
+            files_offsets = []
+            files_sizes = []
+            files_names = []
             
-        try:
-            
-            os.mkdir(os.path.join(base_path,file_name.upper()))
-        except:
-            pass
-
-        if offset != 0x00:
             for i in range(file_number-1):
-                o = open(os.path.join(base_path, file_name.upper(),files_names[i]), 'wb')
-                f.seek(files_offsets[i], 0)
-                o.write(f.read(files_sizes[i]))
-                o.close()
-        else:
-            f2 = open(name2, 'rb')
-            for i in range(file_number-1):
-                o = open(os.path.join(base_path, file_name.upper(), files_names[i]), 'wb')
-                f2.seek(files_offsets[i], 0)
-                o.write(f2.read(files_sizes[i]))
-                o.close()
-            f2.close()
+                files_offsets.append(struct.unpack('<L', f.read(4))[0])
+                files_sizes.append(struct.unpack('<L', f.read(4))[0])
+                f.read(4) # File size
+                fname = f.read(block_size-0xC).decode("ASCII").strip('\x00')
+                files_names.append(fname)
                 
-        f.close()
+            try:
+                
+                os.mkdir(os.path.join(base_path,file_name.upper()))
+            except:
+                pass
+    
+            if offset != 0x00:
+                for i in range(file_number-1):
+                    o = open(os.path.join(base_path, file_name.upper(),files_names[i]), 'wb')
+                    f.seek(files_offsets[i], 0)
+                    o.write(f.read(files_sizes[i]))
+                    o.close()
+            else:
+                with open(name2, 'rb') as f2:
+                    for i in range(file_number-1):
+                        o = open(os.path.join(base_path, file_name.upper(), files_names[i]), 'wb')
+                        f2.seek(files_offsets[i], 0)
+                        o.write(f2.read(files_sizes[i]))
+                        o.close()
+         
 
 def dump_folder(folder):
     
@@ -63,14 +61,14 @@ def dump_folder(folder):
             dump_fps4(f, f.split('.')[0]+'.MAPBIN')
         print ("Extracting %s" % f)
 
-def pack_folder(folder, dat='.DAT'):
+def pack_folder(folder, dat='.dat'):
     
     buffer = 0
     files_sizes = []
     files_names = []
-    b_file = open(folder + '.B', 'wb')
+    b_file = open(folder + '.b', 'wb')
     dat_file = open(folder + dat, 'wb')
-    files = os.listdir(folder)
+    files = [ele for ele in os.listdir(folder) if os.path.isfile(folder + '/' + ele)]
     
     for n in files:
         f = open(os.path.join(folder, n), 'rb')
