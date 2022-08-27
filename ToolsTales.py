@@ -921,5 +921,8 @@ class ToolsTales:
         self.insertAll()
         
         #
+    def extract_UMD(self, umd_iso):  
+        print("Extract files from UMD")
+        subprocess.run(['piso', 'extract', umd_iso, "\\", '-od', "../Data/{}/Disc/Original".format(self.repo_name)])
         
                      
