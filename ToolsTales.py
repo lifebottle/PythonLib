@@ -824,7 +824,7 @@ class ToolsTales:
         file_name = os.path.basename(file_original)
         
         #Copy the files under Menu Folder
-        menu_path = "../Data/{}/Menu/New/".format(self.gameName) 
+        menu_path = "../Data/{}/Menu/New/".format(self.repo_name) 
         shutil.copy( file_original, menu_path+file_name)
         
         #Extract if needed (PakComposer or other)
@@ -889,8 +889,7 @@ class ToolsTales:
         self.mkdir("../Data/{}/Menu/New".format(self.repo_name))
         
         #Prepare the menu files (Unpack PAK files and use comptoe)
-        files_to_prepare = list(dict.fromkeys([ele['File_Original'] for ele in self.menu_files_json]))
-        res = [ self.prepare_Menu_File(ele) for ele in files_to_prepare]
+        res = [ self.prepare_Menu_File(ele['File_Original']) for ele in self.menu_files_json]
         
         for file_definition in self.menu_files_json:
            
