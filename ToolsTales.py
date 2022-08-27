@@ -310,6 +310,9 @@ class ToolsTales:
     
         if data[6:8] == b"\xBD\x27":
             return "ovl"
+        
+        if data[:4] == b"FPS4":
+            return "fps4"
     
         is_pak = self.get_pak_type(data)
         if is_pak != None:
