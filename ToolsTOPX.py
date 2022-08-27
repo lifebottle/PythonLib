@@ -305,10 +305,68 @@ class ToolsTOPX(ToolsTales):
         etree.SubElement(entry_node,"Status").text        = statusText
         
         self.id += 1
+    def extract_All_Menu(self):
+        
+        res = [self.prepare_Menu_File(ele) for ele in list(set([ele['Hashes_Name'] for ele in self.menu_files_json if ele['Hashes_Name'] != '']))]
+        
+        print("Extracting Menu Files")
+        self.mkdir("../Data/{}/Menu/New".format(self.repo_name))
+        
+        for file_definition in self.menu_files_json:
+           
+            #if file_definition['Hashes_Name'] != '':
+            #    self.prepare_Menu_File(file_definition['Hashes_Name'])
+                                   
+            self.extract_Menu_File(file_definition)
+            
+    def extract_Menu_File(self, file_definition):
         
         
+        section_list = []
+        pointers_offset_list = []
+        texts_list = []
+        to_translate = []
+
+         
+        base_offset = file_definition['Base_Offset']
+        file_path   = file_definition['File_Extract']
+        with open(file_path, "rb") as f:
+
+            for section in file_definition['Sections']:
+                
         
+                text_start = section['Text_Start']
+                text_end = section['Text_End'] 
+                  
+                #Extract Pointers of the file
+                print("Section: {}".format(section['Section']))
+                pointers_offset = section['Pointer_Offset_Start']
+                if isinstance(pointers_offset, list):
+                    pointers_offset, pointers_value = self.get_Direct_Pointers(text_start, text_end, base_offset, pointers_offset, section,file_path)
+                else:
+                    pointers_offset, pointers_value = self.get_special_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Nb_Per_Block'], section['Step'], section['Section'], file_path)
+          
+              
+                #Extract Text from the pointers
+                #print([hex(ele + base_offset) for ele in pointers_value])
+                texts = [ self.bytes_to_text(f, ele + base_offset)[0] for ele in pointers_value]
+                
+                #Make a list
+                section_list.extend( [section['Section']] * len(texts)) 
+                pointers_offset_list.extend( pointers_offset)
+                texts_list.extend( texts )
+                to_translate.extend( [section['To_Translate']] * len(texts))
+       
+        #Remove duplicates
+        list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list, to_translate)
         
+        #Build the XML Structure with the information
+        root = self.create_Node_XML(file_path, list_informations, "MenuText")
+        
+        #Write to XML file
+        txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
+        with open(file_definition['File_XML'].replace("/{}".format(self.repo_name),"").replace("{}".format(self.gameName),self.repo_name), "wb") as xmlFile:
+            xmlFile.write(txt)
     
     
     
