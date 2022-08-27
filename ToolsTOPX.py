@@ -130,15 +130,15 @@ class ToolsTOPX(ToolsTales):
         #1) Extract CAB file to the PAK3 format
         #subprocess.run(['expand', original_cab_file, file_name])
         
-        #2) Decompress PAK3 to a folder
-        #self.pakcomposer("-d", file_name, os.path.join( self.story_XML_extract, "New"))
-        
+        self.id = 1
+        self.speaker_id = 1
+        self.struct_id = 1
         if os.path.isdir(file_name.replace(".pak3", "")):
             
-            #3) Grab TSS file from PAK3 folder
+            #2) Grab TSS file from PAK3 folder
             tss = self.get_tss_from_pak3(  file_name.replace(".pak3", ""))
      
-            #4) Extract TSS to XML
+            #3) Extract TSS to XML
             self.extract_tss_XML(tss, original_cab_file)
         
     def get_tss_from_pak3(self, pak3_folder):
@@ -164,21 +164,26 @@ class ToolsTOPX(ToolsTales):
         
         tss.read(12)
         strings_offset = struct.unpack('<I', tss.read(4))[0]
-        print(hex(strings_offset))
+        print("BaseOffset:{}".format(hex(strings_offset)))
         
         tss.read(4)
         pointer_block_size = struct.unpack('<I', tss.read(4))[0]
-        print(hex(pointer_block_size))
+        print("PointerBlockSize:{}".format(hex(pointer_block_size)))
         block_size = struct.unpack('<I', tss.read(4))[0]
         #print(pointer_block_size)
         #print(block_size)
         
         
-        #Create all the Nodes for Struct and grab the Person offset
+        #Create all the Nodes for Struct
+        speaker_node = etree.SubElement(root, 'Speakers')
+        etree.SubElement(speaker_node, 'Section').text = "Speaker"
         strings_node = etree.SubElement(root, 'Strings')
-        etree.SubElement(strings_node, 'Section').text = "Story"
+        etree.SubElement(strings_node, 'Section').text = "Story"       
+        
+        
         texts_offset, pointers_offset = self.extract_Story_Pointers(tss, self.story_struct_byte_code, strings_offset, pointer_block_size)
-        person_offset = [ self.extract_From_Struct(tss, strings_offset, pointer_offset, struct_offset, strings_node) for pointer_offset, struct_offset in zip(pointers_offset, texts_offset)]
+        
+        person_offset = [ self.extract_From_Struct(tss, strings_offset, pointer_offset, struct_offset, root) for pointer_offset, struct_offset in zip(pointers_offset, texts_offset)]
         
 
         #Create all the Nodes for Strings and grab the minimum offset
@@ -201,51 +206,55 @@ class ToolsTOPX(ToolsTales):
     
 
     def extract_From_Struct(self, f,strings_offset, pointer_offset, struct_offset, root):
-        
-        
-        
+         
         #print("Offset: {}".format(hex(struct_offset)))
         f.seek(struct_offset, 0)
-       
-        #Unknown first pointer
+        
+        #Extract all the information and create the entry
         f.read(4)
-        
-
         unknown_pointer  = struct.unpack('<I', f.read(4))[0]
-        self.create_Entry(root, pointer_offset, unknown_pointer,0, "Struct")
-        
-        person_offset    = struct.unpack('<I', f.read(4))[0] + strings_offset
-        text_offset      = struct.unpack('<I', f.read(4))[0] + strings_offset
-        unknown1_offset  = struct.unpack('<I', f.read(4))[0] + strings_offset
-        unknown2_offset  = struct.unpack('<I', f.read(4))[0] + strings_offset
-        
-        
-        
-        person_text      = self.bytes_to_text(f, person_offset)[0]
-        self.create_Entry(root, pointer_offset, person_text,1, "Struct")
-        #print("Person offset: {}".format(hex(person_offset)))
-        #print("Text offset: {}".format(hex(text_offset)))
-        #print("Unknown1 offset: {}".format(hex(unknown1_offset)))
+        speaker_offset   = struct.unpack('<I', f.read(4))[0] + strings_offset
+        text_offset      = struct.unpack('<I', f.read(4))[0] + strings_offset    
+        speaker_text   = self.bytes_to_text(f, speaker_offset)[0]
+        struct_speaker_id     = self.add_Speaker_Entry(root.find("Speakers"), pointer_offset, speaker_text)      
         japText         = self.bytes_to_text(f, text_offset)[0]
-        self.create_Entry(root, pointer_offset, japText,1, "Struct")
-        
-        unknown1Text     = self.bytes_to_text(f, unknown1_offset)[0]
-        self.create_Entry(root, pointer_offset, unknown1Text,0, "Struct")
-        #print(unknown1Text)
-        unknown2Text     = self.bytes_to_text(f, unknown2_offset)[0]
-        self.create_Entry(root, pointer_offset, unknown2Text,0, "Struct")
-        
-        
+        jap_split_bubble = japText.split("<Bubble>")       
+        [self.create_Entry(root.find("Strings"), pointer_offset, jap,1, "Struct", struct_speaker_id, unknown_pointer) for jap in jap_split_bubble]
         self.struct_id += 1
         
-        return person_offset
+        return speaker_offset
+    
+    def add_Speaker_Entry(self, root, pointer_offset, japText):
+        
+        speaker_entries = [entry for entry in root.iter("Entry") if entry != None and entry.find("JapaneseText").text == japText]
+        struct_speaker_id = 0
+        
+        if len(speaker_entries) > 0:
+            
+            #Speaker already exist
+            speaker_entries[0].find("PointerOffset").text = speaker_entries[0].find("PointerOffset").text + ",{}".format(pointer_offset)
+            struct_speaker_id = speaker_entries[0].find("Id").text
+            
+        else:
+            
+            #Need to create that new speaker
+            entry_node = etree.SubElement(root, "Entry")
+            etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset)
+            etree.SubElement(entry_node,"JapaneseText").text  = str(japText)
+            etree.SubElement(entry_node,"EnglishText").text   = ''
+            etree.SubElement(entry_node,"Notes").text         = ''
+            etree.SubElement(entry_node,"Id").text            = str(self.speaker_id)
+            struct_speaker_id = self.speaker_id
+            self.speaker_id += 1
+              
+        return struct_speaker_id
     
     def extract_From_String(self, f, strings_offset, pointer_offset, text_offset, root):
         
         
         f.seek(text_offset, 0)
         japText = self.bytes_to_text(f, text_offset)[0]
-        self.create_Entry(root, pointer_offset, japText,1, "Other Strings")
+        self.create_Entry(root, pointer_offset, japText,1, "Other Strings", -1, "")
     
     def extract_Story_Pointers(self, f, bytecode, strings_offset, pointer_block_size):
 
