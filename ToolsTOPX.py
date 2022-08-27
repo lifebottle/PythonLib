@@ -18,16 +18,16 @@ class ToolsTOPX(ToolsTales):
         
         super().__init__("NDX", tbl, "Narikiri-Dungeon-X")
         
-        with open("../{}/Data/Misc/{}".format(self.repo_name, self.tblFile), encoding="utf-8") as f:
+        with open("../{}/Data/{}/Misc/{}".format(self.repo_name, self.gameName, self.tblFile), encoding="utf-8") as f:
                        
-            jsonRaw = json.load(f)       
-            self.jsonTblTags ={ k1:{ int(k2,16) if (k1 not in ["TBL", "NAME"]) else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
-            
+            self.jsonTblTags = json.load(f)     
+            self.jsonTblTags["TBL"] = { int(k):v for k,v in self.jsonTblTags["TBL"].items()}
+            keys = [int(ele, 16) for ele in self.jsonTblTags["TAGS"].keys()]
+            self.jsonTblTags["TAGS"] = dict(zip(keys, list(self.jsonTblTags["TAGS"].values())))
+      
             
         self.itable = dict([[i, struct.pack(">H", int(j))] for j, i in self.jsonTblTags['TBL'].items()])
         self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
-        if "NAME" in self.jsonTblTags.keys():
-            self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAME'].items()])
         
         if "COLOR" in self.jsonTblTags.keys():
             self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLOR'].items()])
@@ -50,7 +50,8 @@ class ToolsTOPX(ToolsTales):
         self.story_XML_extract  = '../Data/{}/Story/'.format(self.repo_name)                       #Files are the result of PAKCOMPOSER + Comptoe here
         self.story_XML_new      = '../{}/Data/NDX/Story/XML'.format(self.repo_name)
         self.skit_extract       = '../Data/{}/Skit/'.format(self.repo_name)                                      #Files are the result of PAKCOMPOSER + Comptoe here
-        
+        self.elf_original       = '../Data/{}/Misc/EBOOT.bin'.format(self.repo_name)
+        self.elf_new            = '../Data/{}/Disc/New/PSP_GAME/SYSDIR/EBOOT.bin'.format(self.repo_name)
         self.all_extract      = '../Data/{}/All/'.format(self.repo_name)
         self.all_original     = '../Data/{}/Disc/Original/PSP_GAME/USRDIR/all.dat'.format(self.repo_name)
         self.all_new          = '../Data/{}/Disc/New/PSP_GAME/USRDIR/all.dat'.format(self.repo_name)                  #File is all.dat
@@ -68,6 +69,15 @@ class ToolsTOPX(ToolsTales):
     # Make the basic directories for extracting all.dat
     def make_dirs(self):
         self.mkdir('../Data/{}/All'.format(self.repo_name))
+        self.mkdir('../Data/{}/Story'.format(self.repo_name))
+        self.mkdir('../Data/{}/Story/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Story/XML'.format(self.repo_name))
+        self.mkdir('../Data/{}/Menu'.format(self.repo_name))
+        self.mkdir('../Data/{}/Menu/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Menu/XML'.format(self.repo_name))
+        self.mkdir('../Data/{}/Skits'.format(self.repo_name))
+        self.mkdir('../Data/{}/Skits/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Skits/XML'.format(self.repo_name))
         self.mkdir('../Data/{}/All/battle'.format(self.repo_name))
         self.mkdir('../Data/{}/All/battle/character'.format(self.repo_name))
         self.mkdir('../Data/{}/All/battle/charsnd'.format(self.repo_name))
@@ -763,6 +773,7 @@ class ToolsTOPX(ToolsTales):
                 final_name = hash_
                 if hash_ in self.hashes.keys():
                     final_name = self.hashes[hash_]
+  
                 self.extract_files(file_info[0], file_info[1], final_name, all_read)
                 
                 if len( [ele for ele in files_to_prepare if ele in final_name]) > 0:
@@ -822,7 +833,7 @@ class ToolsTOPX(ToolsTales):
         
     def extract_Decripted_Eboot(self):
         print("Extracting Eboot")
-        args = ["deceboot", "../Data/{}Disc/Original/PSP_GAME/SYSDIR/EBOOT.BIN".format(self.repo_name), "../Data/{}/Misc/EBOOT_DEC.BIN".format(self.repo_name)]
+        args = ["deceboot", "../Data/{}/Disc/Original/PSP_GAME/SYSDIR/EBOOT.BIN".format(self.repo_name), "../Data/{}/Misc/EBOOT.BIN".format(self.repo_name)]
         listFile = subprocess.run(
             args,
             cwd= os.getcwd(),
