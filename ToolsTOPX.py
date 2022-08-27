@@ -580,6 +580,43 @@ class ToolsTOPX(ToolsTales):
             with open( os.path.join(self.all_extract, file_name), mode='wb') as output_file:
                 output_file.write(data)
 
+    def pack_Menu_Archives(self):
+        
+        menu_archives = list(set([ (ele['File_Original'], ele['Hashes_Name']) for ele in self.menu_files_json if ele['File_Original'] != ele['File_Extract']]))
+        
+        for file_original, hashes_name in menu_archives:
+
+            name = os.path.basename(file_original)
+            self.pack_Archive('../Data/{}/Menu/New/{}/{}'.format(self.repo_name, hashes_name, name))
+            
+    def pack_All_Menu(self):
+        
+        print("Insert Menu Files")
+        for ele in self.menu_files_json:
+            
+            print("Insert {}".format(os.path.basename(ele['File_XML'])))
+            self.pack_Menu_File(ele['File_Extract'])
+            
+            if 'EBOOT' not in ele['File_Extract']:
+                
+                name = os.path.basename(ele['File_Extract']).split(".")[0]
+                self.make_Cab(name+".dat", (name+".cab").upper(), os.path.join(os.path.dirname(ele['File_Extract']), ".."))
+            
+        self.pack_Menu_Archives()
+        
+    def pack_Archive(self, file_path):
+         
+        path = os.path.dirname(file_path)
+        
+        #FPS4 Archive
+        if '.b' in file_path:   
+            list_files = [path +'/' + ele for ele in os.listdir( path) if '.b' not in ele if '.dat' in ele]
+            
+            self.fps4_action('-c', file_path.replace(".b",""), path)
+            [ shutil.copy(file_path.replace(".b",".dat"), ele) for ele in list_files]
+            os.remove(file_path.replace(".b",".dat"))
+            
+            
     # Extract the file all.dat to the different directorties
     def extract_Main_Archive(self):
         
