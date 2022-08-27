@@ -100,19 +100,6 @@ class ToolsTOPX(ToolsTales):
         self.mkdir('../Data/{}/All/snd/se3/map_mus'.format(self.repo_name))
         self.mkdir('../Data/{}/All/snd/strpck'.format(self.repo_name))
         self.mkdir('../Data/{}/All/sysdata'.format(self.repo_name))
-        
-    # Extract each of the file from the all.dat
-    def extract_files(self, start, size, filename):
-        if filename in self.hashes.keys():
-            filename = self.hashes[filename]
-            input_file = open( self.all_original, 'rb')
-            input_file.seek(start, 0)
-            data = input_file.read(size)
-            output_file = open( os.path.join(self.all_extract, filename), 'wb')
-            output_file.write(data)
-            output_file.close()
-            input_file.close()
-            
     
     # Extract the story files
     def extract_All_Story(self):
