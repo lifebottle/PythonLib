@@ -305,6 +305,17 @@ class ToolsTOPX(ToolsTales):
         etree.SubElement(entry_node,"Status").text        = statusText
         
         self.id += 1
+    def prepare_Menu_File(self, hashes_folder):
+        
+        menu_file_path = "../Data/{}/Menu/New/{}".format(self.repo_name, hashes_folder)
+        for filename in os.listdir(menu_file_path):
+            
+            if os.path.isdir(filename):
+                shutil.rmtree(filename)
+                
+        self.unpack_Folder( menu_file_path)
+        
+                
     def extract_All_Menu(self):
         
         res = [self.prepare_Menu_File(ele) for ele in list(set([ele['Hashes_Name'] for ele in self.menu_files_json if ele['Hashes_Name'] != '']))]
