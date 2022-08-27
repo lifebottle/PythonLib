@@ -265,20 +265,35 @@ class ToolsTOPX(ToolsTales):
         return text_offset, pointer_offset
     
     
-    def create_Entry(self, strings_node, pointer_offset, text, to_translate, entry_type):
+ 
+    def create_Entry(self, strings_node, pointer_offset, text, to_translate, entry_type, speaker_id, unknown_pointer):
         
         #Add it to the XML node
         entry_node = etree.SubElement(strings_node, "Entry")
         etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset)
-        etree.SubElement(entry_node,"JapaneseText").text  = str(text)
-        etree.SubElement(entry_node,"EnglishText").text   = ''
+        etree.SubElement(entry_node,"JapaneseText").text  = str(text)  
+        eng_text = ''
+        
+        if to_translate == 0:
+            statusText = 'Done' 
+            eng_text   = str(text)
+            
+        etree.SubElement(entry_node,"EnglishText").text   = eng_text
         etree.SubElement(entry_node,"Notes").text         = ''
-        etree.SubElement(entry_node,"Id").text            = str(self.id)
+        etree.SubElement(entry_node,"Id").text            = str(self.id)   
+        statusText = "To Do"
         
         if entry_type == "Struct":
             etree.SubElement(entry_node,"StructId").text      = str(self.struct_id)
+            etree.SubElement(entry_node,"UnknownPointer").text = str(unknown_pointer)
+            
+            if to_translate == 1:
+                etree.SubElement(entry_node,"SpeakerId").text      = str(speaker_id)
+                
+        etree.SubElement(entry_node,"ToTranslate").text   = str(to_translate)             
+        etree.SubElement(entry_node,"Status").text        = statusText      
+        self.id += 1
         
-        etree.SubElement(entry_node,"ToTranslate").text   = str(to_translate)
         
         
         # Status for Unknown_Pointer, UnknownText1 and UnknownText2 should always be Done
