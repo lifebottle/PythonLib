@@ -264,6 +264,29 @@ class ToolsTOPX(ToolsTales):
         
         return text_offset, pointer_offset
     
+    def get_Direct_Pointers(self, text_start, text_max, base_offset, pointers_list, section,file_path=''):
+         
+        if file_path == '':
+            file_path = self.elf_original
+        
+        f = open(file_path , "rb")  
+        pointers_offset = []
+        pointers_value  = []
+        
+        for pointer in pointers_list:
+            f.seek(pointer, 0)
+            value = struct.unpack("<I", f.read(4))[0]      
+            if ((value + base_offset >= text_start) and (value + base_offset <= text_max)):
+                pointers_offset.append(pointer)
+                pointers_value.append(value)
+        f.close()
+        
+        #Only grab the good pointers
+        good_indexes = [index for index,ele in enumerate(pointers_value) if ele != 0]   
+        pointers_offset = [pointers_offset[i] for i in good_indexes]
+        pointers_value = [pointers_value[i] for i in good_indexes]
+
+        return [pointers_offset, pointers_value]
     
  
     def create_Entry(self, strings_node, pointer_offset, text, to_translate, entry_type, speaker_id, unknown_pointer):
