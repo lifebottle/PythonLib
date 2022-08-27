@@ -368,6 +368,28 @@ class ToolsTOPX(ToolsTales):
         with open(file_definition['File_XML'].replace("/{}".format(self.repo_name),"").replace("{}".format(self.gameName),self.repo_name), "wb") as xmlFile:
             xmlFile.write(txt)
     
+    def remove_duplicates(self, section_list, pointers_offset, texts_list, to_translate_list):
+        
+        final_list = []
+        unique_text = set(texts_list)
+        for text in unique_text:
+            
+            indexes = [index for index,ele in enumerate(texts_list) if ele == text]
+
+
+            
+            found = [str(pointers_offset[i]) for i in indexes]
+            found.sort(reverse=False)
+            found = list( set(found))
+            pointers_found = ",".join(found)
+           
+            section = [section_list[i] for i in indexes][0]
+            to_translate = [to_translate_list[i] for i in indexes][0]
+            final_list.append( (section, pointers_found, text, to_translate))
+        
+        final_list.sort(key=lambda x: int(x[1].split(",")[-1]))
+
+        return final_list
     
     
     def bytes_to_text(self, fileRead, offset=-1, end_strings = b"\x00"):
