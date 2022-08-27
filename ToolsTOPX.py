@@ -264,6 +264,47 @@ class ToolsTOPX(ToolsTales):
         
         return text_offset, pointer_offset
     
+    #def create_Struct_Entry(self, strings_node, pointer_offset, text, speaker_id = -1):
+        
+    #start_offset : where the pointers start for the section
+    # nb_per_block : number of pointers per block before adding step
+    # step : number of bytes before the next block
+    def get_special_pointers(self, text_start, text_max, base_offset, start_offset, nb_per_block, step, section,file_path=''):
+         
+        if file_path == '':
+            file_path = self.elf_original
+        
+        f = open(file_path , "rb")  
+        f.seek(start_offset, 0)
+        pointers_offset = []
+        pointers_value  = []
+        list_test = []
+        is_bad_count = 0
+        
+        while is_bad_count <2:
+            block_pointers_offset = [f.tell()+4*i for i in range(nb_per_block)]
+            
+            block_pointers_value = struct.unpack(f"<{nb_per_block}L", f.read(4 * nb_per_block))
+            list_test.extend(block_pointers_value)         
+            
+            for i in range(len(block_pointers_offset)):
+                if (block_pointers_value[i] + base_offset >= text_start and block_pointers_value[i] + base_offset <= text_max):
+                    pointers_offset.append(block_pointers_offset[i])
+                    pointers_value.append(block_pointers_value[i])
+                    is_bad_count = 0
+
+                elif block_pointers_value[i] != 0:
+                    is_bad_count += 1
+            f.read(step)
+        f.close()
+        
+        #Only grab the good pointers
+        good_indexes = [index for index,ele in enumerate(pointers_value) if ele != 0]   
+        pointers_offset = [pointers_offset[i] for i in good_indexes]
+        pointers_value = [pointers_value[i] for i in good_indexes]
+
+        return [pointers_offset, pointers_value]
+    
     def get_Direct_Pointers(self, text_start, text_max, base_offset, pointers_list, section,file_path=''):
          
         if file_path == '':
