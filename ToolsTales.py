@@ -618,7 +618,7 @@ class ToolsTales:
         file_node = [ele for ele in self.menu_files_json if ele['File_Extract'] == menu_file_path][0]
         
         xml_file_name = "../{}/Data/{}/Menu/XML/".format(self.repo_name, self.gameName) + self.get_file_name(menu_file_path)+'.xml'
-        tree = etree.parse(xml_file_name)
+        tree = etree.parse(file_node['File_XML'])
         root = tree.getroot()
         
         sections_start = [ section['Text_Start'] for section in file_node['Sections'] if section['Text_Start'] > 0 ]
