@@ -403,8 +403,9 @@ class ToolsTales:
         os.mkdir( os.path.join(working_dir, folder_name.upper()))
         subprocess.run(['expand', os.path.basename(cab_file_name), folder_name + '/{}.dat'.format(folder_name)], cwd=working_dir)
       
-    
-    
+    def make_Cab(self, dat_file_name, cab_file_name, working_dir):
+        
+        subprocess.run(['makecab', '/D', 'CompressionType=LZX', '/D', 'CompressionMemory=15', '/D', 'ReservePerCabinetSize=8',os.path.join( cab_file_name.replace(".CAB",""), dat_file_name), cab_file_name ], cwd=working_dir)
     def get_file_name(self, path):
         return os.path.splitext(os.path.basename(path))[0]
 
