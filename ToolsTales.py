@@ -402,12 +402,13 @@ class ToolsTales:
     def extract_Cab(self, cab_file_name, new_file_name, working_dir):
         
         folder_name = os.path.basename(new_file_name).split('.')[0].lower()
-        os.mkdir( os.path.join(working_dir, folder_name.upper()))
+        self.mkdir( working_dir + "/" + folder_name)
+        #os.mkdir("{}/{}".format(working_dir,folder_name))
         subprocess.run(['expand', os.path.basename(cab_file_name), folder_name + '/{}.dat'.format(folder_name)], cwd=working_dir)
       
     def make_Cab(self, dat_file_name, cab_file_name, working_dir):
         
-        subprocess.run(['makecab', '/D', 'CompressionType=LZX', '/D', 'CompressionMemory=15', '/D', 'ReservePerCabinetSize=8',os.path.join( cab_file_name.replace(".CAB",""), dat_file_name), cab_file_name ], cwd=working_dir)
+        subprocess.run(['makecab', '/D', 'CompressionType=LZX', '/D', 'CompressionMemory=15', '/D', 'ReservePerCabinetSize=8', dat_file_name, cab_file_name ], cwd=working_dir)
     def get_file_name(self, path):
         return os.path.splitext(os.path.basename(path))[0]
 
@@ -610,7 +611,22 @@ class ToolsTales:
     # Insertion of texts and packing of files
     #
     #############################
-    
+    def get_Node_Bytes(self, entry_node):
+        status = entry_node.find("Status").text
+        japanese_text = entry_node.find("JapaneseText").text
+        english_text = entry_node.find("EnglishText").text
+        
+        #Use the values only for Status = Done and use English if non empty
+        final_text = ''
+        if (status not in ['Problematic', 'To Do']):
+            final_text = english_text or japanese_text or ''
+        else:
+            final_text = japanese_text or ''
+            
+        #Convert the text values to bytes using TBL, TAGS, COLORS, ...
+        bytes_entry = self.text_to_bytes(final_text)
+        
+        return bytes_entry
     def pack_Menu_File(self, menu_file_path):
         
         
