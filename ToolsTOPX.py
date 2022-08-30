@@ -697,7 +697,13 @@ class ToolsTOPX(ToolsTales):
                            
             #Find a possible Color, Icon
             elif b in (0x1, 0xB):
+                
+                offset_temp = fileRead.tell()
+                next_4 = struct.unpack("<I", fileRead.read(4))[0]
+                fileRead.seek(offset_temp)
                 b2 = struct.unpack("<B", fileRead.read(1))[0]
+                b3 = struct.unpack("<B", fileRead.read(1))[0]
+                fileRead.seek(fileRead.tell()-1)
                 if b in TAGS:
                     
                     tag_name = TAGS.get(b)
@@ -779,9 +785,14 @@ class ToolsTOPX(ToolsTales):
                                     bytesFinal += struct.pack("B", int(split[0][1:], 16))
                                     bytesFinal += struct.pack("<I", int(split[1][:8], 16))
                                     
-                            if c in self.jsonTblTags['NAME']:
+                            if (c in self.jsonTblTags['NAME']):         
                                 bytesFinal += struct.pack("B", 0x4)
-                                c = '(' + c.replace("<","").replace(">","") + ")"
+                                c = c.replace("<","(").replace(">",")")
+                                bytesFinal += c.encode("cp932")
+                                
+                            if "VSM" in c:
+                                bytesFinal += struct.pack("B", 0x9)
+                                c = c.replace("<","(").replace(">",")")
                                 bytesFinal += c.encode("cp932")
                                 
                             if c in self.icolors:
@@ -797,7 +808,7 @@ class ToolsTOPX(ToolsTales):
            
             i=i+1
             if (nb >=2 and i<nb):
-                bytesFinal += b'\x01'
+                bytesFinal += b'\x0A'
         
         return bytesFinal    
         
