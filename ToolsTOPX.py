@@ -172,7 +172,31 @@ class ToolsTOPX(ToolsTales):
                         print("... Extract TSS for file {} of size: {}".format(folder_name, len(data)))
                         return io.BytesIO(data), file
     
-    def extract_tss_XML(self, tss, cab_file_name):
+    def extract_All_Event(self):
+        
+        print("Extracting Events")
+        events_files = [file for file in os.listdir("../Data/{}/All/map".format(self.repo_name)) if file.endswith(".bin")]
+        for event_file in events_files:
+            self.extract_Event_File(event_file)
+            
+    def extract_Event_File(self, event_file):
+        
+        self.id = 1
+        self.speaker_id = 1
+        self.struct_id = 1
+        
+        #1) Extract CAB to folder
+        event_path = '../Data/{}/Events/New/map'.format(self.repo_name)
+        file_path  = os.path.join(event_path, event_file)
+        self.extract_Cab(event_file, event_file, event_path)
+        
+        #2) Grab TSS file from the decompressed CAB file
+        tss, file_tss = self.get_tss_from_event(  os.path.join(event_path, event_file.replace(".bin",""), event_file.replace(".bin",".dat")))
+ 
+        #3) Extract TSS to XML
+        self.extract_tss_XML(tss, event_file, '../Data/{}/Events'.format(self.repo_name))
+        return tss
+        
         
         root = etree.Element('SceneText')
    
