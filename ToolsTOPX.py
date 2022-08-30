@@ -141,22 +141,20 @@ class ToolsTOPX(ToolsTales):
                     #super().pakComposerAndComptoe(fileName, "-d", "-3")
         
     # Extract one single CAB file to the XML format
-    def extract_Story_File(self,original_cab_file, file_name):
-        
-        #1) Extract CAB file to the PAK3 format
-        #subprocess.run(['expand', original_cab_file, file_name])
+    def extract_Story_File(self, pak3_folder):
         
 
         self.id = 1
         self.speaker_id = 1
         self.struct_id = 1
-        if os.path.isdir(file_name.replace(".pak3", "")):
             
+        
+        if os.path.exists(pak3_folder):
             #2) Grab TSS file from PAK3 folder
-            tss = self.get_tss_from_pak3(  file_name.replace(".pak3", ""))
+            tss, file_tss = self.get_tss_from_pak3(  pak3_folder)
      
             #3) Extract TSS to XML
-            self.extract_tss_XML(tss, original_cab_file)
+            self.extract_tss_XML(tss, pak3_folder)
         
     def get_tss_from_pak3(self, pak3_folder):
           
