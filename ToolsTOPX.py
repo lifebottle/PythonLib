@@ -468,6 +468,76 @@ class ToolsTOPX(ToolsTales):
             tss.write(b'\x00')
         return speaker_dict
     
+    #Repack SCPK files for Story
+    def pack_Story_File(self, story_ep_no):
+        
+        
+        #Grab the Tss file inside the folder
+        story_path = '../Data/{}/Story/'.format(self.repo_name)
+        tss, file_tss = self.get_tss_from_pak3( story_path + 'New/{}/{}'.format(story_ep_no, story_ep_no) )
+        
+        tss.read(12)
+        base_offset = struct.unpack('<I', tss.read(4))[0]
+        tree = etree.parse(story_path + 'XML/{}'.format(story_ep_no+'.xml'))
+        root = tree.getroot()
+        
+        #Move to the start of the text section
+        start_offset = self.get_Starting_Offset(root, tss, base_offset)
+        tss.seek(start_offset,0)
+
+        #Insert all Speaker Nodes from Struct
+        speaker_dict = self.insert_Speaker(root, tss, base_offset)
+        
+        #Do stuff for Struct
+        struct_dict = dict()
+        for struct_node in root.findall('Strings[Section="Story"]/Entry'):
+            text_offset = tss.tell()
+            bytes_text = self.get_Node_Bytes(struct_node)
+            tss.write(bytes_text)
+            tss.write(b'\x00\x00\x00')
+            
+            #Construct Struct
+            struct_dict[ int(struct_node.find("PointerOffset").text)] = struct.pack( "<I", tss.tell() - base_offset)
+            tss.write(struct.pack("<I", 1))
+            tss.write(struct.pack("<I", int(struct_node.find("UnknownPointer").text)))      #UnknownPointer
+            tss.write(speaker_dict[struct_node.find("SpeakerId").text])                     #PersonPointer
+            tss.write(struct.pack("<I", text_offset - base_offset))                         #TextPointer
+            tss.write(struct.pack("<I", text_offset + len(bytes_text) + 1 - base_offset))
+            tss.write(struct.pack("<I", text_offset + len(bytes_text) + 2 - base_offset))
+            tss.write(b'\x00')
+    
+        #Do Other Strings
+        string_dict = dict()
+        for string_node in root.findall('Strings[Section="Other Strings"]/Entry'):
+            string_dict[ int(string_node.find("PointerOffset").text)] = struct.pack("<I", tss.tell() - base_offset)
+            bytes_text = self.get_Node_Bytes(string_node)
+            tss.write(bytes_text)
+            tss.write(b'\x00')
+            
+        #Update Struct pointers
+        for pointer_offset, value in struct_dict.items():
+            tss.seek(pointer_offset)
+            tss.write(value)
+            
+        #Update String pointers
+        for pointer_offset, value in string_dict.items():
+            tss.seek(pointer_offset)
+            tss.write(value)
+        
+            
+        with open(file_tss, "wb") as f:
+            f.write(tss.getvalue())
+            
+        #PAK3
+        self.pakComposer_Comptoe(story_ep_no, "-c", "-3", 0, story_path + 'New/{}'.format(story_ep_no))
+        os.remove(story_path + 'New/{}/{}.dat'.format(story_ep_no, story_ep_no))
+        os.rename(story_path + 'New/{}/{}.pak3'.format(story_ep_no, story_ep_no), story_path + 'New/{}/{}.dat'.format(story_ep_no, story_ep_no))
+        self.adjust_pak3(story_path + 'New/{}/{}.dat'.format(story_ep_no, story_ep_no))
+        
+        #CAB
+        self.make_Cab('{}/{}.dat'.format(story_ep_no, story_ep_no), story_ep_no+".cab", story_path+'New')
+        return tss.getvalue()
+        
     def unpack_Folder(self, folder_path):
         
         files = [folder_path+ '/' + ele for ele in os.listdir(folder_path)]
