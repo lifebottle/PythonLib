@@ -9,6 +9,7 @@ import re
 import io
 import pandas as pd
 import xml.etree.ElementTree as ET
+import glob
 import lxml.etree as etree
 from xml.dom import minidom
 from pathlib import Path
@@ -55,7 +56,6 @@ class ToolsTOPX(ToolsTales):
         self.all_extract      = '../Data/{}/All/'.format(self.repo_name)
         self.all_original     = '../Data/{}/Disc/Original/PSP_GAME/USRDIR/all.dat'.format(self.repo_name)
         self.all_new          = '../Data/{}/Disc/New/PSP_GAME/USRDIR/all.dat'.format(self.repo_name)                  #File is all.dat
-        
         self.story_struct_byte_code = b'\x18\x00\x0C\x04'
         self.story_string_byte_code = b'\x00\x00\x82\x02'
         
@@ -78,6 +78,9 @@ class ToolsTOPX(ToolsTales):
         self.mkdir('../Data/{}/Story'.format(self.repo_name))
         self.mkdir('../Data/{}/Story/New'.format(self.repo_name))
         self.mkdir('../Data/{}/Story/XML'.format(self.repo_name))
+        self.mkdir('../Data/{}/Events'.format(self.repo_name))
+        self.mkdir('../Data/{}/Events/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Events/XML'.format(self.repo_name))
         self.mkdir('../Data/{}/Menu'.format(self.repo_name))
         self.mkdir('../Data/{}/Menu/New'.format(self.repo_name))
         self.mkdir('../Data/{}/Menu/XML'.format(self.repo_name))
@@ -112,7 +115,11 @@ class ToolsTOPX(ToolsTales):
         
         print("Extracting Story")
         path = os.path.join( self.all_extract, 'map/pack/')
-        self.mkdir(self.story_XML_extract)
+        story_new =  "../Data/{}/Story/New".format(self.repo_name)
+        #self.mkdir(self.story_XML_extract)
+        #files = glob.glob(story_new+'/*')
+        #for f in files:
+        #    os.remove(f)
         
         for f in os.listdir( path ):
             if os.path.isfile( path+f) and '.cab' in f:
@@ -133,6 +140,7 @@ class ToolsTOPX(ToolsTales):
         #1) Extract CAB file to the PAK3 format
         #subprocess.run(['expand', original_cab_file, file_name])
         
+
         self.id = 1
         self.speaker_id = 1
         self.struct_id = 1
@@ -158,7 +166,7 @@ class ToolsTOPX(ToolsTales):
                   
                     if data[0:3] == b'TSS':
                         print("... Extract TSS for file {} of size: {}".format(folder_name, len(data)))
-                        return io.BytesIO(data)
+                        return io.BytesIO(data), file
     
     def extract_tss_XML(self, tss, cab_file_name):
         
@@ -518,7 +526,7 @@ class ToolsTOPX(ToolsTales):
         
         pos = fileRead.tell()
         b = fileRead.read(1)
-      
+
         while b != end_strings:
             #print(hex(fileRead.tell()))
             
@@ -597,7 +605,7 @@ class ToolsTOPX(ToolsTales):
         nb = len(splitLineBreak)
         bytesFinal = b''
         i=0
-        
+
         for line in splitLineBreak:
             string_hex = re.split(self.HEX_TAG, line)
             string_hex = [sh for sh in string_hex if sh]
