@@ -456,6 +456,18 @@ class ToolsTOPX(ToolsTales):
             
         return min( min(strings_offset), min(structs_offset))
          
+    def insert_Speaker(self, root, tss, base_offset):
+        
+        speaker_dict = dict()
+        
+        for speaker_node in root.findall("Speakers/Entry"):          
+            bytes_entry = self.get_Node_Bytes(speaker_node)
+            speaker_id  = speaker_node.find("Id").text
+            speaker_dict[speaker_id] = struct.pack("<I", tss.tell() - base_offset)
+            tss.write(bytes_entry)
+            tss.write(b'\x00')
+        return speaker_dict
+    
     def unpack_Folder(self, folder_path):
         
         files = [folder_path+ '/' + ele for ele in os.listdir(folder_path)]
