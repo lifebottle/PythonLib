@@ -1014,8 +1014,23 @@ class ToolsTOPX(ToolsTales):
         elf.close()
         all_file.close()
         
+    def adjust_pak3(self, pak3_file): 
         
-        
+        pointer_value = []
+        with open(pak3_file, "rb") as f:
+            data = f.read()
+            f.seek(0x4)
+            pointer_value = struct.unpack("<3I", f.read(12))
+            
+        with open(pak3_file, "wb") as f2:
+            f2.write(data[:16])
+            f2.write(b'\x00' * 48)
+            f2.write(data[0x10:])
+            
+            f2.seek(0x4)
+            for p in pointer_value:
+                f2.write(struct.pack("<I", p + 0x30))
+            
     def extract_Decripted_Eboot(self):
         print("Extracting Eboot")
         args = ["deceboot", "../Data/{}/Disc/Original/PSP_GAME/SYSDIR/EBOOT.BIN".format(self.repo_name), "../Data/{}/Misc/EBOOT.BIN".format(self.repo_name)]
