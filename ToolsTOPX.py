@@ -932,6 +932,18 @@ class ToolsTOPX(ToolsTales):
   
                 self.extract_files(file_info[0], file_info[1], final_name, all_read)
                 
+                #Story file
+                if final_name.startswith("map/pack/ep_") and final_name.endswith(".cab"):
+                    story_dest = "../Data/{}/Story/New/{}".format( self.repo_name, os.path.basename(final_name))
+                    os.makedirs(os.path.dirname(story_dest), exist_ok=True)
+                    shutil.copy( os.path.join(self.all_extract, final_name), story_dest)
+                    
+                #Event  file
+                elif final_name.startswith("map/") and os.path.dirname(final_name) == "map" and final_name.endswith(".bin"):
+                    event_dest = "../Data/{}/Events/New/{}".format( self.repo_name, final_name)
+                    os.makedirs(os.path.dirname(event_dest), exist_ok=True)
+                    shutil.copy( os.path.join(self.all_extract, final_name), event_dest)
+                    
                 if len( [ele for ele in files_to_prepare if ele in final_name]) > 0:
                     copy_path = os.path.join("../Data/{}/Menu/New/{}".format(self.repo_name, final_name))
                     Path(os.path.dirname(copy_path)).mkdir(parents=True, exist_ok=True)
