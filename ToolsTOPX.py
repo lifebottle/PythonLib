@@ -293,6 +293,7 @@ class ToolsTOPX(ToolsTales):
             etree.SubElement(entry_node,"EnglishText").text   = ''
             etree.SubElement(entry_node,"Notes").text         = ''
             etree.SubElement(entry_node,"Id").text            = str(self.speaker_id)
+            etree.SubElement(entry_node,"Status").text         = "To Do"
             struct_speaker_id = self.speaker_id
             self.speaker_id += 1
               
