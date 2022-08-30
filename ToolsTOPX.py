@@ -124,9 +124,15 @@ class ToolsTOPX(ToolsTales):
         for f in os.listdir( path ):
             if os.path.isfile( path+f) and '.cab' in f:
                 
-               
-                file_name = self.story_XML_extract+'New/'+f.replace(".cab", ".pak3")
-                self.extract_Story_File(path+f, file_name)
+                #Unpack the CAB into PAK3 file
+                shutil.copy( path+f,os.path.join(story_new, f))
+                self.extract_Cab(f, f.replace(".cab", ".pak3"), story_new)
+
+                #Decompress using PAKCOMPOSER + Comptoe
+                self.pakComposer_Comptoe(f.replace(".cab", ".dat"), "-d", "-3",0, os.path.join( story_new, f.replace(".cab","")) )       
+                
+                #Extract from XML
+                self.extract_Story_File(os.path.join(story_new, f.replace(".cab", ""), f.replace(".cab", "")))
                 
                 
                 
