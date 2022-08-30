@@ -214,21 +214,16 @@ class ToolsTOPX(ToolsTales):
             
             
             
+    def extract_tss_XML(self, tss, cab_file_name, xml_path):
         
         root = etree.Element('SceneText')
    
-        
+        tss.seek(0)
         tss.read(12)
-        strings_offset = struct.unpack('<I', tss.read(4))[0]
-        print("BaseOffset:{}".format(hex(strings_offset)))
-        
+        strings_offset = struct.unpack('<I', tss.read(4))[0]     
         tss.read(4)
         pointer_block_size = struct.unpack('<I', tss.read(4))[0]
-        print("PointerBlockSize:{}".format(hex(pointer_block_size)))
         block_size = struct.unpack('<I', tss.read(4))[0]
-        #print(pointer_block_size)
-        #print(block_size)
-        
         
         #Create all the Nodes for Struct
         speaker_node = etree.SubElement(root, 'Speakers')
@@ -238,9 +233,8 @@ class ToolsTOPX(ToolsTales):
         
         
         texts_offset, pointers_offset = self.extract_Story_Pointers(tss, self.story_struct_byte_code, strings_offset, pointer_block_size)
-        
         person_offset = [ self.extract_From_Struct(tss, strings_offset, pointer_offset, struct_offset, root) for pointer_offset, struct_offset in zip(pointers_offset, texts_offset)]
-        
+
 
         #Create all the Nodes for Strings and grab the minimum offset
         strings_node = etree.SubElement(root, 'Strings')
@@ -249,13 +243,12 @@ class ToolsTOPX(ToolsTales):
         texts_offset, pointers_offset = self.extract_Story_Pointers(tss, self.story_string_byte_code, strings_offset, pointer_block_size)
         [ self.extract_From_String(tss, strings_offset, pointer_offset, text_offset, strings_node) for pointer_offset, text_offset in zip(pointers_offset, texts_offset)]
         
-        text_start = min( min(person_offset), min(texts_offset))
+        text_start = min( min(person_offset, default=0), min(texts_offset, default=0))
         etree.SubElement(root, "TextStart").text = str(text_start)
   
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
-        xml_path = os.path.join(self.story_XML_extract,"XML", self.get_file_name(cab_file_name)+".xml")
-        print(xml_path)
+        xml_path = os.path.join(xml_path,"XML", self.get_file_name(cab_file_name)+".xml")
         with open(xml_path, "wb") as xmlFile:
             xmlFile.write(txt)
     
