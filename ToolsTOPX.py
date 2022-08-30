@@ -433,6 +433,29 @@ class ToolsTOPX(ToolsTales):
          
         return root
      
+    def get_Starting_Offset(self, root, tss, base_offset):
+       
+        #String Pointers
+        strings_pointers = [int(ele.find("PointerOffset").text) for ele in root.findall('Strings[Section="Other Strings"]/Entry')]
+        strings_offset = []
+        structs_offset = []
+
+        for pointer_offset in strings_pointers:
+            tss.seek(pointer_offset)
+            strings_offset.append( struct.unpack("<I", tss.read(4))[0] + base_offset)
+        
+        #Struct Pointers
+        struct_pointers =  [int(ele.find("PointerOffset").text) for ele in root.findall('Strings[Section="Story"]/Entry')]
+        for pointer_offset in struct_pointers:
+            tss.seek(pointer_offset)
+            struct_offset = struct.unpack("<I", tss.read(4))[0] + base_offset 
+            tss.seek(struct_offset)
+            tss.read(8)
+            struct_offset = struct.unpack("<I",tss.read(4))[0] + base_offset
+            structs_offset.append(struct_offset)
+            
+        return min( min(strings_offset), min(structs_offset))
+         
     def unpack_Folder(self, folder_path):
         
         files = [folder_path+ '/' + ele for ele in os.listdir(folder_path)]
