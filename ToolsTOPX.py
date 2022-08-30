@@ -197,6 +197,23 @@ class ToolsTOPX(ToolsTales):
         self.extract_tss_XML(tss, event_file, '../Data/{}/Events'.format(self.repo_name))
         return tss
         
+    def get_tss_from_event(self, event_file):
+        
+        with open(event_file, "rb") as event_f:
+            data = event_f.read()
+            file_offset = struct.unpack("<I", data[0x6C:0x70])[0]
+            tss_data = data[file_offset:len(data)]
+            dirname = os.path.dirname(event_file)
+            self.mkdir( os.path.join(dirname, "TSS"))
+            file_tss = os.path.join(dirname, "TSS", os.path.basename(event_file).replace(".dat",".tss"))
+            with open(file_tss, "wb") as f:
+                f.write(tss_data)
+            
+            return io.BytesIO(tss_data), file_tss
+            
+            
+            
+            
         
         root = etree.Element('SceneText')
    
