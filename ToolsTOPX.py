@@ -961,13 +961,30 @@ class ToolsTOPX(ToolsTales):
                     name = self.hashes[name]
                    
                 data = b''
-                if os.path.dirname(name) in menu_files:               
-                    with open( os.path.join( '../Data/{}/Menu/New'.format(self.repo_name), name), 'rb') as new_f:
-                        data = new_f.read()
+                new_path = ''
+                #Menu files to repack
+                if os.path.dirname(name) in menu_files:     
+                    new_path = '../Data/{}/Menu/New/{}'.format(self.repo_name, name)
+      
+                #Story files to repack
+                elif os.path.basename(name).startswith("ep_"): 
+                    #print(name)
+                    new_path = '../Data/{}/Story/New/{}'.format(self.repo_name, os.path.basename(name))
+                    
+                #Events files to repack
+                elif os.path.basename(name).startswith("ep_"): 
+                    #print(name)
+                    new_path = '../Data/{}/Events/New/{}'.format(self.repo_name, os.path.basename(name))
+                    
                 else:
-                    with open( os.path.join( self.all_extract, name), 'rb') as orig_f:
-                        data = orig_f.read()
-
+                    new_path = os.path.join( self.all_extract, name)
+                    
+                with open( new_path, 'rb') as final_f:
+                    
+                    data = final_f.read()
+  
+                        
+                        
                 size = len(data)
                 sizes.append(size)
                 remainder = 0x800 - (size % 0x800)
