@@ -1,0 +1,20 @@
+
+name: refreshRepo
+
+on:
+  workflow_dispatch:
+    inputs:
+      repoName:
+jobs:
+
+  repoBasic:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ../$repoName
+    steps:
+    
+    - name: Refresh repo
+      run:
+        git pull
+  
