@@ -1,0 +1,20 @@
+
+name: refreshRepo
+
+on:
+  workflow_dispatch:
+    inputs:
+      repoName:
+jobs:
+
+  RefreshRepo:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ../${{ github.event.inputs.repoName }}
+    steps:
+    
+    - name: Refresh repo
+      run:
+        git pull
+  
