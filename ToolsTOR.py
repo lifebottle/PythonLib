@@ -37,7 +37,7 @@ class ToolsTOR(ToolsTales):
         
         super().__init__("TOR", tbl, "Tales-of-Rebirth")
         
-        with open("../{}/Data/Misc/{}".format(self.repo_name, self.tblFile), encoding="utf-8") as f:
+        with open("../{}/Data/{}/Misc/{}".format(self.repo_name, self.gameName, self.tblFile), encoding="utf-8") as f:
                        
             jsonRaw = json.load(f)       
             self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
