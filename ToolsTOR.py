@@ -113,7 +113,7 @@ class ToolsTOR(ToolsTales):
         text = re.sub(u'\u3000', '', text)
         text = re.sub(r" ", "", text)
         return text
-    
+      
     def add_line_break(self, text):
         temp = "";
         currentLineSize = 0;
@@ -137,7 +137,7 @@ class ToolsTOR(ToolsTales):
     
     #Extract/Transform Lauren translation
     def extract_Lauren_Translation(self):
-        
+
         #Load Lauren's googlesheet data inside a dataframe
         df = self.extract_Google_Sheets("1-XwzS7F0SaLlXwv1KS6RcTEYYORH2DDb1bMRy5VM5oo", "Story")
         
@@ -210,6 +210,40 @@ class ToolsTOR(ToolsTales):
         temp = self.rreplace(temp, " ", "", 1)
 
         return temp
+
+    def clean_text(self, text):
+        text = re.sub(r"\n ", "\n", text)
+        text = re.sub(r"\n", "", text)
+        text = re.sub(r"(<\w+:?\w+>)", "", text)
+        text = re.sub(r"\[\w+=*\w+\]", "", text)
+        text = re.sub(r" ", "", text)
+        text = re.sub(u'\u3000', '', text)
+        text = re.sub(r" ", "", text)
+    
+        return text
+    
+    def add_line_break(self, text):
+        temp = "";
+        currentLineSize = 0;
+
+        text_size = len(text)
+        max_size = 32
+        split_space = text.split(" ")
+        
+        for word in split_space:
+            currentLineSize += (len(word)+1)
+            
+            if currentLineSize <= max_size:      
+                temp = temp + word + ' '
+    
+            else:
+                temp = temp + '\n' + word + ' '
+                currentLineSize = 0
+
+        temp = temp.replace(" \n", "\n")
+        temp = self.rreplace(temp, " ", "", 1)
+        
+        return temp
     
     #Extract/Transform Lauren translation
     def extract_Lauren_Translation(self):
@@ -227,8 +261,65 @@ class ToolsTOR(ToolsTales):
         #3) Make some transformations to the JapaneseText so we can better match with XML
         df['File'] = df['File'].apply( lambda x: x.split("_")[0]+".xml")
         df['JapaneseText'] = df['JapaneseText'].apply( lambda x: self.clean_text(x) )
+
         return df
 
+    #Transfer Lauren translation
+    def transfer_Lauren_Translation(self):
+        
+        df_lauren = self.extract_Lauren_Translation()
+        
+        #Distinct list of XMLs file
+        xml_files = list(set(df_lauren['File'].tolist()))
+        
+    
+        for file in xml_files:       
+            cond = df_lauren['File'] == file
+            lauren_translations = dict(df_lauren[cond][['JapaneseText', 'EnglishText']].values)         
+            file_path = self.story_XML_new + 'XML/' + file
+            
+            if os.path.exists(file_path):
+                tree = etree.parse(file_path)
+                root = tree.getroot()
+                need_save = False
+                       
+                for key,item in lauren_translations.items():
+                                 
+                    for entry_node in root.iter("Entry"):
+                        xml_jap = entry_node.find("JapaneseText").text or ''
+                        xml_eng = entry_node.find("EnglishText").text or ''
+                        xml_jap_cleaned = self.clean_text(xml_jap)
+                        
+                        
+                        if key == xml_jap_cleaned:                     
+                            split_text = re.split(r"(<voice:\w+>)", xml_eng)
+                            item = self.add_line_break(item)
+                            
+                            if len(split_text) >= 2:                         
+                                item = split_text[1] + item
+                                
+                            if xml_eng != item:                            
+                                entry_node.find("EnglishText").text = item
+                                need_save = True
+                                
+                                if entry_node.find("Status").text == "To Do":
+                                    entry_node.find("Status").text = "Proofreading"
+          
+                        #else:
+                        #    print("File: {} - {}".format(file, key))
+            
+                if need_save:
+                    txt=etree.tostring(root, encoding="UTF-8", pretty_print=True, xml_declaration=False)
+                    
+                    with open(file_path, 'wb') as xml_file:
+                        xml_file.write(txt)
+                
+            else:
+                print("File {} skipped because file is not found".format(file))
+  
+        return df
+
+            
     # Extract THEIRSCE to XML
     def extract_TheirSce_XML(self, scpk_file_name):
      

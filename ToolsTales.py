@@ -608,8 +608,8 @@ class ToolsTales:
         else:
             print("{} was not found to authenticate to Googlesheet API".format(creds_path))
             
-    
-
+            
+            
     def extract_Google_Sheets(self, googlesheet_id, sheet_name):
         
         creds_path = "..\gsheet.json"
@@ -640,7 +640,6 @@ class ToolsTales:
         else:
             print("{} was not found to authenticate to Googlesheet API".format(creds_path))
             
-    
 
     #############################
     #
