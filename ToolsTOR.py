@@ -113,7 +113,18 @@ class ToolsTOR(ToolsTales):
         text = re.sub(u'\u3000', '', text)
         text = re.sub(r" ", "", text)
         return text
+
+    def clean_text(self, text):
+        text = re.sub(r"\n ", "\n", text)
+        text = re.sub(r"\n", "", text)
+        text = re.sub(r"(<\w+:?\w+>)", "", text)
+        text = re.sub(r"\[\w+=*\w+\]", "", text)
+        text = re.sub(r" ", "", text)
+        text = re.sub(u'\u3000', '', text)
+        text = re.sub(r" ", "", text)
     
+        return text
+
     def add_line_break(self, text):
         temp = "";
         currentLineSize = 0;
