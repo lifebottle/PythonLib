@@ -330,13 +330,15 @@ class ToolsTales:
     
     def get_pak_type(self,data):
         is_aligned = False
-    
-        if len(data) < 0x8:
+        
+        data_size = len(data)
+        if data_size < 0x8:
             return None
     
         files = struct.unpack("<I", data[:4])[0]
         first_entry = struct.unpack("<I", data[4:8])[0]
-    
+        
+        
         # Expectations
         pak1_header_size = 4 + (files * 8)
         pakN_header_size = 4 + (files * 4)
@@ -356,32 +358,44 @@ class ToolsTales:
             pakN_check = pakN_header_size
     
         # First test pak0 (hope there are no aligned pak0 files...)
-        if len(data) > pakN_header_size:
+        if data_size > pakN_header_size:
             calculated_size = 0
             for i in range(4, (files + 1) * 4, 4):
                 calculated_size += struct.unpack("<I", data[i : i + 4])[0]
-            if calculated_size == len(data) - pakN_header_size:
+            if calculated_size == data_size - pakN_header_size:
                 return "pak0"
     
-        # Test for pak1 & pak3
-        if is_aligned:
-            if pak1_check == first_entry:
-                return "pak1"
-            elif pakN_check == first_entry:
-                return "pak3"
-        else:
-            if pak1_header_size == first_entry:
-                return "pak1"
-            elif pakN_header_size == first_entry:
-                return "pak3"
-    
+        #Test for pak1
+        calculated_size = 0
+        for i in range(files):
+            start =8*i + 8
+            calculated_size += struct.unpack("<I",data[start:(start+4)])[0]
+            if calculated_size >  data_size - pakN_header_size:
+                break 
+        if calculated_size == data_size - pakN_header_size:
+            return "pak1"
+            
         # Test for pak2
         offset = struct.unpack("<I", data[0:4])[0]
-    
         if data[offset:offset+8] == b"THEIRSCE":
             return "pak2"
         elif data[offset:offset+8] == b"IECSsreV":
             return "apak"
+        
+        #Test for pak3
+        previous = 0
+        for i in range(files):
+            file_offset = struct.unpack("<I", data[4*i+4: 4*i+8])[0]
+
+            if file_offset > previous:
+                previous = file_offset
+            else:
+                break
+            
+            if data[4*i+8: first_entry] == b'\x00' * (first_entry - (4*i+8)):
+                return "pak3"
+        
+        
     
         # Didn't match anything
         return None
