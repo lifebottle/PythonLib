@@ -21,7 +21,7 @@ def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xde
     subprocess.run(["xdelta", "-f", "-s", original_path, new_path, xdelta_name])
    
 
-    
+
 def get_directory_path(path):
     return os.path.dirname(os.path.abspath(path))
 
@@ -97,6 +97,14 @@ def get_arguments(argv=None):
         choices=["All", "Main", "Menu", "Story", "Skits"],
         metavar="FILE",
         help="Options: all, dat, mfh, theirsce, scpk",
+    )
+    
+    sp_unpack.add_argument(
+        "--iso",
+        metavar="iso_path",
+        help="Specify path to Iso",
+        type=os.path.abspath,
+        required=False
     )
 
     sp_updateiso = sp.add_parser(
@@ -195,7 +203,6 @@ if __name__ == "__main__":
     
     org = 'SymphoniaLauren'
     repo_name = 'Tales-of-Rebirth'
-    RepoFunctions.refresh_repo(repo_name)
     
     #Utility function
     if args.action == "utility":
@@ -207,6 +214,7 @@ if __name__ == "__main__":
         if args.function == "dumptext":
             
             tales_instance.bytes_to_text_with_offset( args.param1, int(args.param2))
+            
             
             
             
@@ -245,8 +253,17 @@ here is your xdelta patch :
             
     if args.action == "updateiso":
         replace_Files_Apache( ['SLPS_254.50', 'DAT.BIN'], repo_name)
+        
+        
     if args.action == "unpack":
         
+        if args.file == "All":
+            print("Extracting Rebirth's iso files")
+            tales_instance.extract_Iso(args.iso)
+            
+            print("Extracting Main Archive")
+            tales_instance.extract_Main_Archive()
+            
         if args.file == "Main":
             tales_instance.extract_Main_Archive()
             
