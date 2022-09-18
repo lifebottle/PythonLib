@@ -58,7 +58,7 @@ class ToolsTOR(ToolsTales):
         self.story_byte_code = b"\xF8"
         self.list_status_insertion = ['Done', 'Proofreading']
     
-    
+        self.mkdir('../Data/{}/DAT'.format(self.repo_name))
         
     
     
