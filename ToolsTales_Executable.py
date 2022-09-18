@@ -1,4 +1,5 @@
 import ToolsTOR
+import ToolsNDX
 import json
 import argparse
 import textwrap
@@ -92,6 +93,15 @@ def get_arguments(argv=None):
         description="Unpacks some file types into more useful ones.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
+    
+    sp_unpack.add_argument(
+        "--iso",
+        metavar="iso_path",
+        help="Specify path to Iso",
+        type=os.path.abspath,
+        required=False
+    )
+    
     sp_unpack.add_argument(
         "file",
         choices=["All", "Main", "Menu", "Story", "Skits"],
@@ -172,9 +182,10 @@ def hex2bytes(tales_instance, hex_value):
 
 def getTalesInstance(game_name):
     
-    talesInstance = ToolsTOR.ToolsTOR("TBL_All.json")
-    #if game_name == "TOR":
-    #    talesInstance = ToolsTOR.ToolsTOR("tbl")
+    if game_name == "TOR":
+        talesInstance = ToolsTOR.ToolsTOR("TBL_All.json")
+    elif game_name == "NDX":
+        talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
 
     return talesInstance
 
@@ -195,7 +206,6 @@ if __name__ == "__main__":
     
     org = 'SymphoniaLauren'
     repo_name = 'Tales-of-Rebirth'
-    RepoFunctions.refresh_repo(repo_name)
     
     #Utility function
     if args.action == "utility":
@@ -245,8 +255,15 @@ here is your xdelta patch :
             
     if args.action == "updateiso":
         replace_Files_Apache( ['SLPS_254.50', 'DAT.BIN'], repo_name)
+        
     if args.action == "unpack":
         
+        if args.file == "Init":
+            print("Extracting Rebirth's iso files")
+            tales_instance.extract_Iso(args.iso)
+            
+            print("Extracting Main Archive")
+            tales_instance.extract_Main_Archive()
         if args.file == "Main":
             tales_instance.extract_Main_Archive()
             
