@@ -349,8 +349,9 @@ class ToolsTales:
     
     def get_pak_type(self,data):
         is_aligned = False
-    
-        if len(data) < 0x8:
+        
+        data_size = len(data)
+        if data_size < 0x8:
             return None
     
         files = struct.unpack("<I", data[:4])[0]
@@ -382,17 +383,12 @@ class ToolsTales:
             if calculated_size == len(data) - pakN_header_size:
                 return "pak0"
     
-        # Test for pak1 & pak3
+        # Test for pak1
         if is_aligned:
             if pak1_check == first_entry:
                 return "pak1"
-            elif pakN_check == first_entry:
-                return "pak3"
-        else:
-            if pak1_header_size == first_entry:
+        elif pak1_header_size == first_entry:
                 return "pak1"
-            elif pakN_header_size == first_entry:
-                return "pak3"
     
         # Test for pak2
         offset = struct.unpack("<I", data[0:4])[0]
@@ -401,6 +397,19 @@ class ToolsTales:
             return "pak2"
         elif data[offset:offset+8] == b"IECSsreV":
             return "apak"
+        
+        #Test for pak3
+        previous = 0
+        for i in range(files):
+            file_offset = struct.unpack("<I", data[4*i+4: 4*i+8])[0]
+
+            if file_offset > previous and file_offset >= pakN_header_size:
+                previous = file_offset
+            else:
+                break
+            
+            if data[4*i+8: first_entry] == b'\x00' * (first_entry - (4*i+8)):
+                return "pak3"
     
         # Didn't match anything
         return None
