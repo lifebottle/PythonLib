@@ -362,21 +362,17 @@ class ToolsTales:
             calculated_size = 0
             for i in range(4, (files + 1) * 4, 4):
                 calculated_size += struct.unpack("<I", data[i : i + 4])[0]
+                
             if calculated_size == data_size - pakN_header_size:
                 return "pak0"
     
         #Test for pak1
-        calculated_size = 0
-        for i in range(files):
-            start =8*i + 8
-            calculated_size += struct.unpack("<I",data[start:(start+4)])[0]
-            print(calculated_size)
-            if calculated_size >  data_size - pakN_header_size:
-                break 
-        if calculated_size == data_size - pakN_header_size - 4:
+        if is_aligned:
+            if pak1_check == first_entry:
+                return "pak1"
+        elif pak1_header_size == first_entry:
             return "pak1"
-            
-        # Test for pak2
+        
         offset = struct.unpack("<I", data[0:4])[0]
         if data[offset:offset+8] == b"THEIRSCE":
             return "pak2"
@@ -388,7 +384,7 @@ class ToolsTales:
         for i in range(files):
             file_offset = struct.unpack("<I", data[4*i+4: 4*i+8])[0]
 
-            if file_offset > previous:
+            if file_offset > previous and file_offset >= pakN_header_size:
                 previous = file_offset
             else:
                 break
@@ -955,8 +951,8 @@ class ToolsTales:
         self.insertAll()
         
         #
-    def extract_UMD(self, umd_iso):  
-        print("Extract files from UMD")
+    def extract_Iso(self, umd_iso):  
+        print("Extract files from Iso")
         subprocess.run(['piso', 'extract', umd_iso, "\\", '-od', "../Data/{}/Disc/Original".format(self.repo_name), "-y"])
         
                      
