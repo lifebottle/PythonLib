@@ -57,14 +57,10 @@ class ToolsTOR(ToolsTales):
         #byteCode 
         self.story_byte_code = b"\xF8"
         self.list_status_insertion = ['Done', 'Proofreading']
-    
-    
         
-    
-    
-    
-
-    
+        #Folders for TOR
+        self.mkdir('../Data/{}/DAT'.format(self.repo_name))
+        
     # Extract the story files
     def extract_All_Story_Files(self,debug=False):
         i = 1

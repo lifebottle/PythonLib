@@ -41,6 +41,24 @@ class ToolsTales:
             with open(menu_path) as f:
                 self.menu_files_json = json.load(f)
            
+        self.make_dirs()
+        
+    def make_dirs(self):
+        self.mkdir('../Data')
+        self.mkdir('../Data/{}'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc/Original'.format(self.repo_name))
+        self.mkdir('../Data/{}/Disc/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Misc'.format(self.repo_name))
+        self.mkdir('../Data/{}/Story'.format(self.repo_name))
+        self.mkdir('../Data/{}/Story/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Story/XML'.format(self.repo_name))
+        self.mkdir('../Data/{}/Menu'.format(self.repo_name))
+        self.mkdir('../Data/{}/Menu/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Menu/XML'.format(self.repo_name))
+        self.mkdir('../Data/{}/Skits'.format(self.repo_name))
+        self.mkdir('../Data/{}/Skits/New'.format(self.repo_name))
+        self.mkdir('../Data/{}/Skits/XML'.format(self.repo_name))
     def generate_xdelta_patch(self, xdelta_name):
         
         
