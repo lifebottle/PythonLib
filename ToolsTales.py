@@ -362,17 +362,20 @@ class ToolsTales:
             calculated_size = 0
             for i in range(4, (files + 1) * 4, 4):
                 calculated_size += struct.unpack("<I", data[i : i + 4])[0]
-                
             if calculated_size == data_size - pakN_header_size:
                 return "pak0"
     
         #Test for pak1
-        if is_aligned:
-            if pak1_check == first_entry:
-                return "pak1"
-        elif pak1_header_size == first_entry:
+        calculated_size = 0
+        for i in range(files):
+            start =8*i + 8
+            calculated_size += struct.unpack("<I",data[start:(start+4)])[0]
+            if calculated_size >  data_size - pakN_header_size:
+                break 
+        if calculated_size == data_size - pakN_header_size:
             return "pak1"
-        
+            
+        # Test for pak2
         offset = struct.unpack("<I", data[0:4])[0]
         if data[offset:offset+8] == b"THEIRSCE":
             return "pak2"
@@ -384,7 +387,7 @@ class ToolsTales:
         for i in range(files):
             file_offset = struct.unpack("<I", data[4*i+4: 4*i+8])[0]
 
-            if file_offset > previous and file_offset >= pakN_header_size:
+            if file_offset > previous:
                 previous = file_offset
             else:
                 break
