@@ -443,8 +443,8 @@ class ToolsTOR(ToolsTales):
         
         #Create folder and delete everything isinde
         #shutil.rmtree("../Data/Tales-Of-Rebirth/DAT")
-        for file in os.scandir("../Data/Tales-Of-Rebirth/DAT"):
-            os.remove(file.path)
+        #for file in os.scandir("../Data/Tales-Of-Rebirth/DAT"):
+        #    os.remove(file.path)
         
         self.mkdir("../Data/Tales-Of-Rebirth/DAT")
                
