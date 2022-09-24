@@ -632,8 +632,30 @@ class ToolsTales:
         else:
             print("{} was not found to authenticate to Googlesheet API".format(creds_path))
             
+    def copy_XML_Translations(self, current_XML_path, new_XML_path):
+        
+        tree = etree.parse(current_XML_path)
+        current_root = tree.getroot()
+        tree = etree.parse(new_XML_path)
+        new_root = tree.getroot()
     
-
+        keys = [ele.find("PointerOffset").text for ele in  current_root.iter("Entry") ]
+        items =  [ele for ele in current_root.iter("Entry")]
+        dict_current_translations = dict(zip(keys, items))
+            
+        for new_entry in new_root.iter("Entry"):
+            pointer_offset = new_entry.find("PointerOffset").text
+            
+            if pointer_offset in dict_current_translations:
+                entry_found = dict_current_translations[pointer_offset]
+                new_entry.find("EnglishText").text = entry_found.find("EnglishText").text
+                new_entry.find("Status").text = entry_found.find("Status").text
+                new_entry.find("Notes").text = entry_found.find("Notes").text
+            
+        txt=etree.tostring(new_root, encoding="UTF-8", pretty_print=True)
+        with open(new_XML_path, "wb") as xmlFile:
+            xmlFile.write(txt)
+                
     #############################
     #
     # Insertion of texts and packing of files
