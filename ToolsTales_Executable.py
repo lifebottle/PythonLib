@@ -104,7 +104,7 @@ def get_arguments(argv=None):
     
     sp_unpack.add_argument(
         "file",
-        choices=["All", "Main", "Menu", "Story", "Skits"],
+        choices=["All", "Init", "Main", "Menu", "Story", "Skits"],
         metavar="FILE",
         help="Options: all, dat, mfh, theirsce, scpk",
     )
@@ -169,6 +169,19 @@ def get_arguments(argv=None):
 
     return args
 
+def send_xdelta():
+   file_link = GoogleAPI.upload_xdelta(xdelta_name, "Stewie")            #Need to add user for the folder
+            
+   message_text = """
+Hi {},
+
+here is your xdelta patch : 
+{}
+""".format('fortiersteven1@gmail.com', file_link)
+
+   message_text = message_text + "<br>" + RepoFunctions.get_pull_requests_message(org, repo_name)
+   GoogleAPI.send_message('fortiersteven1@gmail.com', 'fortiersteven1@gmail.com', game_name + " Patch", file_link, message_text)
+    
 def hex2bytes(tales_instance, hex_value):
     
     bytes_value =  bytes.fromhex(hex_value + " 00")
@@ -222,32 +235,16 @@ if __name__ == "__main__":
             
     if args.action == "pack":
         
-
-        
-        
         if args.file == "SLPS":
             
             #SLPS
             tales_instance.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50")
             
+            #Generate Iso
             
-            
-            xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/Tales-Of-Rebirth_patch.xdelta"
+            xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/{}.xdelta".format(args.iso.replace(".iso",""))
             generate_xdelta_patch(repo_name, xdelta_name)
             
-            file_link = GoogleAPI.upload_xdelta(xdelta_name, "Stewie")            #Need to add user for the folder
-            
-            message_text = """
-Hi {},
-
-here is your xdelta patch : 
-{}
-""".format('fortiersteven1@gmail.com', file_link)
-
-            message_text = message_text + "<br>" + RepoFunctions.get_pull_requests_message(org, repo_name)
-            GoogleAPI.send_message('fortiersteven1@gmail.com', 'fortiersteven1@gmail.com', game_name + " Patch", file_link, message_text)
-            
-
 
         if args.file == "Main":
             
