@@ -13,7 +13,7 @@ import glob
 import lxml.etree as etree
 from xml.dom import minidom
 from pathlib import Path
-class ToolsTOPX(ToolsTales):
+class ToolsNDX(ToolsTales):
     
     def __init__(self, tbl):
         
