@@ -36,7 +36,7 @@ class ToolsTOR(ToolsTales):
     
     def __init__(self, tbl):
         
-        super().__init__("TOR", tbl, "Tales-of-Rebirth")
+        super().__init__("TOR", tbl, "Tales-Of-Rebirth")
         
         with open("../{}/Data/{}/Misc/{}".format(self.repo_name, self.gameName, self.tblFile), encoding="utf-8") as f:
                        

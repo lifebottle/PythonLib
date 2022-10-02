@@ -16,6 +16,8 @@ import comptolib
 import lxml.etree as ET
 import string
 import pygsheets
+import pycdlib
+import collections
 from googleapiclient.errors import HttpError
 
 class ToolsTales:
@@ -969,7 +971,72 @@ class ToolsTales:
         
         #
     def extract_Iso(self, umd_iso):  
-        print("Extract files from Iso")
-        subprocess.run(['piso', 'extract', umd_iso, "\\", '-od', "../Data/{}/Disc/Original".format(self.repo_name), "-y"])
+    
+        print("Extracting ISO files")
         
-                     
+        iso = pycdlib.PyCdlib()
+        iso.open(umd_iso)
+        start_path = "/"+os.path.dirname(umd_iso)
+        extract_to = "../Data/{}/Disc/Original".format(self.repo_name)
+        shutil.rmtree(extract_to)
+        os.mkdir(extract_to)
+        pathname = ''
+        if iso.has_udf():
+            pathname = 'udf_path'
+        elif iso.has_rock_ridge():
+            pathname = 'rr_path'
+        elif iso.has_joliet():
+            pathname = 'joliet_path'
+        else:
+            pathname = 'iso_path'
+      
+        root_entry = iso.get_record(**{pathname: start_path})
+    
+        dirs = collections.deque([root_entry])
+        while dirs:
+            dir_record = dirs.popleft()
+            ident_to_here = iso.full_path_from_dirrecord(dir_record,
+                                                         rockridge=pathname == 'rr_path')
+            
+            if self.repo_name == "Tales-Of-Rebirth":
+                relname = ident_to_here[1:]
+                print(relname)
+            else:
+                relname = ident_to_here[len(start_path):]
+
+            if relname and relname[0] == '/':
+                relname = relname[1:]
+
+            if dir_record.is_dir():
+                if relname != '':
+                    os.makedirs(os.path.join(extract_to, relname))
+                child_lister = iso.list_children(**{pathname: ident_to_here})
+    
+                for child in child_lister:
+                    if child is None or child.is_dot() or child.is_dotdot():
+                        continue
+                    dirs.append(child)
+            else:
+                if dir_record.is_symlink():
+                    fullpath = os.path.join(extract_to, relname)
+                    local_dir = os.path.dirname(fullpath)
+                    local_link_name = os.path.basename(fullpath)
+                    old_dir = os.getcwd()
+                    os.chdir(local_dir)
+                    os.symlink(dir_record.rock_ridge.symlink_path(), local_link_name)
+                    os.chdir(old_dir)
+                else:
+                    iso.get_file_from_iso(os.path.join(extract_to, relname), **{pathname: ident_to_here})
+                
+        iso.close()
+        
+        if self.repo_name == "Narikiri-Dungeon-X":
+            
+            for element in os.listdir(extract_to):
+                
+                if os.path.isdir(os.path.join(extract_to, element)):
+                    os.rename(os.path.join(extract_to, element), os.path.join(extract_to, "PSP_GAME"))
+                else:
+                    os.rename(os.path.join(extract_to, element), os.path.join(extract_to, "UMD_DATA.BIN"))
+
+        
