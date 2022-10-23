@@ -929,6 +929,38 @@ class ToolsTales:
         pointers_value = [pointers_value[i] for i in good_indexes]
 
         return [pointers_offset, pointers_value]
+    
+    def get_Style_Pointers(self, text_start, text_max, base_offset, start_offset, style, file_path):
+        
+        f_size = os.path.getsize(file_path)
+        with open(file_path , "rb") as f:
+    
+            f.seek(start_offset, 0)
+            pointers_offset = []
+            pointers_value  = []
+            split = [ele for ele in re.split('(P)|(\d+)', style) if ele != None and ele != '']
+            ok = True
+            
+            while ok:
+                for step in split:
+                    
+                    if step == "P":
+                        
+                        print(hex(f.tell()))
+                        text_offset = struct.unpack("<I", f.read(4))[0] 
+                        print('Offset: {}'.format(text_offset))
+                        if text_offset < f_size and text_offset >= text_start and text_offset < text_max:
+                            pointers_value.append(text_offset)
+                            pointers_offset.append(f.tell()-4)
+                            
+                        else:
+                            ok = False
+                    else:
+                        f.read(int(step))
+                        #print(hex(f.tell()))
+        
+        return pointers_offset, pointers_value
+            
    
     def prepare_Menu_File(self, file_original):
         
@@ -945,14 +977,16 @@ class ToolsTales:
         
         
         
-    def extract_Menu_File(self, file_definition):
+    def extract_Menu_File(self, xml_file):
         
         
         section_list = []
         pointers_offset_list = []
         texts_list = []
 
-         
+        file_definition = [os.path.basename(ele['File_XML']) for ele in self.menu_files_json][0]
+        print(file_definition)
+        
         base_offset = file_definition['Base_Offset']
         print("BaseOffset:{}".format(base_offset))
         file_path   = file_definition['File_Extract']
@@ -961,19 +995,17 @@ class ToolsTales:
 
             for section in file_definition['Sections']:
                 
-        
                 text_start = section['Text_Start']
                 text_end = section['Text_End'] 
                   
                 #Extract Pointers of the file
                 print("Extract Pointers")
-                pointers_offset, pointers_value = self.get_special_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Nb_Per_Block'], section['Step'], section['Section'], file_path)
-          
+                pointers_offset, pointers_value = self.get_Style_Pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], file_path)
+                print([hex(pointers_value) for ele in pointers_value])
               
                 #Extract Text from the pointers
                 print("Extract Text")
                 texts = [ self.bytes_to_text(f, ele + base_offset)[0] for ele in pointers_value]
-                print(texts)
                 
                 #Make a list
                 section_list.extend( [section['Section']] * len(texts)) 
@@ -982,13 +1014,13 @@ class ToolsTales:
        
         #Remove duplicates
         list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
-        
+
         #Build the XML Structure with the information
         root = self.create_Node_XML(file_path, list_informations, "Menu", "MenuText")
         
         #Write to XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
-        with open(file_definition['File_XML'].replace("/{}".format(self.repo_name),"").replace("/Data","/Data/{}".format(self.repo_name)), "wb") as xmlFile:
+        with open(file_definition['File_XML'].replace("../{}/Data/{}".format(self.repo_name, self.gameName), "../Data/{}".format(self.repo_name)), "wb") as xmlFile:
             xmlFile.write(txt)
         
         
