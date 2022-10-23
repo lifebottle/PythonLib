@@ -28,6 +28,7 @@ class ToolsTales:
             (string.digits, string.ascii_letters, string.punctuation, " ")
         )
     VALID_FILE_NAME = r"([0-9]{2,5})(?:\.)?([1,3])?\.(\w+)$"
+    VALID_VOICEID = ['VSM_', 'voice_', 'VCT_']
     
     def __init__(self, gameName, tblFile, repo_name):
         
@@ -515,14 +516,14 @@ class ToolsTales:
                         if re.match(self.COMMON_TAG, c):
                             if ":" in c:
                                 split = c.split(":")
-                                if split[0][1:] in self.itags.keys():
-                                    bytesFinal += struct.pack("B", self.itags[split[0][1:]])
-                                    bytesFinal += struct.pack("<I", int(split[1][:-1], 16))
-                                elif split[0][1:4] == "Unk":
-                                    bytesFinal += struct.pack("B", int(split[0][4:], 16))
-                                    for j in [split[1][j:j+2] for j in range(0, len(split[1]) - 2, 2)]:
-                                        bytesFinal += struct.pack("B", int(j, 16))
-                                    bytesFinal += struct.pack("B", 0x80)
+                                tag = split[0][1:]
+                                if tag in self.itags.keys():
+                                    bytesFinal += struct.pack("B", self.itags[tag])
+                                    
+                                    if tag == "color":
+
+                                        bytesFinal += struct.pack(int(split[1][0:-1]).to_bytes(2, 'little'))
+                 
                                 else:
                                     bytesFinal += struct.pack("B", int(split[0][1:], 16))
                                     bytesFinal += struct.pack("<I", int(split[1][:8], 16))
@@ -551,14 +552,74 @@ class ToolsTales:
         #Return the bytes for that specific text
         bytes_from_text = self.text_to_bytes(japanese_text)
 
+    def copy_XML_Translations(self, current_XML_path, new_XML_path):
+        
+        tree = etree.parse(current_XML_path)
+        current_root = tree.getroot()
+        tree = etree.parse(new_XML_path)
+        new_root = tree.getroot()
+    
+        keys = [ele.find("JapaneseText").text for ele in  current_root.iter("Entry") ]
+        items =  [ele for ele in current_root.iter("Entry")]
+        dict_current_translations = dict(zip(keys, items))
+            
+        for new_entry in new_root.iter("Entry"):
+            jap_text = new_entry.find("JapaneseText").text
+            
+            if jap_text in dict_current_translations:
+                entry_found = dict_current_translations[jap_text]
+                
+                if entry_found.find("EnglishText").text != "" and entry_found.find("Status").text != "To Do":
+                    new_entry.find("EnglishText").text = entry_found.find("EnglishText").text
+                    new_entry.find("Status").text = entry_found.find("Status").text
+                    new_entry.find("Notes").text = entry_found.find("Notes").text
+            
+        txt=etree.tostring(new_root, encoding="UTF-8", pretty_print=True)
+        with open(new_XML_path, "wb") as xmlFile:
+            xmlFile.write(txt)
+    
+    def copy_XML_English_Translations(self, current_XML_path, new_XML_path):
+        
+        tree = etree.parse(current_XML_path)
+        current_root = tree.getroot()
+        tree = etree.parse(new_XML_path)
+        new_root = tree.getroot()
+    
+        keys = [ele.find("PointerOffset").text for ele in  current_root.iter("Entry") ]
+        items =  [ele for ele in current_root.iter("Entry")]
+        dict_current_translations = dict(zip(keys, items))
+            
+        for new_entry in new_root.iter("Entry"):
+            pointer_offset = new_entry.find("PointerOffset").text
+            
+            if pointer_offset in dict_current_translations:
+                entry_found = dict_current_translations[pointer_offset]
+                text = entry_found.find("JapaneseText").text
+                occ_list = [ele for ele in [*text] if ele in self.PRINTABLE_CHARS]
+                if entry_found.find("JapaneseText").text != "" and len(occ_list) > 0:
+                    new_entry.find("EnglishText").text = entry_found.find("JapaneseText").text
+                    new_entry.find("Status").text = "Editing"
+                    new_entry.find("Notes").text = entry_found.find("Notes").text
+            
+        txt=etree.tostring(new_root, encoding="UTF-8", pretty_print=True)
+        with open(new_XML_path, "wb") as xmlFile:
+            xmlFile.write(txt)
+        
     def create_Entry(self, strings_node, pointer_offset, text):
         
         #Add it to the XML node
         entry_node = etree.SubElement(strings_node, "Entry")
         etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset)
-        etree.SubElement(entry_node,"JapaneseText").text  = text
-        etree.SubElement(entry_node,"EnglishText").text   = ''
-        etree.SubElement(entry_node,"Notes").text         = ''
+        text_split = re.split(self.COMMON_TAG, text)
+        
+        if len(text_split) > 1 and any(possible_value in text for possible_value in self.VALID_VOICEID):
+            etree.SubElement(entry_node,"VoiceId").text  = text_split[1]
+            etree.SubElement(entry_node, "JapaneseText").text = ''.join(text_split[2:])
+        else:
+            etree.SubElement(entry_node, "JapaneseText").text = text
+        
+        etree.SubElement(entry_node,"EnglishText")
+        etree.SubElement(entry_node,"Notes")
         etree.SubElement(entry_node,"Id").text            = str(self.id)
         
         self.id = self.id + 1
@@ -578,6 +639,7 @@ class ToolsTales:
         
 
         for s, pointers_offset, text in list_informations:
+            print(text)
             self.create_Entry( strings_node,  pointers_offset, text)
          
         return root
@@ -652,7 +714,7 @@ class ToolsTales:
             final_text = english_text or japanese_text or ''
         else:
             final_text = japanese_text or ''
-            
+        #print(final_text)
         #Convert the text values to bytes using TBL, TAGS, COLORS, ...
         bytes_entry = self.text_to_bytes(final_text)
         
