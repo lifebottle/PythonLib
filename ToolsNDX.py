@@ -179,6 +179,21 @@ class ToolsNDX(ToolsTales):
         for event_file in events_files:
             self.extract_Event_File(event_file)
             
+        #Extract Field file
+        
+    def extract_Field(self):
+        
+        
+        with open('../Data/{}/Events/New/map/field/field.dat'.format(self.repo_name), "rb") as f:
+            data = f.read()
+            tss_offset = struct.unpack("<I",data[0x94:0x98])[0]
+            print(hex(tss_offset))
+            print(hex(len(data)))
+            tss = io.BytesIO(data[tss_offset:])
+            with open("../test.bin", "wb") as f:
+                f.write(data[tss_offset:])
+            self.extract_tss_XML(tss, "field.bin", '../Data/{}/Events'.format(self.repo_name))
+            
     def extract_Event_File(self, event_file):
         
         self.id = 1
