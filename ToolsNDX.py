@@ -253,7 +253,40 @@ class ToolsNDX(ToolsTales):
             xmlFile.write(txt)
     
     
+    def extract_Debug_XML(self):
+        
+        root = etree.Element('SceneText')
+        self.speaker_id = 1
+        
+        with open(r"G:\TalesHacking\TOP_Narikiri\BD3BDFF5\ar.dat", "rb") as tss:
+            strings_offset = 0x1EF130 
+            pointer_block_size = 0x1EF4A0
+    
+            #Create all the Nodes for Struct
+            speaker_node = etree.SubElement(root, 'Speakers')
+            etree.SubElement(speaker_node, 'Section').text = "Speaker"
+            strings_node = etree.SubElement(root, 'Strings')
+            etree.SubElement(strings_node, 'Section').text = "Story"       
+            
+            
+            texts_offset, pointers_offset = self.extract_Story_Pointers(tss, self.story_struct_byte_code, strings_offset, pointer_block_size)
+            person_offset = [ self.extract_From_Struct(tss, strings_offset, pointer_offset, struct_offset, root) for pointer_offset, struct_offset in zip(pointers_offset, texts_offset)]
 
+            #Create all the Nodes for Strings and grab the minimum offset
+            strings_node = etree.SubElement(root, 'Strings')
+            etree.SubElement(strings_node, 'Section').text = "Other Strings"
+            tss.seek(16)
+            texts_offset, pointers_offset = self.extract_Story_Pointers(tss, self.story_string_byte_code, strings_offset, pointer_block_size)
+            [ self.extract_From_String(tss, strings_offset, pointer_offset, text_offset, strings_node) for pointer_offset, text_offset in zip(pointers_offset, texts_offset)]
+            
+            text_start = min( min(person_offset, default=0), min(texts_offset, default=0))
+
+            etree.SubElement(root, "TextStart").text = str(text_start)
+      
+            #Write the XML file
+            txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
+            with open(r'G:\TalesHacking\TOP_Narikiri\BD3BDFF5\debug.xml', "wb") as xmlFile:
+                xmlFile.write(txt)
     def extract_From_Struct(self, f,strings_offset, pointer_offset, struct_offset, root):
          
         #print("Offset: {}".format(hex(struct_offset)))
