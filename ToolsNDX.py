@@ -23,6 +23,7 @@ class ToolsNDX(ToolsTales):
                        
             self.jsonTblTags = json.load(f)     
             self.jsonTblTags["TBL"] = { int(k):v for k,v in self.jsonTblTags["TBL"].items()}
+            self.jsonTblTags["COLOR"] = { int(k):v for k,v in self.jsonTblTags["COLOR"].items()}
             keys = [int(ele, 16) for ele in self.jsonTblTags["TAGS"].keys()]
             self.jsonTblTags["TAGS"] = dict(zip(keys, list(self.jsonTblTags["TAGS"].values())))
       
@@ -111,37 +112,36 @@ class ToolsNDX(ToolsTales):
         self.mkdir('../Data/{}/All/sysdata'.format(self.repo_name))
     
     # Extract the story files
-    def extract_All_Story(self):
+    def extract_All_Story(self, extract_XML = False):
         
         print("Extracting Story")
         path = os.path.join( self.all_extract, 'map/pack/')
-        story_new =  "../Data/{}/Story/New".format(self.repo_name)
-        #self.mkdir(self.story_XML_extract)
-        #files = glob.glob(story_new+'/*')
-        #for f in files:
-        #    os.remove(f)
         
         for f in os.listdir( path ):
             if os.path.isfile( path+f) and '.cab' in f:
-                
-                #Unpack the CAB into PAK3 file
-                shutil.copy( path+f,os.path.join(story_new, f))
-                self.extract_Cab(f, f.replace(".cab", ".pak3"), story_new)
+                if extract_XML:
+                    self.extract_CAB_File(path,f, '../Data/{}/Story'.format(self.repo_name))
+                else:
+                    self.extract_CAB_File(path,f)
+                         
+    def extract_CAB_File(self, path, f, xml_path=None):
+        
+        #Unpack the CAB into PAK3 file
+        path_new = '{}/New'.format(xml_path)
+        shutil.copy( path+f,os.path.join(path_new, f))
+        self.extract_Cab(f, f.replace(".cab", ".pak3"), path_new)
 
-                #Decompress using PAKCOMPOSER + Comptoe
-                self.pakComposer_Comptoe(f.replace(".cab", ".dat"), "-d", "-3",0, os.path.join( story_new, f.replace(".cab","")) )       
-                
-                #Extract from XML
-                self.extract_Story_File(os.path.join(story_new, f.replace(".cab", ""), f.replace(".cab", "")))
-                
-                
-                
-                
+        #Decompress using PAKCOMPOSER + Comptoe
+        self.pakComposer_Comptoe(f.replace(".cab", ".dat"), "-d", "-3",0, os.path.join( path_new, f.replace(".cab","")) )       
         
-                    #super().pakComposerAndComptoe(fileName, "-d", "-3")
-        
+        if xml_path != None:
+            #Extract from XML
+            self.extract_TSS_File(os.path.join(path_new, f.replace(".cab", ""), f.replace(".cab", "")), xml_path)
+            
+            
+            
     # Extract one single CAB file to the XML format
-    def extract_Story_File(self, pak3_folder):
+    def extract_TSS_File(self, pak3_folder, xml_path):
         
 
         self.id = 1
@@ -150,11 +150,11 @@ class ToolsNDX(ToolsTales):
             
         
         if os.path.exists(pak3_folder):
-            #2) Grab TSS file from PAK3 folder
+            #1) Grab TSS file from PAK3 folder
             tss, file_tss = self.get_tss_from_pak3(  pak3_folder)
      
-            #3) Extract TSS to XML
-            self.extract_tss_XML(tss, pak3_folder)
+            #2) Extract TSS to XML
+            self.extract_tss_XML(tss, pak3_folder, xml_path)
         
     def get_tss_from_pak3(self, pak3_folder):
           
@@ -187,7 +187,6 @@ class ToolsNDX(ToolsTales):
         
         #1) Extract CAB to folder
         event_path = '../Data/{}/Events/New/map'.format(self.repo_name)
-        file_path  = os.path.join(event_path, event_file)
         self.extract_Cab(event_file, event_file, event_path)
         
         #2) Grab TSS file from the decompressed CAB file
@@ -210,10 +209,7 @@ class ToolsNDX(ToolsTales):
                 f.write(tss_data)
             
             return io.BytesIO(tss_data), file_tss
-            
-            
-            
-            
+                   
     def extract_tss_XML(self, tss, cab_file_name, xml_path):
         
         root = etree.Element('SceneText')
@@ -227,7 +223,7 @@ class ToolsNDX(ToolsTales):
         
         #Create all the Nodes for Struct
         speaker_node = etree.SubElement(root, 'Speakers')
-        etree.SubElement(speaker_node, 'Section').text = "Speaker"
+        etree.SubElement(speaker_node, 'Section').text = "Speaker"   
         strings_node = etree.SubElement(root, 'Strings')
         etree.SubElement(strings_node, 'Section').text = "Story"       
         
@@ -244,7 +240,6 @@ class ToolsNDX(ToolsTales):
         [ self.extract_From_String(tss, strings_offset, pointer_offset, text_offset, strings_node) for pointer_offset, text_offset in zip(pointers_offset, texts_offset)]
         
         text_start = min( min(person_offset, default=0), min(texts_offset, default=0))
-        etree.SubElement(root, "TextStart").text = str(text_start)
   
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
@@ -296,9 +291,11 @@ class ToolsNDX(ToolsTales):
         f.read(4)
         unknown_pointer  = struct.unpack('<I', f.read(4))[0]
         speaker_offset   = struct.unpack('<I', f.read(4))[0] + strings_offset
-        text_offset      = struct.unpack('<I', f.read(4))[0] + strings_offset    
+        text_offset      = struct.unpack('<I', f.read(4))[0] + strings_offset   
         speaker_text   = self.bytes_to_text(f, speaker_offset)[0]
-        struct_speaker_id     = self.add_Speaker_Entry(root.find("Speakers"), pointer_offset, speaker_text)      
+        
+        if speaker_text != None:
+            struct_speaker_id     = self.add_Speaker_Entry(root.find("Speakers"), pointer_offset, speaker_text)      
         japText         = self.bytes_to_text(f, text_offset)[0]
         jap_split_bubble = japText.split("<Bubble>")       
         [self.create_Entry(root.find("Strings"), pointer_offset, jap,1, "Struct", struct_speaker_id, unknown_pointer) for jap in jap_split_bubble]
@@ -323,8 +320,8 @@ class ToolsNDX(ToolsTales):
             entry_node = etree.SubElement(root, "Entry")
             etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset)
             etree.SubElement(entry_node,"JapaneseText").text  = str(japText)
-            etree.SubElement(entry_node,"EnglishText").text   = ''
-            etree.SubElement(entry_node,"Notes").text         = ''
+            etree.SubElement(entry_node,"EnglishText")
+            etree.SubElement(entry_node,"Notes")
             etree.SubElement(entry_node,"Id").text            = str(self.speaker_id)
             etree.SubElement(entry_node,"Status").text         = "To Do"
             struct_speaker_id = self.speaker_id
@@ -397,6 +394,9 @@ class ToolsNDX(ToolsTales):
 
         return [pointers_offset, pointers_value]
     
+    
+    
+    
     def get_Direct_Pointers(self, text_start, text_max, base_offset, pointers_list, section,file_path=''):
          
         if file_path == '':
@@ -427,26 +427,26 @@ class ToolsNDX(ToolsTales):
         #Add it to the XML node
         entry_node = etree.SubElement(strings_node, "Entry")
         etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset)
-        etree.SubElement(entry_node,"JapaneseText").text  = str(text)  
-        eng_text = ''
+        text_split = re.split(self.COMMON_TAG, text)
         
-        if to_translate == 0:
-            statusText = 'Done' 
-            eng_text   = str(text)
+        if len(text_split) > 1 and any(possible_value in text for possible_value in self.VALID_VOICEID):
+            etree.SubElement(entry_node,"VoiceId").text  = text_split[1]
+            etree.SubElement(entry_node, "JapaneseText").text = ''.join(text_split[2:])
+        else:
+            etree.SubElement(entry_node, "JapaneseText").text = text
             
-        etree.SubElement(entry_node,"EnglishText").text   = eng_text
-        etree.SubElement(entry_node,"Notes").text         = ''
+        eng_text = ''
+            
+        etree.SubElement(entry_node,"EnglishText")
+        etree.SubElement(entry_node,"Notes")
         etree.SubElement(entry_node,"Id").text            = str(self.id)   
         statusText = "To Do"
         
         if entry_type == "Struct":
             etree.SubElement(entry_node,"StructId").text      = str(self.struct_id)
+            etree.SubElement(entry_node,"SpeakerId").text     = str(speaker_id)
             etree.SubElement(entry_node,"UnknownPointer").text = str(unknown_pointer)
-            
-            if to_translate == 1:
-                etree.SubElement(entry_node,"SpeakerId").text      = str(speaker_id)
-                
-        etree.SubElement(entry_node,"ToTranslate").text   = str(to_translate)             
+                      
         etree.SubElement(entry_node,"Status").text        = statusText      
         self.id += 1
         
@@ -486,8 +486,16 @@ class ToolsNDX(ToolsTales):
             tss.read(8)
             struct_offset = struct.unpack("<I",tss.read(4))[0] + base_offset
             structs_offset.append(struct_offset)
-            
-        return min( min(strings_offset), min(structs_offset))
+         
+        struct_count = len(structs_offset)
+        strings_count = len(strings_offset)
+        
+        if struct_count == 0:
+            return min(strings_offset)
+        elif strings_count == 0:
+            return min(structs_offset)
+        else:
+            return min( min(structs_offset), min(strings_offset))
          
     def insert_Speaker(self, root, tss, base_offset):
         
@@ -511,7 +519,7 @@ class ToolsNDX(ToolsTales):
         
         tss.read(12)
         base_offset = struct.unpack('<I', tss.read(4))[0]
-        tree = etree.parse(story_path + 'XML/{}'.format(story_ep_no+'.xml'))
+        tree = etree.parse('../{}/Data/{}/Story/XML/{}'.format(self.repo_name, self.gameName,story_ep_no+'.xml'))
         root = tree.getroot()
         
         #Move to the start of the text section
@@ -523,11 +531,31 @@ class ToolsNDX(ToolsTales):
         
         #Do stuff for Struct
         struct_dict = dict()
-        for struct_node in root.findall('Strings[Section="Story"]/Entry'):
+        struct_entries = root.findall('Strings[Section="Story"]/Entry')
+        
+        struct_ids = list(set([int(entry.find("StructId").text) for entry in struct_entries]))
+        for struct_id in struct_ids:
+            
+            entries = [entry for entry in struct_entries if int(entry.find("StructId").text) == struct_id]        
             text_offset = tss.tell()
-            bytes_text = self.get_Node_Bytes(struct_node)
-            tss.write(bytes_text)
-            tss.write(b'\x00\x00\x00')
+            
+            bytes_text = b''
+            for struct_node in entries:
+                
+                voice_id = struct_node.find("VoiceId")
+                if voice_id != None:
+                    voice_final = voice_id.text.replace('<','(').replace('>',')')
+                    tss.write(b'\x09')
+                    tss.write( self.text_to_bytes(voice_final))
+                    
+                
+                    bytes_text = self.get_Node_Bytes(struct_node)
+                    tss.write(bytes_text)
+                    tss.write(b'\x0C')
+            
+            tss.seek(tss.tell()-1)
+            tss.write(b'\x00\x00\x00')    
+            
             
             #Construct Struct
             struct_dict[ int(struct_node.find("PointerOffset").text)] = struct.pack( "<I", tss.tell() - base_offset)
@@ -573,7 +601,7 @@ class ToolsNDX(ToolsTales):
         
     def unpack_Folder(self, folder_path):
         
-        files = [folder_path+ '/' + ele for ele in os.listdir(folder_path)]
+        files = [folder_path+ '/' + ele for ele in os.listdir(folder_path) if os.path.isdir(folder_path+ '/' + ele) == False]
         
         for file in files:
             
@@ -620,7 +648,7 @@ class ToolsNDX(ToolsTales):
                                    
             self.extract_Menu_File(file_definition)
             
-    def extract_Menu_File(self, file_definition):
+    def extract_Menu_File(self, xml_file):
         
         
         section_list = []
@@ -628,7 +656,9 @@ class ToolsNDX(ToolsTales):
         texts_list = []
         to_translate = []
 
-         
+        file_definition = [ele for ele in self.menu_files_json if xml_file == os.path.basename(ele['File_XML'])][0]
+        self.prepare_Menu_File(file_definition['Hashes_Name'])
+        
         base_offset = file_definition['Base_Offset']
         file_path   = file_definition['File_Extract']
         with open(file_path, "rb") as f:
@@ -645,7 +675,7 @@ class ToolsNDX(ToolsTales):
                 if isinstance(pointers_offset, list):
                     pointers_offset, pointers_value = self.get_Direct_Pointers(text_start, text_end, base_offset, pointers_offset, section,file_path)
                 else:
-                    pointers_offset, pointers_value = self.get_special_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Nb_Per_Block'], section['Step'], section['Section'], file_path)
+                    pointers_offset, pointers_value = self.get_Style_Pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Style'], file_path)
           
               
                 #Extract Text from the pointers
@@ -660,6 +690,8 @@ class ToolsNDX(ToolsTales):
        
         #Remove duplicates
         list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list, to_translate)
+        df = pd.DataFrame({"PointerOffset":pointers_offset_list, "Text": texts_list}, columns=['PointerOffset', 'Text'])
+        df.to_excel("../Memo.xlsx", index=False)
         
         #Build the XML Structure with the information
         root = self.create_Node_XML(file_path, list_informations, "MenuText")
@@ -728,15 +760,11 @@ class ToolsNDX(ToolsTales):
             elif b == 0x0C:
                 final_text += "<Bubble>"
                            
-            #Find a possible Color, Icon
-            elif b in (0x1, 0xB):
+            #Find a possible Color
+            elif b == 0x1:
                 
                 offset_temp = fileRead.tell()
-                next_4 = struct.unpack("<I", fileRead.read(4))[0]
-                fileRead.seek(offset_temp)
                 b2 = struct.unpack("<B", fileRead.read(1))[0]
-                b3 = struct.unpack("<B", fileRead.read(1))[0]
-                fileRead.seek(fileRead.tell()-1)
                 if b in TAGS:
                     
                     tag_name = TAGS.get(b)
@@ -751,13 +779,16 @@ class ToolsNDX(ToolsTales):
                     else:
                         #Pad the tag to be even number of characters
                         hex_value = self.hex2(b2)
-                        if len(hex_value) < 4 and tag_name not in ['icon','speed']:
-                            hex_value = "0"*(4-len(hex_value)) + hex_value
-                        
                         final_text += '<{}:{}>'.format(tag_name, hex_value)
                 else:
                     final_text += "<%02X:%08X>" % (b, b2)
-                 
+            
+            #Found an icon
+            elif b == 0xB:
+                next_bytes = fileRead.read(3)
+                final_text += '<icon:{}>'.format( int.from_bytes(next_bytes, 'little'))
+                
+                
             #Found a name tag
             elif b in [0x4, 0x9]:
                 
@@ -805,16 +836,16 @@ class ToolsNDX(ToolsTales):
                         if re.match(self.COMMON_TAG, c):
                             if ":" in c:
                                 split = c.split(":")
+                                tag = split[0][1:]
                                 
-                                if split[0][1:] in self.itags.keys():
-                                    bytesFinal += struct.pack("B", self.itags[split[0][1:]])
-                                    bytesFinal += struct.pack("<I", int(split[1][:-1], 16))
-                                elif split[0][1:4] == "Unk":
-                                    bytesFinal += struct.pack("B", int(split[0][4:], 16))
-                                    for j in [split[1][j:j+2] for j in range(0, len(split[1]) - 2, 2)]:
-                                        bytesFinal += struct.pack("B", int(j, 16))
-                                    bytesFinal += struct.pack("B", 0x80)
+                                if tag == "icon":
+                                    bytesFinal += struct.pack("B", 0xB)
+                                    bytesFinal += int(split[1][:-1]).to_bytes(3, 'little')
+                                elif tag == "color":
+                                    bytesFinal += struct.pack("B", 0x1)
+                                    bytesFinal += struct.pack("B", int(split[1][:-1], 16))
                                 else:
+                                    
                                     bytesFinal += struct.pack("B", int(split[0][1:], 16))
                                     bytesFinal += struct.pack("<I", int(split[1][:8], 16))
                                     
@@ -829,8 +860,8 @@ class ToolsNDX(ToolsTales):
                                 bytesFinal += c.encode("cp932")
                                 
                             if c in self.icolors:
-                                bytesFinal += struct.pack("B", 0x5)
-                                bytesFinal += struct.pack("<I", self.icolors[c])
+                                bytesFinal += struct.pack("B", 0x1)
+                                bytesFinal += struct.pack("B", self.icolors[c])
                         else:
                             for c2 in c:
                                 if c2 in self.itable.keys():
@@ -849,39 +880,21 @@ class ToolsNDX(ToolsTales):
         
         
     
-    def extract_All_Skit(self):
+    def extract_All_Skit(self, extract_XML = False):
         
         print("Extracting Skits")
         path = os.path.join( self.all_extract, 'chat/')
         skitsPath ='../Data/Archives/Skits/'
         self.mkdir(skitsPath)
         
-        for f in os.listdir(path):
-            if os.path.isfile(path + f):
-                
-                #Unpack the CAB into PAK3 file
-                fileName = skitsPath + f.replace(".cab", ".pak3")
-                subprocess.run(['expand', path + f, fileName])
-                
-                #Decompress using PAKCOMPOSER + Comptoe
-                self.pakComposerAndComptoe(fileName, "-d", "-3")
-    
-    def extract_All_Events(self):
         
-        print("Extract Events")
-        path = os.path.join( self.allPathExtract, 'map/')
-        eventsPath = '..Data/Archives/Events/'
-        self.mkdir(eventsPath)
-        
-        for f in os.listdir(path):
-            if os.path.isfile( path + f):
-                
-                #Unpack the CAB into PAK3 file
-                fileName = eventsPath + f.replace(".cab", ".pak3")
-                subprocess.run(['expand', path + f, fileName])
-                
-                #Decompress using PAKCOMPOSER + Comptoe
-                self.pakComposerAndComptoe(fileName, "-d", "-3")
+        for f in os.listdir( path ):
+            if os.path.isfile( path+f) and '.cab' in f:
+                if extract_XML:
+                    self.extract_CAB_File(path,f, '../Data/{}/Skits'.format(self.repo_name))
+                else:
+                    self.extract_CAB_File(path,f)
+
                 
     # Extract each of the file from the all.dat
     def extract_files(self, start, size, file_name, all_read):
@@ -950,7 +963,7 @@ class ToolsNDX(ToolsTales):
         
         
         #Open the eboot
-        eboot = open( os.path.join( self.misc, 'EBOOT.BIN'), 'rb')
+        eboot = open( os.path.join( self.misc, 'EBOOT.OLD'), 'rb')
         eboot.seek(0x1FF624)
         print("Extract All.dat")
         with open(self.all_original, "rb") as all_read:
@@ -986,7 +999,7 @@ class ToolsNDX(ToolsTales):
             json.dump(order, order_json, indent = 4)
             order_json.close()
         
-    def pack_Main_Archive(self):
+    def pack_Main_Archive(self, debug_room=True):
         addrs = []
         sizes = []
         buffer = 0
@@ -1044,6 +1057,10 @@ class ToolsNDX(ToolsTales):
                 elf.write(struct.pack('<I', addrs[i]))
                 elf.write(struct.pack('<I', sizes[i]))
                 elf.write(struct.pack('<I', int(order_hash['order'][i], 16)))
+                
+            if not(debug_room):
+                elf.seek(0x1AB3B8)
+                elf.write('title'.encode('cp932'))
         elf.close()
         all_file.close()
         

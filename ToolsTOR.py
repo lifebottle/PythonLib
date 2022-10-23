@@ -281,6 +281,10 @@ class ToolsTOR(ToolsTales):
             final_text = english_text or japanese_text or ''
         else:
             final_text = japanese_text or ''
+        
+        voiceId_node = entry_node.find("VoiceId")
+        if (voiceId_node != None):
+            final_text = voiceId_node.text + final_text 
             
         #Convert the text values to bytes using TBL, TAGS, COLORS, ...
         bytes_entry = self.text_to_bytes(final_text)
