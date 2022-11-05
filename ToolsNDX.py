@@ -1111,3 +1111,22 @@ class ToolsNDX(ToolsTales):
             args,
             cwd=working_directory
             )
+        
+    def make_patch(self, number, debug=False):
+        self.pack_Main_Archive(debug)
+        shutil.copy("../b-topndxj.iso", "b-topndxj - Copy.iso")
+        subprocess.run(
+            ["UMD-replace", "b-topndxj - Copy.iso", r"\PSP_GAME\USRDIR\all.dat", r"Data\Narikiri-Dungeon-X\Disc\New\PSP_GAME\USRDIR\all.dat"],
+            cwd = ".."
+        )
+        
+        subprocess.run(
+            ["UMD-replace", "b-topndxj - Copy.iso", r"\PSP_GAME\SYSDIR\EBOOT.BIN", r"Data\Narikiri-Dungeon-X\Disc\New\PSP_GAME\SYSDIR\EBOOT.BIN"],
+            cwd = ".."
+        )
+        debug_str = ""
+        if debug:
+            debug_str =" (Debug Room)"
+            
+        subprocess.run(["xdelta", "-f", "-s", "b-topndxj.iso", "b-topndxj - Copy.iso", "NDX_patch_{}{}.xdelta".format(number, debug_str)], cwd="..")
+    
