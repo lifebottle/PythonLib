@@ -13,6 +13,7 @@ import glob
 import lxml.etree as etree
 from xml.dom import minidom
 from pathlib import Path
+from distutils.dir_util import copy_tree
 class ToolsNDX(ToolsTales):
     
     def __init__(self, tbl):
@@ -38,7 +39,9 @@ class ToolsNDX(ToolsTales):
         self.id = 1
         self.struct_id = 1
         
-        
+        #Load exceptions
+        with open('../{}/Data/{}/Misc/tssExceptions.json'.format(self.repo_name, self.gameName), 'r') as f:
+            self.tss_exceptions = json.load(f)
         
         
         #Load the hash table for the files
@@ -524,12 +527,34 @@ class ToolsNDX(ToolsTales):
             tss.write(b'\x00')
         return speaker_dict
     
+    def write_With_Exceptions(self, tss, bytes_text, exceptions_list=None):
+        
+        nb = len(bytes_text) + 1
+        
+        if exceptions_list != None:
+            closer_exc_list = [ele for ele in exceptions_list if int(ele['Start']) > tss.tell() ]
+            
+            if len(closer_exc_list) > 0:
+                if tss.tell() + nb >= closer_exc_list[0]['Start']:
+                    tss.seek( closer_exc_list[0]['End']+1)    
+                
+        tss.write(bytes_text)
+        
+    
+    
+    
     #Repack SCPK files for Story
     def pack_Story_File(self, story_ep_no):
         
         
         #Grab the Tss file inside the folder
         story_path = '../Data/{}/Story/'.format(self.repo_name)
+        file = [ele for ele in self.tss_exceptions if ele['FileNo'] == story_ep_no]
+        
+        exceptions_list = None
+        if len(file) > 0:
+            exceptions_list = [exc for exc in file[0]['Exceptions']]
+        
         tss, file_tss = self.get_tss_from_pak3( story_path + 'New/{}/{}'.format(story_ep_no, story_ep_no) )
         
         tss.read(12)
@@ -560,35 +585,36 @@ class ToolsNDX(ToolsTales):
                 voice_id = struct_node.find("VoiceId")
                 if voice_id != None:
                     voice_final = voice_id.text.replace('<','(').replace('>',')')
-                    tss.write(b'\x09')
-                    tss.write( self.text_to_bytes(voice_final))
-                    
+                    self.write_With_Exceptions(tss, b'\x09', exceptions_list)
+                    self.write_With_Exceptions(tss, self.text_to_bytes(voice_final), exceptions_list)
                 
-                    bytes_text = self.get_Node_Bytes(struct_node)
-                    tss.write(bytes_text)
-                    tss.write(b'\x0C')
+                bytes_text = self.get_Node_Bytes(struct_node)
+                self.write_With_Exceptions(tss, bytes_text + b'\x0C', exceptions_list)
             
             tss.seek(tss.tell()-1)
-            tss.write(b'\x00\x00\x00')    
+            self.write_With_Exceptions(tss, b'\x00\x00\x00', exceptions_list)
             
-            
-            #Construct Struct
-            struct_dict[ int(struct_node.find("PointerOffset").text)] = struct.pack( "<I", tss.tell() - base_offset)
-            tss.write(struct.pack("<I", 1))
-            tss.write(struct.pack("<I", int(struct_node.find("UnknownPointer").text)))      #UnknownPointer
-            tss.write(speaker_dict[struct_node.find("SpeakerId").text])                     #PersonPointer
-            tss.write(struct.pack("<I", text_offset - base_offset))                         #TextPointer
-            tss.write(struct.pack("<I", text_offset + len(bytes_text) + 1 - base_offset))
-            tss.write(struct.pack("<I", text_offset + len(bytes_text) + 2 - base_offset))
-            tss.write(b'\x00')
+            padding = 0
+            if tss.tell() % 4 != 0:
+                padding = 4 - (tss.tell() % 4)
+                struct_dict[ int(struct_node.find("PointerOffset").text)] = struct.pack( "<I", tss.tell() + padding - base_offset)
+                self.write_With_Exceptions(tss, b'\x00' * padding, exceptions_list)    
+            else:
+                struct_dict[ int(struct_node.find("PointerOffset").text)] = struct.pack( "<I", tss.tell() - base_offset)
+            self.write_With_Exceptions(tss, struct.pack("<I", 1), exceptions_list)
+            self.write_With_Exceptions(tss, struct.pack("<I", int(struct_node.find("UnknownPointer").text)), exceptions_list)    #UnknownPointer
+            self.write_With_Exceptions(tss, speaker_dict[struct_node.find("SpeakerId").text], exceptions_list)                   #PersonPointer
+            self.write_With_Exceptions(tss, struct.pack("<I", text_offset - base_offset), exceptions_list)                       #TextPointer
+            self.write_With_Exceptions(tss, struct.pack("<I", text_offset + len(bytes_text) + 1 - base_offset), exceptions_list)
+            self.write_With_Exceptions(tss, struct.pack("<I", text_offset + len(bytes_text) + 2 - base_offset), exceptions_list)
+            self.write_With_Exceptions(tss, b'\x00', exceptions_list)
     
         #Do Other Strings
         string_dict = dict()
         for string_node in root.findall('Strings[Section="Other Strings"]/Entry'):
             string_dict[ int(string_node.find("PointerOffset").text)] = struct.pack("<I", tss.tell() - base_offset)
             bytes_text = self.get_Node_Bytes(string_node)
-            tss.write(bytes_text)
-            tss.write(b'\x00')
+            self.write_With_Exceptions(tss, bytes_text + b'\x00', exceptions_list)
             
         #Update Struct pointers
         for pointer_offset, value in struct_dict.items():
@@ -661,11 +687,10 @@ class ToolsNDX(ToolsTales):
             #if file_definition['Hashes_Name'] != '':
             #    self.prepare_Menu_File(file_definition['Hashes_Name'])
                                    
-            self.extract_Menu_File(file_definition)
+            self.extract_Menu_File(os.path.basename(file_definition['File_XML']))
             
     def extract_Menu_File(self, xml_file):
-        
-        
+
         section_list = []
         pointers_offset_list = []
         texts_list = []
@@ -680,7 +705,6 @@ class ToolsNDX(ToolsTales):
 
             for section in file_definition['Sections']:
                 
-        
                 text_start = section['Text_Start']
                 text_end = section['Text_End'] 
                   
@@ -691,11 +715,10 @@ class ToolsNDX(ToolsTales):
                     pointers_offset, pointers_value = self.get_Direct_Pointers(text_start, text_end, base_offset, pointers_offset, section,file_path)
                 else:
                     pointers_offset, pointers_value = self.get_Style_Pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Style'], file_path)
-          
-              
+      
                 #Extract Text from the pointers
                 #print([hex(ele + base_offset) for ele in pointers_value])
-                texts = [ self.bytes_to_text(f, ele + base_offset)[0] for ele in pointers_value]
+                texts = [ self.bytes_to_text(f, ele)[0] for ele in pointers_value]
                 
                 #Make a list
                 section_list.extend( [section['Section']] * len(texts)) 
@@ -726,9 +749,8 @@ class ToolsNDX(ToolsTales):
 
 
             
-            found = [str(pointers_offset[i]) for i in indexes]
-            found.sort(reverse=False)
-            found = list( set(found))
+            found = list(set([str(pointers_offset[i]) for i in indexes]))
+            found.sort()
             pointers_found = ",".join(found)
            
             section = [section_list[i] for i in indexes][0]
@@ -934,13 +956,16 @@ class ToolsNDX(ToolsTales):
         print("Insert Menu Files")
         for ele in self.menu_files_json:
             
-            print("Insert {}".format(os.path.basename(ele['File_XML'])))
-            self.pack_Menu_File(ele['File_Extract'])
             
-            if 'EBOOT' not in ele['File_Extract']:
-                
+            print("Insert {}".format(os.path.basename(ele['File_XML'])))
+            if 'EBOOT' in ele['File_Extract']:
+                print(" ")           
+                #self.pack_Menu_File('../Data/{}/Disc/New/PSP_GAME/SYSDIR/EBOOT.BIN'.format(self.repo_name))
+            
+            else:
+                self.pack_Menu_File(ele['File_Extract'])
                 name = os.path.basename(ele['File_Extract']).split(".")[0]
-                self.make_Cab(name+".dat", (name+".cab").upper(), os.path.join(os.path.dirname(ele['File_Extract']), ".."))
+                self.make_Cab( os.path.join(name, name+".dat"), (name+".cab").upper(), os.path.join(os.path.dirname(ele['File_Extract']), ".."))
             
         self.pack_Menu_Archives()
         
@@ -958,7 +983,7 @@ class ToolsNDX(ToolsTales):
             
             
     # Extract the file all.dat to the different directorties
-    def extract_Main_Archive(self):
+    def extract_Main_Archive(self, copy=True):
         
         #Clean files and folders
         shutil.rmtree("../Data/{}/Menu/New".format(self.repo_name))
@@ -967,6 +992,8 @@ class ToolsNDX(ToolsTales):
                 os.remove(file.path,)
         self.mkdir("../Data/{}/All".format(self.repo_name))
         self.mkdir("../Data/{}/Menu/New".format(self.repo_name))
+        copy_tree('../Data/{}/Disc/Original/PSP_GAME'.format(self.repo_name), '../Data/{}/Disc/New/PSP_GAME'.format(self.repo_name) )
+        shutil.copy('../Data/{}/Disc/Original/UMD_DATA.BIN'.format(self.repo_name), '../Data/{}/Disc/New/UMD_DATA.BIN'.format(self.repo_name))
         
         order = {}
         order['order'] = []
@@ -978,7 +1005,7 @@ class ToolsNDX(ToolsTales):
         
         
         #Open the eboot
-        eboot = open( os.path.join( self.misc, 'EBOOT.OLD'), 'rb')
+        eboot = open( os.path.join( self.misc, 'EBOOT.BIN'), 'rb')
         eboot.seek(0x1FF624)
         print("Extract All.dat")
         with open(self.all_original, "rb") as all_read:
@@ -996,14 +1023,18 @@ class ToolsNDX(ToolsTales):
                 #Story file
                 if final_name.startswith("map/pack/ep_") and final_name.endswith(".cab"):
                     story_dest = "../Data/{}/Story/New/{}".format( self.repo_name, os.path.basename(final_name))
-                    os.makedirs(os.path.dirname(story_dest), exist_ok=True)
-                    shutil.copy( os.path.join(self.all_extract, final_name), story_dest)
+                    
+                    if copy:
+                        os.makedirs(os.path.dirname(story_dest), exist_ok=True)
+                        shutil.copy( os.path.join(self.all_extract, final_name), story_dest)
                     
                 #Event  file
                 elif final_name.startswith("map/") and os.path.dirname(final_name) == "map" and final_name.endswith(".bin"):
                     event_dest = "../Data/{}/Events/New/{}".format( self.repo_name, final_name)
-                    os.makedirs(os.path.dirname(event_dest), exist_ok=True)
-                    shutil.copy( os.path.join(self.all_extract, final_name), event_dest)
+                    
+                    if copy:
+                        os.makedirs(os.path.dirname(event_dest), exist_ok=True)
+                        shutil.copy( os.path.join(self.all_extract, final_name), event_dest)
                     
                 if len( [ele for ele in files_to_prepare if ele in final_name]) > 0:
                     copy_path = os.path.join("../Data/{}/Menu/New/{}".format(self.repo_name, final_name))
@@ -1076,6 +1107,10 @@ class ToolsNDX(ToolsTales):
             if not(debug_room):
                 elf.seek(0x1AB3B8)
                 elf.write('title'.encode('cp932'))
+            else:
+                elf.seek(0x1AB3B8)
+                elf.write('home'.encode('cp932'))
+                elf.write(b'\x00')
         elf.close()
         all_file.close()
         
