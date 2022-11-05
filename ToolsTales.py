@@ -595,8 +595,9 @@ class ToolsTales:
             if pointer_offset in dict_current_translations:
                 entry_found = dict_current_translations[pointer_offset]
                 text = entry_found.find("JapaneseText").text
-                occ_list = [ele for ele in [*text] if ele in self.PRINTABLE_CHARS]
-                if entry_found.find("JapaneseText").text != "" and len(occ_list) > 0:
+                
+                if text != None and text != new_entry.find("JapaneseText").text:
+
                     new_entry.find("EnglishText").text = entry_found.find("JapaneseText").text
                     new_entry.find("Status").text = "Editing"
                     new_entry.find("Notes").text = entry_found.find("Notes").text
@@ -932,30 +933,27 @@ class ToolsTales:
         
         f_size = os.path.getsize(file_path)
         with open(file_path , "rb") as f:
-    
+            
             f.seek(start_offset, 0)
             pointers_offset = []
             pointers_value  = []
-            split = [ele for ele in re.split('(P)|(\d+)', style) if ele != None and ele != '']
+            split = [ele for ele in re.split('(P)|(\d+)', style) if ele != None and ele != '']    
             ok = True
             
             while ok:
                 for step in split:
                     
                     if step == "P":
-                        
-                        print(hex(f.tell()))
-                        text_offset = struct.unpack("<I", f.read(4))[0] 
-                        print('Offset: {}'.format(text_offset))
+                        text_offset = struct.unpack("<I", f.read(4))[0] + base_offset
+                             
                         if text_offset < f_size and text_offset >= text_start and text_offset < text_max:
                             pointers_value.append(text_offset)
                             pointers_offset.append(f.tell()-4)
                             
-                        else:
+                        elif text_offset > base_offset:
                             ok = False
                     else:
                         f.read(int(step))
-                        #print(hex(f.tell()))
         
         return pointers_offset, pointers_value
             
@@ -983,8 +981,7 @@ class ToolsTales:
         texts_list = []
 
         file_definition = [os.path.basename(ele['File_XML']) for ele in self.menu_files_json][0]
-        print(file_definition)
-        
+
         base_offset = file_definition['Base_Offset']
         print("BaseOffset:{}".format(base_offset))
         file_path   = file_definition['File_Extract']
@@ -1003,7 +1000,7 @@ class ToolsTales:
               
                 #Extract Text from the pointers
                 print("Extract Text")
-                texts = [ self.bytes_to_text(f, ele + base_offset)[0] for ele in pointers_value]
+                texts = [ self.bytes_to_text(f, ele)[0] for ele in pointers_value]
                 
                 #Make a list
                 section_list.extend( [section['Section']] * len(texts)) 
