@@ -651,12 +651,10 @@ class ToolsTales:
         for text in unique_text:
             
             indexes = [index for index,ele in enumerate(texts_list) if ele == text]
-
-
-            
-            found = [str(pointers_offset[i]) for i in indexes]
-            found.sort(reverse=False)
-            found = list( set(found))
+            found = [pointers_offset[i] for i in indexes]
+            found.sort(reverse=True)
+            found = list( set(found)).sort(reverse=True)
+            print(found)
             pointers_found = ",".join(found)
            
             section = [section_list[i] for i in indexes][0]
