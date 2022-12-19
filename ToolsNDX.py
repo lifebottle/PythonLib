@@ -37,7 +37,7 @@ class ToolsNDX(ToolsTales):
         
         self.id = 1
         self.struct_id = 1
-        
+        self.eboot_name = 'EBOOT.BIN'
         
         
         
@@ -52,7 +52,6 @@ class ToolsNDX(ToolsTales):
         self.story_XML_extract  = '../Data/{}/Story/'.format(self.repo_name)                       #Files are the result of PAKCOMPOSER + Comptoe here
         self.story_XML_new      = '../{}/Data/NDX/Story/XML'.format(self.repo_name)
         self.skit_extract       = '../Data/{}/Skit/'.format(self.repo_name)                                      #Files are the result of PAKCOMPOSER + Comptoe here
-        self.elf_original       = '../Data/{}/Misc/EBOOT.bin'.format(self.repo_name)
         self.elf_new            = '../Data/{}/Disc/New/PSP_GAME/SYSDIR/EBOOT.bin'.format(self.repo_name)
         self.all_extract      = '../Data/{}/All/'.format(self.repo_name)
         self.all_original     = '../Data/{}/Disc/Original/PSP_GAME/USRDIR/all.dat'.format(self.repo_name)
@@ -376,7 +375,7 @@ class ToolsNDX(ToolsTales):
     def get_special_pointers(self, text_start, text_max, base_offset, start_offset, nb_per_block, step, section,file_path=''):
          
         if file_path == '':
-            file_path = self.elf_original
+            file_path = '../Data/{}/Misc/{}'.format(self.repo_name, self.eboot_name)
         
         f = open(file_path , "rb")  
         f.seek(start_offset, 0)
@@ -415,7 +414,7 @@ class ToolsNDX(ToolsTales):
     def get_Direct_Pointers(self, text_start, text_max, base_offset, pointers_list, section,file_path=''):
          
         if file_path == '':
-            file_path = self.elf_original
+            file_path = '../Data/{}/Misc/{}'.format(self.repo_name, self.eboot_name)
         
         f = open(file_path , "rb")  
         pointers_offset = []
@@ -978,7 +977,7 @@ class ToolsNDX(ToolsTales):
         
         
         #Open the eboot
-        eboot = open( os.path.join( self.misc, 'EBOOT.OLD'), 'rb')
+        eboot = open( os.path.join( self.misc, self.eboot_name), 'rb')
         eboot.seek(0x1FF624)
         print("Extract All.dat")
         with open(self.all_original, "rb") as all_read:
