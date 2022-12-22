@@ -66,21 +66,24 @@ class ToolsTOR(ToolsTales):
 
     
     # Extract the story files
-    def extract_All_Story_Files(self,debug=False):
+    def extract_All_Story(self,replace=False):
+
+        print("Extracting Story files")
+        print(replace)
         i = 1
         self.mkdir( self.story_XML_patch + "XML")
         listFiles = [self.dat_archive_extract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.dat_archive_extract, "SCPK"))]
         for scpk_file in listFiles:
             
             theirsce = self.get_theirsce_from_scpk(scpk_file)
-            self.extract_TheirSce_XML(theirsce, scpk_file, self.story_XML_patch, "Story")
+            self.extract_TheirSce_XML(theirsce, scpk_file, self.story_XML_patch, "Story", replace)
             self.id = 1
             print("Writing file %05d.." % i, end="\r") # Not healthy
             i += 1
         print("Writing file %05d..." % (i-1))
             
     # Extract all the skits files
-    def extract_Skits(self):
+    def extract_All_Skits(self, replace):
         i = 1
         os.makedirs( self.skit_XML_patch + "XML", exist_ok=True)
         list_pak2_files = [ self.dat_archive_extract + "PAK2/" + ele for ele in os.listdir(self.dat_archive_extract + "PAK2")]
@@ -90,7 +93,7 @@ class ToolsTOR(ToolsTales):
                 with open(file_path, "rb") as pak:
                     data = pak.read()
                 theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
-                self.extract_TheirSce_XML(theirsce, re.sub("\.\d+", "", file_path), self.skit_XML_patch, "Skits")
+                self.extract_TheirSce_XML(theirsce, re.sub("\.\d+", "", file_path), self.skit_XML_patch, "Skits", replace)
                 
                 print("Writing file %05d" % i, end="\r")
                 i += 1
@@ -131,7 +134,7 @@ class ToolsTOR(ToolsTales):
     
         
     # Extract THEIRSCE to XML
-    def extract_TheirSce_XML(self, theirsce, file_name, destination, section):
+    def extract_TheirSce_XML(self, theirsce, file_name, destination, section, replace):
      
         #Create the XML file
         root = etree.Element('SceneText')
@@ -170,7 +173,13 @@ class ToolsTOR(ToolsTales):
     
         with open(os.path.join( destination,"XML", self.get_file_name(file_name)+".xml"), "wb") as xmlFile:
             xmlFile.write(txt)
-    
+
+        if replace:
+            self.copy_XML_Translations(
+                '../{}/Data/{}/{}/XML/{}.xml'.format(self.repo_name, self.gameName, section, self.get_file_name(file_name)),
+                '../Data/{}/{}/XML/{}.xml'.format(self.repo_name,  section, self.get_file_name(file_name))
+            )
+
     #Convert a bytes object to text using TAGS and TBL in the json file
     def bytes_to_text(self, fileRead, offset=-1, end_strings = b"\x00"):
     
@@ -441,15 +450,50 @@ class ToolsTOR(ToolsTales):
         #    f2.write(pak2lib.create_pak2(pak2_obj))
             
         return pak2lib.create_pak2(pak2_obj)
-    
+
+    def pack_All_Skits(self):
+
+        print("Recreating Skits files")
+        listFiles = [ele for ele in os.listdir(self.skit_XML_patch + "New/")]
+        for pak2_file in listFiles:
+            self.pack_Skit_File(pak2_file)
+            print("Writing file {} ...".format(pak2_file))
+
+    def debug_Story_Skits(self, section, file_name, text=False):
+
+        if section == "Story":
+            theirsce = self.get_theirsce_from_scpk(self.dat_archive_extract + 'SCPK/' + self.get_file_name(file_name) + '.scpk')
+        else:
+            with open(self.dat_archive_extract + "PAK2/" + file_name.split(".")[0] + '.3.pak2', "rb") as pak:
+                data = pak.read()
+            theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
+
+        with open('../{}.theirsce'.format(file_name), 'wb') as f:
+            f.write(theirsce.getvalue())
+
+        header = theirsce.read(8)
+        pointer_block = struct.unpack("<L", theirsce.read(4))[0]
+        strings_offset = struct.unpack("<L", theirsce.read(4))[0]
+
+        # File size
+        fsize = theirsce.getbuffer().nbytes
+        theirsce.seek(pointer_block, 0)  # Go the the start of the pointer section
+        pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize,
+                                                                    self.story_byte_code)
+
+        text_list = []
+        if text:
+            text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
+
+        df = pd.DataFrame({"Pointers_Offset": pointers_offset, "Text_Offset":texts_offset, "Jap_Text": text_list})
+        df['Text_Offset'] = df['Text_Offset'].apply(lambda x: hex(x)[2:])
+        df['Pointers_Offset'] = df['Pointers_Offset'].apply(lambda x: hex(x)[2:])
+        df.to_excel('../{}.xlsx'.format(self.get_file_name(file_name)), index=False)
+
     # Extract the file DAT.BIn to the different directorties
     def extract_Main_Archive(self):
         
-        #Create folder and delete everything isinde
-        #shutil.rmtree("../Data/Tales-Of-Rebirth/DAT")
-        #for file in os.scandir("../Data/Tales-Of-Rebirth/DAT"):
-        #    os.remove(file.path)
-        
+        print("Extracting DAT bin files")
         self.mkdir("../Data/Tales-Of-Rebirth/DAT")
                
         
@@ -583,7 +627,7 @@ class ToolsTOR(ToolsTales):
                 output_elf.write(struct.pack("<L", sectors[i] + remainders[i]))
     
         
-    def pack_All_Story_Files(self):
+    def pack_All_Story(self):
         
         print("Recreating Story files")
         listFiles = [ele for ele in os.listdir( self.story_XML_patch + "New/")]

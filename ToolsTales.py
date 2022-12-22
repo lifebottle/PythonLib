@@ -102,7 +102,8 @@ class ToolsTales:
 
         listFile = subprocess.run(
             args,
-            cwd=working
+            cwd=working,
+            stdout=subprocess.DEVNULL
             )
         
         if do_comptoe:
@@ -117,7 +118,8 @@ class ToolsTales:
                 args = ["comptoe", "-d{}".format(ctype), ele, ele.split(".")[0]+"d.unknown"]
                 listFile = subprocess.run(
                 args,
-                cwd=working+"/"+file_number
+                cwd=working+"/"+file_number,
+                stdout=subprocess.DEVNULL
                 )
             
             
@@ -435,7 +437,7 @@ class ToolsTales:
         folder_name = os.path.basename(new_file_name).split('.')[0].lower()
         self.mkdir( working_dir + "/" + folder_name)
         #os.mkdir("{}/{}".format(working_dir,folder_name))
-        subprocess.run(['expand', os.path.basename(cab_file_name), folder_name + '/{}.dat'.format(folder_name)], cwd=working_dir)
+        subprocess.run(['expand', os.path.basename(cab_file_name), folder_name + '/{}.dat'.format(folder_name)], cwd=working_dir, stdout=subprocess.DEVNULL)
       
     def make_Cab(self, dat_file_name, cab_file_name, working_dir):
         
@@ -523,8 +525,9 @@ class ToolsTales:
                                     if tag == "color":
 
                                         bytesFinal += struct.pack(int(split[1][0:-1]).to_bytes(2, 'little'))
-                 
+
                                 else:
+                                    print(split)
                                     bytesFinal += struct.pack("B", int(split[0][1:], 16))
                                     bytesFinal += struct.pack("<I", int(split[1][:8], 16))
                             if c in self.inames:
@@ -594,7 +597,7 @@ class ToolsTales:
             
             if pointer_offset in dict_current_translations:
                 entry_found = dict_current_translations[pointer_offset]
-                text = entry_found.find("JapaneseText").text
+                text = entry_found.find("JapaneseText").text or ''
                 occ_list = [ele for ele in [*text] if ele in self.PRINTABLE_CHARS]
                 if entry_found.find("JapaneseText").text != "" and len(occ_list) > 0:
                     new_entry.find("EnglishText").text = entry_found.find("JapaneseText").text
@@ -639,7 +642,6 @@ class ToolsTales:
         
 
         for s, pointers_offset, text in list_informations:
-            print(text)
             self.create_Entry( strings_node,  pointers_offset, text)
          
         return root
@@ -945,10 +947,8 @@ class ToolsTales:
                 for step in split:
                     
                     if step == "P":
-                        
-                        print(hex(f.tell()))
-                        text_offset = struct.unpack("<I", f.read(4))[0] 
-                        print('Offset: {}'.format(text_offset))
+                        text_offset = struct.unpack("<I", f.read(4))[0]
+
                         if text_offset < f_size and text_offset >= text_start and text_offset < text_max:
                             pointers_value.append(text_offset)
                             pointers_offset.append(f.tell()-4)
@@ -977,17 +977,16 @@ class ToolsTales:
         
         
         
-    def extract_Menu_File(self, xml_file):
+    def extract_Menu_File(self, file_definition):
         
         
         section_list = []
         pointers_offset_list = []
         texts_list = []
 
-        file_definition = [os.path.basename(ele['File_XML']) for ele in self.menu_files_json][0]
         print(file_definition)
         
-        base_offset = file_definition['Base_Offset']
+        base_offset = int(file_definition['Base_Offset'])
         print("BaseOffset:{}".format(base_offset))
         file_path   = file_definition['File_Extract']
         
@@ -1000,7 +999,7 @@ class ToolsTales:
                   
                 #Extract Pointers of the file
                 print("Extract Pointers")
-                pointers_offset, pointers_value = self.get_Style_Pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], file_path)
+                pointers_offset, pointers_value = self.get_Style_Pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Style'], file_path)
                 print([hex(pointers_value) for ele in pointers_value])
               
                 #Extract Text from the pointers
