@@ -111,7 +111,7 @@ class ToolsNDX(ToolsTales):
         self.mkdir('../Data/{}/All/sysdata'.format(self.repo_name))
     
     # Extract the story files
-    def extract_All_Story(self, extract_XML = False):
+    def extract_All_Story(self, replace=False, extract_XML = True):
         
         print("Extracting Story")
         path = os.path.join( self.all_extract, 'map/pack/')
@@ -662,7 +662,7 @@ class ToolsNDX(ToolsTales):
                                    
             self.extract_Menu_File(file_definition)
             
-    def extract_Menu_File(self, xml_file):
+    def extract_Menu_File(self, file_definition):
         
         
         section_list = []
@@ -670,7 +670,6 @@ class ToolsNDX(ToolsTales):
         texts_list = []
         to_translate = []
 
-        file_definition = [ele for ele in self.menu_files_json if xml_file == os.path.basename(ele['File_XML'])][0]
         self.prepare_Menu_File(file_definition['Hashes_Name'])
         
         base_offset = file_definition['Base_Offset']
@@ -705,8 +704,7 @@ class ToolsNDX(ToolsTales):
         #Remove duplicates
         list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list, to_translate)
         df = pd.DataFrame({"PointerOffset":pointers_offset_list, "Text": texts_list}, columns=['PointerOffset', 'Text'])
-        df.to_excel("../Memo.xlsx", index=False)
-        
+
         #Build the XML Structure with the information
         root = self.create_Node_XML(file_path, list_informations, "MenuText")
         
