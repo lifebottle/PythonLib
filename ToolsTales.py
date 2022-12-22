@@ -1093,7 +1093,6 @@ class ToolsTales:
             
             if self.repo_name == "Tales-Of-Rebirth":
                 relname = ident_to_here[1:]
-                print(relname)
             else:
                 relname = ident_to_here[len(start_path):]
 
