@@ -1,3 +1,4 @@
+from itertools import tee, zip_longest
 from typing import Generator
 from FileIO import FileIO
 from dataclasses import dataclass, field
@@ -61,11 +62,13 @@ class Theirsce(FileIO):
         self.seek(start)
 
         while self.tell() < end:
+            opcode = self.read_opcode()
             pos = self.tell()
-            yield self.read_opcode()
+            yield opcode
             self.seek(pos)
 
     def read_opcode(self):
+        pos = self.tell()
         opcode = self.read_uint8()
 
         # Reference Block
@@ -103,11 +106,11 @@ class Theirsce(FileIO):
             else:
                 scope = ReferenceScope.LOCAL
 
-            return TheirsceReferenceInstruction(ref_type=VariableType(var_type), scope=scope, offset=value, shift=shift)
+            return TheirsceReferenceInstruction(ref_type=VariableType(var_type), scope=scope, offset=value, shift=shift, position=pos)
 
         # ALU operations
         elif opcode < 0xC0:
-            return TheirsceAluInstruction(operation = AluOperation(opcode & 0x3F))
+            return TheirsceAluInstruction(operation = AluOperation(opcode & 0x3F), position=pos)
 
         # PUSH block, the amount of bytes depend on encoding
         elif opcode < 0xE0:
@@ -129,29 +132,29 @@ class Theirsce(FileIO):
             # to signed
             value = value | (-(value & 0x80000000))
 
-            return TheirscePushInstruction(value=value)
+            return TheirscePushInstruction(value=value, position=pos)
 
         # CALL block, available commands are at 0x1e5300
         # first entry is number of parameters then function
         elif opcode < 0xF0:
             index = ((opcode & 0xF) << 8) | self.read_uint8()
-            return TheirsceSyscallInstruction(function_index=index, function_name=SYSCALL_NAMES[index])
+            return TheirsceSyscallInstruction(function_index=index, function_name=SYSCALL_NAMES[index], position=pos)
 
         # Flow related block
         elif opcode < 0xF8:
             if opcode == 0xF0:
-                return TheirsceReturnInstruction(is_void=True)
+                return TheirsceReturnInstruction(is_void=True, position=pos)
             elif opcode == 0xF1:
-                return TheirsceReturnInstruction(is_void=False)
+                return TheirsceReturnInstruction(is_void=False, position=pos)
             
             # Need to be offsetted to start of code
             elif opcode >= 0xF2 and opcode < 0xF5:
                 target = self.code_offset + self.read_uint16()
-                return TheirsceBranchInstruction(branch_type=BranchType(opcode - 0xF2), destination=target)
+                return TheirsceBranchInstruction(branch_type=BranchType(opcode - 0xF2), destination=target, position=pos)
             elif opcode == 0xF5:
                 target = self.code_offset + self.read_uint16()
                 reserve = self.read_uint16()
-                return TheirsceLocalCallInstruction(destination=target, reserve=reserve)
+                return TheirsceLocalCallInstruction(destination=target, reserve=reserve, position=pos)
             
             # ?
             elif opcode == 0xF6:
@@ -163,20 +166,20 @@ class Theirsce(FileIO):
                     else:
                         params.append(self.read_uint8())
             
-                return TheirsceAcquireInstruction(params=params,variables=variables)
+                return TheirsceAcquireInstruction(params=params,variables=variables, position=pos)
 
             elif opcode == 0xF7:
                 param = self.read_uint16() # Type?
-                return TheirsceBreakInstruction(param=param)
+                return TheirsceBreakInstruction(param=param, position=pos)
         
         # Get string
         elif opcode < 0xFC:
             value = ((opcode & 3) << 16) | self.read_uint16()
-            return TheirsceStringInstruction(offset=value,text="")
+            return TheirsceStringInstruction(offset=value,text="", position=pos)
 
         # ?
         elif opcode == 0xFE:
-            return TheirsceSpecialReferenceInstruction()
+            return TheirsceSpecialReferenceInstruction(position=pos)
         
         # Impossible
         else:
