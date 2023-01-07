@@ -5,8 +5,14 @@ class FileIO(object):
     def __init__(self, path="", mode="r+b", endian="little"):
         self.f = path
         self.mode = mode
+        self._isBitesIO = False
         if type(path) is bytes:
             self.path = None
+            self.is_memory_file = True
+        elif type(path) is BytesIO:
+            self.path = None
+            self.f = path
+            self._isBitesIO = True
             self.is_memory_file = True
         else:
             self.path = path
@@ -15,7 +21,7 @@ class FileIO(object):
 
     def __enter__(self):
         if self.is_memory_file:
-            self.f = BytesIO(self.f)
+            self.f = self.f if self._isBitesIO else BytesIO(self.f)
         else:
             self.f = open(self.path, self.mode)
         self.f.seek(0)
