@@ -329,7 +329,10 @@ class ToolsTOR(ToolsTales):
     def make_speakers_section(self, root, names: dict[str, NameEntry]):
         for k, v in names.items():
             entry_node = etree.SubElement(root, "Entry")
-            etree.SubElement(entry_node,"PointerOffset").text = ",".join([str(off) for off in v.offsets])
+            if v.offsets:
+                etree.SubElement(entry_node,"PointerOffset").text = ",".join([str(off) for off in v.offsets])
+            else:
+                etree.SubElement(entry_node,"PointerOffset")
             etree.SubElement(entry_node,"JapaneseText").text  = str(k)
             etree.SubElement(entry_node,"EnglishText")
             etree.SubElement(entry_node,"Notes")
