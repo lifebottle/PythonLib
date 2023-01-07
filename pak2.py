@@ -15,7 +15,7 @@ class pak2_file:
     char_count: int = 0
     slot_count: int = 0
     image_count: int = 0
-    chunks: pak2_chunks = pak2_chunks()
+    chunks: pak2_chunks = field(default_factory=pak2_chunks)
 
 def get_file_name_noext(path):
     return os.path.splitext(os.path.basename(path))[0]

@@ -22,6 +22,7 @@ class BranchType(Enum):
 
 
 class InstructionType(Enum):
+    INVALID    = -1
     ALU        = 0
     PUSH       = 1
     SYSCALL    = 2
@@ -90,6 +91,7 @@ class TheirsceBaseInstruction:
 @dataclass
 class TheirsceAluInstruction(TheirsceBaseInstruction):
     operation: AluOperation
+    position: int
     mnemonic = "ALU"
     type = InstructionType.ALU
 
@@ -100,6 +102,7 @@ class TheirsceAluInstruction(TheirsceBaseInstruction):
 @dataclass
 class TheirscePushInstruction(TheirsceBaseInstruction):
     value: int
+    position: int
     mnemonic = "PUSH"
     type = InstructionType.PUSH
 
@@ -108,6 +111,7 @@ class TheirscePushInstruction(TheirsceBaseInstruction):
 class TheirsceSyscallInstruction(TheirsceBaseInstruction):
     function_index: int
     function_name: str
+    position: int
     mnemonic = "SYSCALL"
     type = InstructionType.SYSCALL
 
@@ -116,6 +120,7 @@ class TheirsceSyscallInstruction(TheirsceBaseInstruction):
 class TheirsceLocalCallInstruction(TheirsceBaseInstruction):
     destination: int
     reserve: int
+    position: int
     mnemonic = "CALL"
     type = InstructionType.LOCAL_CALL
 
@@ -124,6 +129,7 @@ class TheirsceLocalCallInstruction(TheirsceBaseInstruction):
 class TheirsceAcquireInstruction(TheirsceBaseInstruction):
     params: list[int]
     variables: int
+    position: int
     mnemonic = "ACQUIRE"
     type = InstructionType.ACQUIRE
 
@@ -131,6 +137,7 @@ class TheirsceAcquireInstruction(TheirsceBaseInstruction):
 @dataclass
 class TheirsceBreakInstruction(TheirsceBaseInstruction):
     param: int
+    position: int
     mnemonic = "BREAK"
     type = InstructionType.BREAK
 
@@ -139,6 +146,7 @@ class TheirsceBreakInstruction(TheirsceBaseInstruction):
 class TheirsceBranchInstruction(TheirsceBaseInstruction):
     destination: int
     branch_type: BranchType
+    position: int
     mnemonic = ""
     type = InstructionType.BRANCH
 
@@ -149,6 +157,7 @@ class TheirsceBranchInstruction(TheirsceBaseInstruction):
 @dataclass
 class TheirsceReturnInstruction(TheirsceBaseInstruction):
     is_void: bool
+    position: int
     mnemonic = "RETURN"
     type = InstructionType.RETURN
 
@@ -161,6 +170,7 @@ class TheirsceReturnInstruction(TheirsceBaseInstruction):
 class TheirsceStringInstruction(TheirsceBaseInstruction):
     text: str
     offset: int
+    position: int
     mnemonic = "STRING"
     type = InstructionType.STRING
 
@@ -171,11 +181,13 @@ class TheirsceReferenceInstruction(TheirsceBaseInstruction):
     scope: ReferenceScope
     offset: int
     shift:  int
+    position: int
     mnemonic = "REF"
     type = InstructionType.REFERENCE
 
 
 @dataclass
 class TheirsceSpecialReferenceInstruction(TheirsceBaseInstruction):
+    position: int
     mnemonic = "SP_REF"
     type = InstructionType.SP_REF
