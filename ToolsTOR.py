@@ -15,6 +15,8 @@ from pathlib import Path
 import string
 import io
 import pak2 as pak2lib
+from theirsce import Theirsce
+from theirsce_instructions import InstructionType, TheirsceStringInstruction
 
 class ToolsTOR(ToolsTales):
     
@@ -56,6 +58,7 @@ class ToolsTOR(ToolsTales):
         
         #byteCode 
         self.story_byte_code = b"\xF8"
+        self.string_opcode = InstructionType.STRING
         self.list_status_insertion = ['Done', 'Proofreading']
     
         self.mkdir('../Data/{}/DAT'.format(self.repo_name))
@@ -240,23 +243,10 @@ class ToolsTOR(ToolsTales):
         #Create the XML file
         root = etree.Element('SceneText')
         etree.SubElement(root, "OriginalName").text = file_name      
-        stringsNode = etree.SubElement(root, "Strings")                   
-        theirsce.seek(0)
-        #Validate the header
-        header = theirsce.read(8)
-        if header != b"THEIRSCE":
-            raise ValueError("No THEIRSCE header")
-        
-        #Start of the pointer
-        pointer_block = struct.unpack("<L", theirsce.read(4))[0]
-        
-        #Start of the text and baseOffset
-        strings_offset = struct.unpack("<L", theirsce.read(4))[0]
-        
-        #File size
-        fsize = theirsce.getbuffer().nbytes
-        theirsce.seek(pointer_block, 0)             #Go the the start of the pointer section
-        pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize, self.story_byte_code)
+        stringsNode = etree.SubElement(root, "Strings") 
+
+        rsce = Theirsce(path=theirsce)
+        pointers_offset, texts_offset = self.extract_Story_Pointers(rsce)
         
         text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
   
@@ -280,6 +270,16 @@ class ToolsTOR(ToolsTales):
                 '../{}/Data/{}/{}/XML/{}.xml'.format(self.repo_name, self.gameName, section, self.get_file_name(file_name)),
                 '../Data/{}/{}/XML/{}.xml'.format(self.repo_name,  section, self.get_file_name(file_name))
             )
+
+    def extract_Story_Pointers(self, theirsce: Theirsce):
+        pointers_offset = []; texts_offset = []
+
+        for opcode in theirsce.walk_code():
+            if opcode == self.string_opcode:
+                pointers_offset.append(theirsce.tell() - 2) # Maybe check this later
+                texts_offset.append(opcode.offset + theirsce.strings_offset)
+                    
+        return pointers_offset, texts_offset
 
     #Convert a bytes object to text using TAGS and TBL in the json file
     def bytes_to_text(self, fileRead, offset=-1, end_strings = b"\x00"):
