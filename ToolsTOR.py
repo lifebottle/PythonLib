@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from itertools import tee
 from ToolsTales import ToolsTales
 import subprocess
 from dicttoxml import dicttoxml
@@ -16,7 +18,21 @@ import string
 import io
 import pak2 as pak2lib
 from theirsce import Theirsce
-from theirsce_instructions import InstructionType, TheirsceStringInstruction
+from theirsce_instructions import AluOperation, InstructionType, ReferenceScope, TheirsceBaseInstruction, TheirsceReferenceInstruction, TheirsceStringInstruction
+
+@dataclass
+class LineEntry:
+    names: list[str]
+    text: str
+    offset: int
+
+@dataclass
+class NameEntry:
+    index: int
+    offsets: list[int]
+
+
+VARIABLE_NAME = "[VARIABLE]"
 
 class ToolsTOR(ToolsTales):
     
@@ -187,7 +203,7 @@ class ToolsTOR(ToolsTales):
         print("Writing file %05d..." % (i-1))
             
     # Extract all the skits files
-    def extract_All_Skits(self, replace):
+    def extract_All_Skits(self, replace=False):
         i = 1
         os.makedirs( self.skit_XML_patch + "XML", exist_ok=True)
         list_pak2_files = [ self.dat_archive_extract + "PAK2/" + ele for ele in os.listdir(self.dat_archive_extract + "PAK2")]
@@ -241,23 +257,33 @@ class ToolsTOR(ToolsTales):
     def extract_TheirSce_XML(self, theirsce, file_name, destination, section, replace):
      
         #Create the XML file
-        root = etree.Element('SceneText')
-        etree.SubElement(root, "OriginalName").text = file_name      
-        stringsNode = etree.SubElement(root, "Strings") 
+        # root = etree.Element('SceneText')
+        # etree.SubElement(root, "OriginalName").text = file_name
 
         rsce = Theirsce(path=theirsce)
-        pointers_offset, texts_offset = self.extract_Story_Pointers(rsce)
-        
-        text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
+        #pointers_offset, texts_offset = self.extract_Story_Pointers(rsce)
+        names, lines = self.extract_lines_with_speaker(rsce)
+
+        for i, (k, v) in enumerate(names.items(), -1):
+            names[k] = NameEntry(i, v)
   
         #Remove duplicates
         #list_informations = self.remove_duplicates(["Story"] * len(pointers_offset), pointers_offset, text_list)
         
-        list_informations = ( ['Story', pointers_offset[i], text_list[i]] for i in range(len(text_list)))
+        # list_lines = ( ['Story', line.offset, line.text] for line in lines)
+        # list_names = ( ['Story', line.offset, line.text] for i, (k, v) in enumerate(found_names.items()))
         #Build the XML Structure with the information  
         
         file_path = destination +"XML/"+ self.get_file_name(file_name)
-        root = self.create_Node_XML(file_path, list_informations, section, "SceneText") 
+
+        root = etree.Element("SceneText")
+        speakers_node = etree.SubElement(root, 'Speakers')
+        etree.SubElement(speakers_node, 'Section').text = "Speakers"
+        strings_node = etree.SubElement(root, 'Strings')
+        etree.SubElement(strings_node, 'Section').text = section
+        
+        self.make_speakers_section(speakers_node, names)
+        self.make_strings_section(strings_node, lines, names)
         
         #Write the XML file
         txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
@@ -270,34 +296,194 @@ class ToolsTOR(ToolsTales):
                 '../{}/Data/{}/{}/XML/{}.xml'.format(self.repo_name, self.gameName, section, self.get_file_name(file_name)),
                 '../Data/{}/{}/XML/{}.xml'.format(self.repo_name,  section, self.get_file_name(file_name))
             )
+    
+    def make_strings_section(self, root, lines: list[LineEntry], names: dict[str, NameEntry]):
+        pass
+        for line in lines:
+            entry_node = etree.SubElement(root, "Entry")
+            etree.SubElement(entry_node,"PointerOffset").text = str(line.offset)
+            text_split = list(filter(None, re.split(self.COMMON_TAG, line.text)))
+            
+            if len(text_split) > 1 and text_split[0].startswith("<voice:"):
+                etree.SubElement(entry_node,"VoiceId").text  = text_split[0][1:-1].split(":")[1]
+                etree.SubElement(entry_node, "JapaneseText").text = ''.join(text_split[1:])
+            else:
+                etree.SubElement(entry_node, "JapaneseText").text = line.text
+            
+            etree.SubElement(entry_node,"EnglishText")
+            etree.SubElement(entry_node,"Notes")
 
-    def extract_Story_Pointers(self, theirsce: Theirsce):
+            if line.names:
+                etree.SubElement(entry_node,"SpeakerId").text = ','.join([str(names[n].index) for n in line.names])
+            etree.SubElement(entry_node,"Id").text = str(self.id)
+            
+            self.id = self.id + 1
+            
+            if line.text == '':
+                statusText = 'Done'
+            else:
+                statusText = 'To Do'
+            etree.SubElement(entry_node,"Status").text        = statusText
+        
+    
+    def make_speakers_section(self, root, names: dict[str, NameEntry]):
+        for k, v in names.items():
+            entry_node = etree.SubElement(root, "Entry")
+            etree.SubElement(entry_node,"PointerOffset").text = ",".join([str(off) for off in v.offsets])
+            etree.SubElement(entry_node,"JapaneseText").text  = str(k)
+            etree.SubElement(entry_node,"EnglishText")
+            etree.SubElement(entry_node,"Notes")
+            etree.SubElement(entry_node,"Id").text            = str(v.index)
+            etree.SubElement(entry_node,"Status").text         = "To Do"
+
+    
+    def extract_lines_with_speaker(self, theirsce: Theirsce):
+        # This will do a bit of everything thanks to the "nice"
+        # architecture of the Theirsce class :)
+    
+        # Debug
+        # sections = []
+        # for _, section in enumerate(theirsce.sections):
+        #     for _, sub in enumerate(section):
+        #         sections.append(sub.off)
+
+        # Setup three-way opcode generator
+        d = TheirsceBaseInstruction(); d.type = InstructionType.INVALID
+        a,b,c = tee(theirsce.walk_code(), 3)
+        next(a, d)
+        next(b, d); next(b, d)
+        next(c, d); next(c, d); next(c, d)
+
+        # Helper function, in the future I'll
+        # just use a list of opcodes
+        def skip():
+            next(a, d); next(a, d)
+            next(b, d); next(b, d)
+            next(c, d); next(c, d)
+        
+        
+        names = {VARIABLE_NAME: []}
+        lines = []
+        params = []
+        used = False
+        for op1, op2, op3 in zip(a,b,c):
+            # Debug
+            # if theirsce.tell() in sections:
+            #     print()
+            #     print("SECTION: ")
+
+            # BREAK marks start of a local function
+            # so local params are no longer in scope
+            if op1.type is InstructionType.BREAK:
+                if used == False:
+                    for param in params:
+                        text = self.bytes_to_text(theirsce, param.offset + theirsce.strings_offset)
+                        lines.append(LineEntry([], text, op1.position + 1))
+                params.clear()
+
+                continue
+
+            # This sequence mark the simple act of assigning
+            # a string to a local variable, so we can detect
+            # when they are used later in a function call
+            if (op1.type is InstructionType.REFERENCE
+                and op2.type is InstructionType.STRING 
+                and op3.type is InstructionType.ALU
+                and op3.operation == AluOperation.ASSIGNMENT 
+                ):
+                params.append(op2)
+                skip()
+                continue
+
+            # This sequence represents the textbox call with
+            # the name being a variable (NPCs do this)
+            if (op1.type is InstructionType.REFERENCE
+                and op2.type is InstructionType.STRING 
+                and op3.type is InstructionType.SYSCALL
+                and op3.function_index == 0x45
+                ):
+                if len(params) >= 1:
+                    name = [self.bytes_to_text(theirsce, p.offset + theirsce.strings_offset) for p in params]
+                    [names.setdefault(n, []).append(p.position + 1) for n, p in zip(name, params)]
+                elif len(params) == 0:
+                    name = []
+                text = self.bytes_to_text(theirsce, op2.offset + theirsce.strings_offset)
+                lines.append(LineEntry(name, text, op2.position + 1))
+                #print(f"{params}: {text}")
+                used = True
+                skip()
+                continue
+            
+            # This sequence represents the textbox call with
+            # the text being a variable (Notice boxes do this)
+            if (op1.type is InstructionType.STRING
+                and op2.type is InstructionType.REFERENCE 
+                and op3.type is InstructionType.SYSCALL
+                and op3.function_index == 0x45
+                ):
+                name = [self.bytes_to_text(theirsce, op1.offset + theirsce.strings_offset)]
+                names.setdefault(name[0], []).append(op1.position + 1)
+                for param in params:
+                    text = self.bytes_to_text(theirsce, param.offset + theirsce.strings_offset)
+                    lines.append(LineEntry(name, text, param.position + 1))
+                    #print(f"{text}: {name}")
+                used = True
+                params.clear()
+                skip()
+                continue
+            
+            # This sequence represents a regular textbox call
+            # where both fields are an string (everything else, save for skits)
+            if (op1.type is InstructionType.STRING
+                and op2.type is InstructionType.STRING
+                and op3.type is InstructionType.SYSCALL
+                and op3.function_index == 0x45
+                ):
+                name = [self.bytes_to_text(theirsce, op1.offset + theirsce.strings_offset)]
+                names.setdefault(name[0], []).append(op1.position + 1)
+                text = self.bytes_to_text(theirsce, op2.offset + theirsce.strings_offset)
+                lines.append(LineEntry(name, text, op2.position + 1))
+                #print(f"{name}: {text}")
+                skip()
+                continue
+            
+            # Any other string in assorted code calls
+            if op1.type is InstructionType.STRING:
+                #print(theirsce.read_string_at(op1.offset + theirsce.strings_offset))
+                text = self.bytes_to_text(theirsce, op1.offset + theirsce.strings_offset)
+                lines.append(LineEntry([], text, op1.position + 1))
+                continue
+        
+        return names, lines
+
+
+    def extract_story_pointers_plain(self, theirsce: Theirsce):
         pointers_offset = []; texts_offset = []
 
         for opcode in theirsce.walk_code():
-            if opcode == self.string_opcode:
+            if opcode.type == self.string_opcode:
                 pointers_offset.append(theirsce.tell() - 2) # Maybe check this later
                 texts_offset.append(opcode.offset + theirsce.strings_offset)
                     
         return pointers_offset, texts_offset
 
     #Convert a bytes object to text using TAGS and TBL in the json file
-    def bytes_to_text(self, fileRead, offset=-1, end_strings = b"\x00"):
+    def bytes_to_text(self, theirsce: Theirsce, offset=-1, end_strings = b"\x00"):
     
         finalText = ''
         TAGS = self.jsonTblTags['TAGS']
         
         if (offset > 0):
-            fileRead.seek(offset, 0)
+            theirsce.seek(offset, 0)
         
-        pos = fileRead.tell()
-        b = fileRead.read(1)
+        pos = theirsce.tell()
+        b = theirsce.read(1)
         while b != end_strings:
             #print(hex(fileRead.tell()))
             b = ord(b)
             
             if (b >= 0x99 and b <= 0x9F) or (b >= 0xE0 and b <= 0xEB):
-                c = (b << 8) + ord(fileRead.read(1))
+                c = (b << 8) + ord(theirsce.read(1))
                
                 # if str(c) not in json_data.keys():
                 #    json_data[str(c)] = char_index[decode(c)]
@@ -311,7 +497,7 @@ class ToolsTOR(ToolsTales):
             elif b == 0x1:
                 finalText += ("\n")
             elif b in (0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xB, 0xC, 0xD, 0xE, 0xF):
-                b2 = struct.unpack("<L", fileRead.read(4))[0]
+                b2 = struct.unpack("<L", theirsce.read(4))[0]
                 if b in TAGS:
                     tag_name = TAGS.get(b)
                     
@@ -340,12 +526,12 @@ class ToolsTOR(ToolsTales):
                 tag_name = f"Unk{b:02X}"
                 hex_value = ""
                 
-                while fileRead.read(1) != b"\x80":
-                    fileRead.seek(fileRead.tell()-1)
-                    mark = fileRead.read(1)
+                while theirsce.read(1) != b"\x80":
+                    theirsce.seek(theirsce.tell()-1)
+                    mark = theirsce.read(1)
                     hex_value += mark.hex()
                     if mark == "\x38":
-                        hex_value += f"{struct.unpack('<H', fileRead.read(2))[0]:04X}"
+                        hex_value += f"{struct.unpack('<H', theirsce.read(2))[0]:04X}"
          
                 finalText += '<{}:{}>'.format(tag_name, hex_value)
                 
@@ -353,14 +539,14 @@ class ToolsTOR(ToolsTales):
                 tag_name = f"Unk{b:02X}"
                 hex_value = ""
  
-                while fileRead.read(1) != b"\x80":
-                    fileRead.seek(fileRead.tell()-1)
-                    hex_value += fileRead.read(1).hex()
+                while theirsce.read(1) != b"\x80":
+                    theirsce.seek(theirsce.tell()-1)
+                    hex_value += theirsce.read(1).hex()
          
                 finalText += '<{}:{}>'.format(tag_name, hex_value)
 
             elif b == 0x81:
-                next_b = fileRead.read(1)
+                next_b = theirsce.read(1)
                 if next_b == b"\x40":
                     finalText += "　"
                 else:
@@ -368,15 +554,16 @@ class ToolsTOR(ToolsTales):
                     finalText += "{%02X}" % ord(next_b)
             else:
                 finalText += "{%02X}" % b
-            b = fileRead.read(1)
+            b = theirsce.read(1)
        
-        end = fileRead.tell()
-        size = fileRead.tell() - pos - 1
-        fileRead.seek(pos)
-        hex_string = fileRead.read(size).hex()
+        end = theirsce.tell()
+        size = theirsce.tell() - pos - 1
+        theirsce.seek(pos)
+        hex_string = theirsce.read(size).hex()
         hex_values = ' '.join(a+b for a,b in zip(hex_string[::2], hex_string[1::2]))
-        fileRead.seek(end)
-        return finalText, hex_values
+        theirsce.seek(end)
+        #return finalText, hex_values
+        return finalText
     
     def get_Node_Bytes(self, entry_node):
         
