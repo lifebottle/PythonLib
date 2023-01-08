@@ -160,11 +160,7 @@ class ToolsTOR(ToolsTales):
                         xml_jap_cleaned = self.clean_text(xml_jap)
 
                         if key == xml_jap_cleaned:
-                            split_text = re.split(r"(<voice:\w+>)", xml_eng)
                             item = self.add_line_break(item)
-
-                            if len(split_text) >= 2:
-                                item = split_text[1] + item
 
                             if xml_eng != item:
                                 entry_node.find("EnglishText").text = item
@@ -278,7 +274,7 @@ class ToolsTOR(ToolsTales):
 
         root = etree.Element("SceneText")
         speakers_node = etree.SubElement(root, 'Speakers')
-        etree.SubElement(speakers_node, 'Section').text = "Speakers"
+        etree.SubElement(speakers_node, 'Section').text = "Speaker"
         strings_node = etree.SubElement(root, 'Strings')
         etree.SubElement(strings_node, 'Section').text = section
         
@@ -759,24 +755,21 @@ class ToolsTOR(ToolsTales):
                 data = pak.read()
             theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
 
+        rsce = Theirsce(path=theirsce)
+        # pointers_offset, texts_offset = self.extract_Story_Pointers(rsce)
+        names, lines = self.extract_lines_with_speaker(rsce)
+
+        for i, (k, v) in enumerate(names.items(), -1):
+            names[k] = NameEntry(i, v)
+
         with open('../{}.theirsce'.format(file_name), 'wb') as f:
             f.write(theirsce.getvalue())
 
-        header = theirsce.read(8)
-        pointer_block = struct.unpack("<L", theirsce.read(4))[0]
-        strings_offset = struct.unpack("<L", theirsce.read(4))[0]
-
-        # File size
-        fsize = theirsce.getbuffer().nbytes
-        theirsce.seek(pointer_block, 0)  # Go the the start of the pointer section
-        pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize,
-                                                                    self.story_byte_code)
-
         text_list = []
         if text:
-            text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
+            text_list = [line.text for line in lines]
 
-        df = pd.DataFrame({"Pointers_Offset": pointers_offset, "Text_Offset":texts_offset, "Jap_Text": text_list})
+        df = pd.DataFrame({"Jap_Text": text_list})
         df['Text_Offset'] = df['Text_Offset'].apply(lambda x: hex(x)[2:])
         df['Pointers_Offset'] = df['Pointers_Offset'].apply(lambda x: hex(x)[2:])
         df.to_excel('../{}.xlsx'.format(self.get_file_name(file_name)), index=False)
