@@ -134,10 +134,10 @@ def get_arguments(argv=None):
     sp_insert.add_argument(
         "-ft",
         "--file_type",
-        choices=["Iso", "Main", "Menu", "Story", "Skits"],
+        choices=["Iso", "Main", "Elf", "Story", "Skits"],
         required=True,
         metavar="file_type",
-        help="(Required) - Options: Iso, Init, Main, Menu, Story, Skits",
+        help="(Required) - Options: Iso, Init, Main, Elf, Story, Skits",
     )
 
     # Debug commands
@@ -236,11 +236,11 @@ if __name__ == "__main__":
         elif args.file_type == "Elf":
             
             #SLPS
-            tales_instance.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50")
+            tales_instance.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50")
             
             #Generate Iso
-            xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/{}.xdelta".format(args.iso.replace(".iso",""))
-            generate_xdelta_patch(repo_name, xdelta_name)
+            #xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/{}.xdelta".format(args.iso.replace(".iso",""))
+            #generate_xdelta_patch(repo_name, xdelta_name)
 
     if args.action == "extract":
         

@@ -523,11 +523,9 @@ class ToolsTales:
                                     bytesFinal += struct.pack("B", self.itags[tag])
                                     
                                     if tag == "color":
-
-                                        bytesFinal += struct.pack(int(split[1][0:-1]).to_bytes(2, 'little'))
+                                        bytesFinal += int(split[1][0:-1]).to_bytes(4, 'little')
 
                                 else:
-                                    print(split)
                                     bytesFinal += struct.pack("B", int(split[0][1:], 16))
                                     bytesFinal += struct.pack("<I", int(split[1][:8], 16))
                             if c in self.inames:
@@ -567,8 +565,12 @@ class ToolsTales:
         dict_current_translations = dict(zip(keys, items))
             
         for new_entry in new_root.iter("Entry"):
-            jap_text = new_entry.find("JapaneseText").text
-            
+            jap_text = new_entry.find("JapaneseText").text or ''
+
+            #Remove voiceId because its part of a node now
+            if jap_text.startswith("<voice:"):
+                jap_text = re.split(self.COMMON_TAG, jap_text)[2]
+
             if jap_text in dict_current_translations:
                 entry_found = dict_current_translations[jap_text]
                 
@@ -580,7 +582,50 @@ class ToolsTales:
         txt=etree.tostring(new_root, encoding="UTF-8", pretty_print=True)
         with open(new_XML_path, "wb") as xmlFile:
             xmlFile.write(txt)
-    
+
+    def denkou_Copy_Script(self, source_folder):
+        destinationFolder = '../{}/Data/{}/Story/XML'.format(self.repo_name, self.gameName)
+        fileList = os.listdir(source_folder)
+        dictionnary = {}
+
+        for file in fileList:
+            with open(os.path.join(source_folder, file), 'r', encoding='utf-8') as f:
+                contents = f.read()
+                tree = ET.fromstring(contents)
+
+                for entry in tree.iter("Entry"):
+                    key = entry.find("JapaneseText").text
+                    value = entry.find("EnglishText").text
+
+                    if key and key not in dictionnary and value:
+                        dictionnary[key] = value
+                        #print(key + " = " + value)
+
+        fileList = os.listdir(destinationFolder)
+
+        for file in fileList:
+            save = False
+
+            with open(os.path.join(destinationFolder, file), 'r', encoding='utf-8') as f:
+                contents = f.read()
+                tree = ET.fromstring(contents)
+
+                for entry in tree.iter("Entry"):
+                    key = entry.find("JapaneseText").text
+
+                    if key in dictionnary:
+                        entry.find("EnglishText").text = dictionnary[key]
+
+                        if key == entry.find("EnglishText").text:
+                            entry.find("Status").text = "Done"
+                        else:
+                            entry.find("Status").text = "Editing"
+                        save = True
+
+            if save:
+                saveTree = ET.ElementTree(tree)
+                saveTree.write(os.path.join(destinationFolder, file), pretty_print=True, xml_declaration=False,
+                               encoding="utf-8")
     def copy_XML_English_Translations(self, current_XML_path, new_XML_path):
         
         tree = etree.parse(current_XML_path)

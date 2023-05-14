@@ -49,7 +49,8 @@ class ToolsTOR(ToolsTales):
     elf_new           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
     story_XML_new    = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
     story_XML_patch  = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
-    skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here              
+    skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here
+    skit_XML_new = '../Tales-Of-Rebirth/Data/TOR/Skits/'
     dat_archive_extract   = '../Data/Tales-Of-Rebirth/DAT/' 
     
     def __init__(self, tbl):
@@ -160,11 +161,7 @@ class ToolsTOR(ToolsTales):
                         xml_jap_cleaned = self.clean_text(xml_jap)
 
                         if key == xml_jap_cleaned:
-                            split_text = re.split(r"(<voice:\w+>)", xml_eng)
                             item = self.add_line_break(item)
-
-                            if len(split_text) >= 2:
-                                item = split_text[1] + item
 
                             if xml_eng != item:
                                 entry_node.find("EnglishText").text = item
@@ -278,7 +275,7 @@ class ToolsTOR(ToolsTales):
 
         root = etree.Element("SceneText")
         speakers_node = etree.SubElement(root, 'Speakers')
-        etree.SubElement(speakers_node, 'Section').text = "Speakers"
+        etree.SubElement(speakers_node, 'Section').text = "Speaker"
         strings_node = etree.SubElement(root, 'Strings')
         etree.SubElement(strings_node, 'Section').text = section
         
@@ -606,15 +603,16 @@ class ToolsTOR(ToolsTales):
         
         tree = etree.parse(file)
         root = tree.getroot()
-        
+
         #Go at the start of the dialog
         #Loop on every Entry and reinsert
         theirsce.seek(strings_offset+1)
-        for entry_node in root.iter("Entry"):
-            
+        nodes = [ele for ele in root.iter('Entry') if ele.find('Id').text != "-1"]
+        nodes = [ele for ele in nodes if ele.find('PointerOffset').text != '-1']
+        for entry_node in nodes:
+
             #Add the PointerOffset and TextOffset
             new_text_offsets[entry_node.find("PointerOffset").text] = theirsce.tell()
-            
             #Use the node to get the new bytes
             bytes_entry = self.get_Node_Bytes(entry_node)
 
@@ -684,7 +682,7 @@ class ToolsTOR(ToolsTales):
                         #    f.write(data_uncompressed)
                             
                         #Update THEIRSCE uncompressed file
-                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpk_file_name, self.story_XML_patch)
+                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpk_file_name, self.story_XML_new)
                         
                             
                         theirsce.seek(0)
@@ -731,7 +729,7 @@ class ToolsTOR(ToolsTales):
         pak2_obj = pak2lib.get_data(pak2_data)
         
         #Generate the new Theirsce based on the XML and replace the original one
-        theirsce_io = self.get_New_Theirsce(io.BytesIO(pak2_obj.chunks.theirsce), os.path.basename(pak2_file_path).split(".")[0], self.skit_XML_patch)
+        theirsce_io = self.get_New_Theirsce(io.BytesIO(pak2_obj.chunks.theirsce), os.path.basename(pak2_file_path).split(".")[0], self.skit_XML_new)
         theirsce_io.seek(0)
         new_data = theirsce_io.read()
         pak2_obj.chunks.theirsce = new_data
@@ -759,24 +757,21 @@ class ToolsTOR(ToolsTales):
                 data = pak.read()
             theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
 
+        rsce = Theirsce(path=theirsce)
+        # pointers_offset, texts_offset = self.extract_Story_Pointers(rsce)
+        names, lines = self.extract_lines_with_speaker(rsce)
+
+        for i, (k, v) in enumerate(names.items(), -1):
+            names[k] = NameEntry(i, v)
+
         with open('../{}.theirsce'.format(file_name), 'wb') as f:
             f.write(theirsce.getvalue())
 
-        header = theirsce.read(8)
-        pointer_block = struct.unpack("<L", theirsce.read(4))[0]
-        strings_offset = struct.unpack("<L", theirsce.read(4))[0]
-
-        # File size
-        fsize = theirsce.getbuffer().nbytes
-        theirsce.seek(pointer_block, 0)  # Go the the start of the pointer section
-        pointers_offset, texts_offset = self.extract_Story_Pointers(theirsce, strings_offset, fsize,
-                                                                    self.story_byte_code)
-
         text_list = []
         if text:
-            text_list = [self.bytes_to_text(theirsce, ele)[0] for ele in texts_offset]
+            text_list = [line.text for line in lines]
 
-        df = pd.DataFrame({"Pointers_Offset": pointers_offset, "Text_Offset":texts_offset, "Jap_Text": text_list})
+        df = pd.DataFrame({"Jap_Text": text_list})
         df['Text_Offset'] = df['Text_Offset'].apply(lambda x: hex(x)[2:])
         df['Pointers_Offset'] = df['Pointers_Offset'].apply(lambda x: hex(x)[2:])
         df.to_excel('../{}.xlsx'.format(self.get_file_name(file_name)), index=False)
@@ -875,15 +870,17 @@ class ToolsTOR(ToolsTales):
                 file_name = self.get_file_name(file)
                 
                 if ".scpk" in file:
-                    print(file)
-                    data = self.pack_Story_File(file_name+".scpk")
-                     
-                if ".pak2" in file:
-                    print(file)
-                    data = self.pack_Skit_File(file_name+".pak2")
+                    path = os.path.join(self.story_XML_patch, 'New', '{}.scpk'.format(file_name))
+                    print(path)
+
+                elif ".pak2" in file:
+                    path = os.path.join(self.skit_XML_patch, 'New', '{}.pak2'.format(file_name))
+                    print(path)
                 else:
-                    with open(file, "rb") as f2:
-                        data = f2.read()  
+                    path = file
+
+                with open(path, "rb") as f2:
+                    data = f2.read()
                 #data = f2.read()  
                 
                 comp_type = re.search(self.VALID_FILE_NAME, file).group(2)
