@@ -186,7 +186,6 @@ class ToolsTOR(ToolsTales):
     def extract_All_Story(self,replace=False):
 
         print("Extracting Story files")
-        print(replace)
         i = 1
         self.mkdir( self.story_XML_patch + "XML")
         listFiles = [self.dat_archive_extract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.dat_archive_extract, "SCPK"))]
@@ -591,7 +590,7 @@ class ToolsTOR(ToolsTales):
         
         voiceId_node = entry_node.find("VoiceId")
         if (voiceId_node != None):
-            final_text = voiceId_node.text + final_text 
+            final_text = '<voice:{}>'.format(voiceId_node.text) + final_text
             
         #Convert the text values to bytes using TBL, TAGS, COLORS, ...
         bytes_entry = self.text_to_bytes(final_text)
