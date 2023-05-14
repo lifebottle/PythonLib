@@ -49,7 +49,8 @@ class ToolsTOR(ToolsTales):
     elf_new           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
     story_XML_new    = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
     story_XML_patch  = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
-    skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here              
+    skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here
+    skit_XML_new = '../Tales-Of-Rebirth/Data/TOR/Skits/'
     dat_archive_extract   = '../Data/Tales-Of-Rebirth/DAT/' 
     
     def __init__(self, tbl):
@@ -75,7 +76,7 @@ class ToolsTOR(ToolsTales):
         #byteCode 
         self.story_byte_code = b"\xF8"
         self.string_opcode = InstructionType.STRING
-        self.list_status_insertion = ['Done', 'Proofreading']
+        self.list_status_insertion = ['Done', 'Proofreading', 'Editing']
     
         self.mkdir('../Data/{}/DAT'.format(self.repo_name))
 
@@ -185,12 +186,15 @@ class ToolsTOR(ToolsTales):
     def extract_All_Story(self,replace=False):
 
         print("Extracting Story files")
-        print(replace)
         i = 1
         self.mkdir( self.story_XML_patch + "XML")
         listFiles = [self.dat_archive_extract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.dat_archive_extract, "SCPK"))]
         for scpk_file in listFiles:
-            
+
+            # Copy the original SCPK file to the folder used for the new version
+            file_name = self.get_file_name(scpk_file)
+            shutil.copy(self.dat_archive_extract + "SCPK/" + file_name + '.scpk', self.story_XML_patch + "New/" + file_name + '.scpk')
+
             theirsce = self.get_theirsce_from_scpk(scpk_file)
             self.extract_TheirSce_XML(theirsce, scpk_file, self.story_XML_patch, "Story", replace)
             self.id = 1
@@ -206,6 +210,12 @@ class ToolsTOR(ToolsTales):
         for file_path in list_pak2_files:
            
             if os.path.isfile(file_path) and file_path.endswith(".pak2"):
+
+                # Copy the original PAK2 file to the folder used for the new version
+                file_name = self.get_file_name(file_path)
+                shutil.copy(self.dat_archive_extract + "PAK2/" + file_name + '.pak2',
+                            self.skit_XML_patch + "New/" + file_name + '.pak2')
+
                 with open(file_path, "rb") as pak:
                     data = pak.read()
                 theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
@@ -580,7 +590,7 @@ class ToolsTOR(ToolsTales):
         
         voiceId_node = entry_node.find("VoiceId")
         if (voiceId_node != None):
-            final_text = voiceId_node.text + final_text 
+            final_text = '<voice:{}>'.format(voiceId_node.text) + final_text
             
         #Convert the text values to bytes using TBL, TAGS, COLORS, ...
         bytes_entry = self.text_to_bytes(final_text)
@@ -602,15 +612,17 @@ class ToolsTOR(ToolsTales):
         
         tree = etree.parse(file)
         root = tree.getroot()
-        
+
         #Go at the start of the dialog
         #Loop on every Entry and reinsert
         theirsce.seek(strings_offset+1)
-        for entry_node in root.iter("Entry"):
-            
+        nodes = [ele for ele in root.iter('Entry') if ele.find('Id').text != "-1"]
+        nodes = [ele for ele in nodes if ele.find('PointerOffset').text != "-1"]
+
+        for entry_node in nodes:
+
             #Add the PointerOffset and TextOffset
             new_text_offsets[entry_node.find("PointerOffset").text] = theirsce.tell()
-            
             #Use the node to get the new bytes
             bytes_entry = self.get_Node_Bytes(entry_node)
 
@@ -680,7 +692,7 @@ class ToolsTOR(ToolsTales):
                         #    f.write(data_uncompressed)
                             
                         #Update THEIRSCE uncompressed file
-                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpk_file_name, self.story_XML_patch)
+                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpk_file_name, self.story_XML_new)
                         
                             
                         theirsce.seek(0)
@@ -705,19 +717,22 @@ class ToolsTOR(ToolsTales):
         o.write(b"\x53\x43\x50\x4B\x01\x00\x0F\x00")
         o.write(struct.pack("<L", len(sizes)))
         o.write(b"\x00" * 4)
-    
+
         for i in range(len(sizes)):
             o.write(struct.pack("<L", sizes[i]))
         
         o.write(dataFinal)
         
-        #with open("10247.scpk", "wb") as f:
-        #    f.write(o.getvalue())
+        with open(self.story_XML_patch + "New/" + scpk_file_name, "wb") as f:
+            f.write(o.getvalue())
         
         return o.getvalue()        
     
     def pack_Skit_File(self, pak2_file):
-        
+
+        # Copy the original PAK2 file to the folder used for the new version
+        shutil.copy(self.dat_archive_extract + "PAK2/" + pak2_file, self.skit_XML_patch + "New/" + pak2_file)
+
         pak2_file_path = os.path.join(self.dat_archive_extract, "PAK2", pak2_file)
         with open(pak2_file_path,"rb") as f_pak2:
             pak2_data = f_pak2.read()
@@ -727,14 +742,14 @@ class ToolsTOR(ToolsTales):
         pak2_obj = pak2lib.get_data(pak2_data)
         
         #Generate the new Theirsce based on the XML and replace the original one
-        theirsce_io = self.get_New_Theirsce(io.BytesIO(pak2_obj.chunks.theirsce), os.path.basename(pak2_file_path).split(".")[0], self.skit_XML_patch)
+        theirsce_io = self.get_New_Theirsce(io.BytesIO(pak2_obj.chunks.theirsce), os.path.basename(pak2_file_path).split(".")[0], self.skit_XML_new)
         theirsce_io.seek(0)
         new_data = theirsce_io.read()
         pak2_obj.chunks.theirsce = new_data
         
         self.mkdir(self.skit_XML_patch+ "New")
-        #with open(self.skit_XML_patch+ "New/" + pak2_file, "wb+") as f2:
-        #    f2.write(pak2lib.create_pak2(pak2_obj))
+        with open(self.skit_XML_patch+ "New/" + pak2_file, "wb") as f2:
+            f2.write(pak2lib.create_pak2(pak2_obj))
             
         return pak2lib.create_pak2(pak2_obj)
 
@@ -832,8 +847,9 @@ class ToolsTOR(ToolsTales):
         sectors = [0]
         remainders = []
         buffer = 0
-    
-    
+
+        # Copy the original SLPS to Disc/New
+        shutil.copy(self.elf_original, self.elf_new)
    
         output_dat_path = self.dat_bin_new
         with open(output_dat_path, "wb") as output_dat:
@@ -868,15 +884,17 @@ class ToolsTOR(ToolsTales):
                 file_name = self.get_file_name(file)
                 
                 if ".scpk" in file:
-                    print(file)
-                    data = self.pack_Story_File(file_name+".scpk")
-                     
-                if ".pak2" in file:
-                    print(file)
-                    data = self.pack_Skit_File(file_name+".pak2")
+                    path = os.path.join(self.story_XML_patch, 'New', '{}.scpk'.format(file_name))
+                    print(path)
+
+                elif ".pak2" in file:
+                    path = os.path.join(self.skit_XML_patch, 'New', '{}.pak2'.format(file_name))
+                    print(path)
                 else:
-                    with open(file, "rb") as f2:
-                        data = f2.read()  
+                    path = file
+
+                with open(path, "rb") as f2:
+                    data = f2.read()
                 #data = f2.read()  
                 
                 comp_type = re.search(self.VALID_FILE_NAME, file).group(2)

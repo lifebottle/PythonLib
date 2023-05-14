@@ -519,15 +519,18 @@ class ToolsTales:
                             if ":" in c:
                                 split = c.split(":")
                                 tag = split[0][1:]
+                                print(split)
                                 if tag in self.itags.keys():
                                     bytesFinal += struct.pack("B", self.itags[tag])
-                                    
-                                    if tag == "color":
 
-                                        bytesFinal += struct.pack(int(split[1][0:-1]).to_bytes(2, 'little'))
+                                    if tag in ['Unk13', 'Unk17', 'Unk18', 'Unk19', 'Unk1A']:
+                                        right_part = split[1][0:-1]
+                                        nb = len(right_part) / 2.0
+                                        bytesFinal += int(right_part, 16).to_bytes(int(nb), 'big')
+                                    else:
+                                        bytesFinal += int(split[1][0:-1], 16).to_bytes(4, 'little')
 
                                 else:
-                                    print(split)
                                     bytesFinal += struct.pack("B", int(split[0][1:], 16))
                                     bytesFinal += struct.pack("<I", int(split[1][:8], 16))
                             if c in self.inames:
@@ -536,6 +539,8 @@ class ToolsTales:
                             if c in self.icolors:
                                 bytesFinal += struct.pack("B", 0x5)
                                 bytesFinal += struct.pack("<I", self.icolors[c])
+
+
                         else:
                             for c2 in c:
                                 if c2 in self.itable.keys():
@@ -763,7 +768,12 @@ class ToolsTales:
             final_text = english_text or japanese_text or ''
         else:
             final_text = japanese_text or ''
-        #print(final_text)
+
+        voiceId_node = entry_node.find("VoiceId")
+        if (voiceId_node != None):
+            final_text = '<voice:{}>'.format(voiceId_node.text) + final_text
+
+            #print(final_text)
         #Convert the text values to bytes using TBL, TAGS, COLORS, ...
         bytes_entry = self.text_to_bytes(final_text)
         
