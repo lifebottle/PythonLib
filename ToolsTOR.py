@@ -76,7 +76,7 @@ class ToolsTOR(ToolsTales):
         #byteCode 
         self.story_byte_code = b"\xF8"
         self.string_opcode = InstructionType.STRING
-        self.list_status_insertion = ['Done', 'Proofreading']
+        self.list_status_insertion = ['Done', 'Proofreading', 'Editing']
     
         self.mkdir('../Data/{}/DAT'.format(self.repo_name))
 
@@ -847,8 +847,9 @@ class ToolsTOR(ToolsTales):
         sectors = [0]
         remainders = []
         buffer = 0
-    
-    
+
+        # Copy the original SLPS to Disc/New
+        shutil.copy(self.elf_original, self.elf_new)
    
         output_dat_path = self.dat_bin_new
         with open(output_dat_path, "wb") as output_dat:
