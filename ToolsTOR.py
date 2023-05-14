@@ -191,7 +191,11 @@ class ToolsTOR(ToolsTales):
         self.mkdir( self.story_XML_patch + "XML")
         listFiles = [self.dat_archive_extract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.dat_archive_extract, "SCPK"))]
         for scpk_file in listFiles:
-            
+
+            # Copy the original SCPK file to the folder used for the new version
+            file_name = self.get_file_name(scpk_file)
+            shutil.copy(self.dat_archive_extract + "SCPK/" + file_name + '.scpk', self.story_XML_patch + "New/" + file_name + '.scpk')
+
             theirsce = self.get_theirsce_from_scpk(scpk_file)
             self.extract_TheirSce_XML(theirsce, scpk_file, self.story_XML_patch, "Story", replace)
             self.id = 1
@@ -207,6 +211,12 @@ class ToolsTOR(ToolsTales):
         for file_path in list_pak2_files:
            
             if os.path.isfile(file_path) and file_path.endswith(".pak2"):
+
+                # Copy the original PAK2 file to the folder used for the new version
+                file_name = self.get_file_name(file_path)
+                shutil.copy(self.dat_archive_extract + "PAK2/" + file_name + '.pak2',
+                            self.skit_XML_patch + "New/" + file_name + '.pak2')
+
                 with open(file_path, "rb") as pak:
                     data = pak.read()
                 theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
@@ -719,7 +729,10 @@ class ToolsTOR(ToolsTales):
         return o.getvalue()        
     
     def pack_Skit_File(self, pak2_file):
-        
+
+        # Copy the original PAK2 file to the folder used for the new version
+        shutil.copy(self.dat_archive_extract + "PAK2/" + pak2_file, self.skit_XML_patch + "New/" + pak2_file)
+
         pak2_file_path = os.path.join(self.dat_archive_extract, "PAK2", pak2_file)
         with open(pak2_file_path,"rb") as f_pak2:
             pak2_data = f_pak2.read()
