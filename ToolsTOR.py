@@ -618,14 +618,12 @@ class ToolsTOR(ToolsTales):
         #Loop on every Entry and reinsert
         theirsce.seek(strings_offset+1)
         nodes = [ele for ele in root.iter('Entry') if ele.find('Id').text != "-1"]
-        nodes = [ele for ele in nodes if ele.find('PointerOffset').text != '-1']
         for entry_node in nodes:
 
             #Add the PointerOffset and TextOffset
             new_text_offsets[entry_node.find("PointerOffset").text] = theirsce.tell()
             #Use the node to get the new bytes
             bytes_entry = self.get_Node_Bytes(entry_node)
-
             #Write to the file
             theirsce.write(bytes_entry + b'\x00')
             
