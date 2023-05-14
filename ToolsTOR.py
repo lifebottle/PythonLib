@@ -618,12 +618,15 @@ class ToolsTOR(ToolsTales):
         #Loop on every Entry and reinsert
         theirsce.seek(strings_offset+1)
         nodes = [ele for ele in root.iter('Entry') if ele.find('Id').text != "-1"]
+        nodes = [ele for ele in nodes if ele.find('PointerOffset').text != "-1"]
+
         for entry_node in nodes:
 
             #Add the PointerOffset and TextOffset
             new_text_offsets[entry_node.find("PointerOffset").text] = theirsce.tell()
             #Use the node to get the new bytes
             bytes_entry = self.get_Node_Bytes(entry_node)
+
             #Write to the file
             theirsce.write(bytes_entry + b'\x00')
             
@@ -715,14 +718,14 @@ class ToolsTOR(ToolsTales):
         o.write(b"\x53\x43\x50\x4B\x01\x00\x0F\x00")
         o.write(struct.pack("<L", len(sizes)))
         o.write(b"\x00" * 4)
-    
+
         for i in range(len(sizes)):
             o.write(struct.pack("<L", sizes[i]))
         
         o.write(dataFinal)
         
-        #with open("10247.scpk", "wb") as f:
-        #    f.write(o.getvalue())
+        with open(self.story_XML_patch + "New/" + scpk_file_name, "wb") as f:
+            f.write(o.getvalue())
         
         return o.getvalue()        
     
@@ -746,8 +749,8 @@ class ToolsTOR(ToolsTales):
         pak2_obj.chunks.theirsce = new_data
         
         self.mkdir(self.skit_XML_patch+ "New")
-        #with open(self.skit_XML_patch+ "New/" + pak2_file, "wb+") as f2:
-        #    f2.write(pak2lib.create_pak2(pak2_obj))
+        with open(self.skit_XML_patch+ "New/" + pak2_file, "wb") as f2:
+            f2.write(pak2lib.create_pak2(pak2_obj))
             
         return pak2lib.create_pak2(pak2_obj)
 
