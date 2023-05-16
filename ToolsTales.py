@@ -31,7 +31,8 @@ class ToolsTales:
     VALID_VOICEID = ['VSM_', 'voice_', 'VCT_']
     
     def __init__(self, gameName, tblFile, repo_name):
-        
+        self.jsonTblTags = {}
+        self.ijsonTblTags = {}
         self.gameName = gameName
         self.repo_name = repo_name
         self.basePath = os.getcwd()
@@ -493,67 +494,55 @@ class ToolsTales:
     
     #Convert text to Bytes object to reinsert text into THEIRSCE and other files
     def text_to_bytes(self, text):
+        multi_regex = (self.HEX_TAG + "|" + self.COMMON_TAG + r"|(\n)")
+        tokens = [sh for sh in re.split(multi_regex, text) if sh]
         
-        
-       
-        unames = []
-        
-        splitLineBreak = text.split('\x0A')
-        nb = len(splitLineBreak)
-        
-        bytesFinal = b''
-        i=0
-        for line in splitLineBreak:
-            string_hex = re.split(self.HEX_TAG, line)
-            string_hex = [sh for sh in string_hex if sh]
-            #print(string_hex)
-            for s in string_hex:
-                if re.match(self.HEX_TAG, s):
-                    bytesFinal += struct.pack("B", int(s[1:3], 16))
+        output = b''
+        for t in tokens:
+            # Hex literals
+            if re.match(self.HEX_TAG, t):
+                output += struct.pack("B", int(t[1:3], 16))
+            
+            # Tags
+            elif re.match(self.COMMON_TAG, t):
+                tag, param, *_ = t[3][1:-1].split(":") + [None]
+
+                if param is not None:
+                    output += struct.pack("B", self.ijsonTblTags["TAGS"].get(tag, int(tag, 16)))
+                    # FIXME
+                    if tag.lower() in ("unk13", "unk17", "unk1a"):
+                        splat = re.findall("..", param)
+                        i = 0
+                        while i < len(splat):
+                            if splat[i] == "38" and i + 2 < len(splat):
+                                output += bytes.fromhex(splat[i])
+                                output += bytes.fromhex(splat[i + 2])
+                                output += bytes.fromhex(splat[i + 1])
+                                i += 3
+                            else:
+                                output += bytes.fromhex(splat[i])
+                                i += 1
+
+                        output += bytes.fromhex("80")
+                    elif "unk" in tag.lower:
+                        output += bytes.fromhex(param + "80")
+                    else:
+                        output += struct.pack("<I", param)
                 else:
-                    s_com = re.split(self.COMMON_TAG, s)
-                    s_com = [sc for sc in s_com if sc]
-                    for c in s_com:
-                      
-                        if re.match(self.COMMON_TAG, c):
-                            if ":" in c:
-                                split = c.split(":")
-                                tag = split[0][1:]
-                                print(split)
-                                if tag in self.itags.keys():
-                                    bytesFinal += struct.pack("B", self.itags[tag])
+                    for k, v in self.ijsonTblTags:
+                        if tag in v:
+                            output += struct.pack("B", self.ijsonTblTags["TAGS"][k.lower()])
+                            output += struct.pack("<I", v[tag])
+                            break
 
-                                    if tag in ['Unk13', 'Unk17', 'Unk18', 'Unk19', 'Unk1A']:
-                                        right_part = split[1][0:-1]
-                                        nb = len(right_part) / 2.0
-                                        bytesFinal += int(right_part, 16).to_bytes(int(nb), 'big')
-                                    else:
-                                        bytesFinal += int(split[1][0:-1], 16).to_bytes(4, 'little')
+            # Actual text
+            elif t == "\n":
+                output += b"\x01"
+            else:
+                for c in t:
+                    output += self.ijsonTblTags["TBL"].get(c, c.encode("cp932"))
 
-                                else:
-                                    bytesFinal += struct.pack("B", int(split[0][1:], 16))
-                                    bytesFinal += struct.pack("<I", int(split[1][:8], 16))
-                            if c in self.inames:
-                                bytesFinal += struct.pack("B", 0xB)
-                                bytesFinal += struct.pack("<I", self.inames[c])
-                            if c in self.icolors:
-                                bytesFinal += struct.pack("B", 0x5)
-                                bytesFinal += struct.pack("<I", self.icolors[c])
-
-
-                        else:
-                            for c2 in c:
-                                if c2 in self.itable.keys():
-                                    bytesFinal += self.itable[c2]
-                                else:
-                                   
-                                    bytesFinal += c2.encode("cp932")
-           
-            i=i+1
-            if (nb >=2 and i<nb):
-                bytesFinal += b'\x01'
-        
-        return bytesFinal       
+        return output
         
     def search_all_files(self, japanese_text):
         

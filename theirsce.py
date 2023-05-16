@@ -67,6 +67,48 @@ class Theirsce(FileIO):
             yield opcode
             self.seek(pos)
 
+    def read_tag_bytes(self):
+        data = b""
+
+        while self.read_uint8_at(self.tell() + 1) != 0x80:
+            data += self.read(1)
+            opcode = data[-1]
+            
+            if opcode < 0x80: 
+                if opcode & 8 != 0: 
+                    data += self.read(2)
+                else:
+                    data += self.read(1)
+
+            elif opcode < 0xE0:
+                size_mask = (opcode >> 3) & 3
+
+                if size_mask == 1: data += self.read(1)
+                elif size_mask == 2: data += self.read(2)
+                elif size_mask == 3: data += self.read(4)
+
+            elif opcode < 0xF0:
+                data += self.read(1)
+            
+            elif opcode < 0xF8:
+                if (0xF2 <= opcode < 0xF5) or opcode == 0xF7:
+                    data += self.read(2)
+                elif opcode == 0xF5:
+                    data += self.read(4)
+                elif opcode == 0xF6:
+                    data += self.read(1)
+                    for _ in range(data[-1]):
+                        if ord(data[-1]) & 8 != 0:
+                            data += self.read(2) 
+                        else:
+                            data += self.read(3)
+            
+            elif opcode < 0xFC:
+                data += self.read(2)
+
+        self.read(1)
+        return data
+
     def read_opcode(self):
         pos = self.tell()
         opcode = self.read_uint8()

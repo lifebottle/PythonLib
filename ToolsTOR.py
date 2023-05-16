@@ -59,19 +59,13 @@ class ToolsTOR(ToolsTales):
         super().__init__("TOR", tbl, "Tales-Of-Rebirth")
         
         with open("../{}/Data/{}/Misc/{}".format(self.repo_name, self.gameName, self.tblFile), encoding="utf-8") as f:
-                       
-            jsonRaw = json.load(f)       
-            self.jsonTblTags ={ k1:{ int(k2,16) if (k1 != "TBL") else k2:v2 for k2,v2 in jsonRaw[k1].items()} for k1,v1 in jsonRaw.items()}
-            
-          
-            
-        self.itable = dict([[i, struct.pack(">H", int(j))] for j, i in self.jsonTblTags['TBL'].items()])
-        self.itags = dict([[i, j] for j, i in self.jsonTblTags['TAGS'].items()])
-        if "NAME" in self.jsonTblTags.keys():
-            self.inames = dict([[i, j] for j, i in self.jsonTblTags['NAME'].items()])
+            jsonRaw = json.load(f)
+
+        for k, v in jsonRaw.items():
+            self.jsonTblTags[k] = {int(k2, 16): v2 for k2, v2 in v.items()}
         
-        if "COLOR" in self.jsonTblTags.keys():
-            self.icolors = dict([[i, j] for j, i in self.jsonTblTags['COLOR'].items()])
+        for k, v in self.jsonTblTags.items():
+            self.ijsonTblTags[k] = {v2: k2 for k2, v2 in v.items()}
         self.id = 1
         
         #byteCode 
@@ -479,100 +473,73 @@ class ToolsTOR(ToolsTales):
 
     #Convert a bytes object to text using TAGS and TBL in the json file
     def bytes_to_text(self, theirsce: Theirsce, offset=-1, end_strings = b"\x00"):
-    
-        finalText = ''
-        TAGS = self.jsonTblTags['TAGS']
-        
+        finalText = ""
+        tags = self.jsonTblTags['TAGS']
+        chars = self.jsonTblTags['TBL']
+
         if (offset > 0):
             theirsce.seek(offset, 0)
-        
-        pos = theirsce.tell()
-        b = theirsce.read(1)
-        while b != end_strings:
-            #print(hex(fileRead.tell()))
-            b = ord(b)
-            
-            if (b >= 0x99 and b <= 0x9F) or (b >= 0xE0 and b <= 0xEB):
-                c = (b << 8) + ord(theirsce.read(1))
-               
-                # if str(c) not in json_data.keys():
-                #    json_data[str(c)] = char_index[decode(c)]
-                try:
-                    finalText += (self.jsonTblTags['TBL'][str(c)])
-                except KeyError:
-                    b_u = (c >> 8) & 0xff
-                    b_l = c & 0xff
-                    finalText += ("{%02X}" % b_u)
-                    finalText += ("{%02X}" % b_l)
-            elif b == 0x1:
-                finalText += ("\n")
-            elif b in (0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xB, 0xC, 0xD, 0xE, 0xF):
-                b2 = struct.unpack("<L", theirsce.read(4))[0]
-                if b in TAGS:
-                    tag_name = TAGS.get(b)
-                    
-                    tag_param = None
-                    tag_search = tag_name.upper()
-                    if (tag_search in self.jsonTblTags.keys()):
-                        tags2 = self.jsonTblTags[tag_search]
-                        tag_param = tags2.get(b2, None) 
-                    if tag_param != None:
-                        finalText += tag_param
-                    else:
-                        #Pad the tag to be even number of characters
-                        hex_value = self.hex2(b2)
-                        if len(hex_value) < 4 and tag_name not in ['icon','speed']:
-                            hex_value = "0"*(4-len(hex_value)) + hex_value
-                        
-                        finalText += '<{}:{}>'.format(tag_name, hex_value)
-                        #finalText += ("<%s:%08X>" % (tag_name, b2))
-                else:
-                    finalText += "<%02X:%08X>" % (b, b2)
-            elif chr(b) in self.PRINTABLE_CHARS:
-                finalText += chr(b)
-            elif b >= 0xA1 and b < 0xE0:
-                finalText += struct.pack("B", b).decode("cp932")
-            elif b in (0x13, 0x17, 0x1A):
-                tag_name = f"Unk{b:02X}"
-                hex_value = ""
-                
-                while theirsce.read(1) != b"\x80":
-                    theirsce.seek(theirsce.tell()-1)
-                    mark = theirsce.read(1)
-                    hex_value += mark.hex()
-                    if mark == "\x38":
-                        hex_value += f"{struct.unpack('<H', theirsce.read(2))[0]:04X}"
-         
-                finalText += '<{}:{}>'.format(tag_name, hex_value)
-                
-            elif b in (0x18, 0x19):
-                tag_name = f"Unk{b:02X}"
-                hex_value = ""
- 
-                while theirsce.read(1) != b"\x80":
-                    theirsce.seek(theirsce.tell()-1)
-                    hex_value += theirsce.read(1).hex()
-         
-                finalText += '<{}:{}>'.format(tag_name, hex_value)
 
-            elif b == 0x81:
+        b = theirsce.read(1)
+        while True:
+            b = theirsce.read(1)
+            if b == end_strings: break
+
+            b = ord(b)
+            # Custom Encoded Text
+            if (0x99 <= b <= 0x9F) or (0xE0 <= b <= 0xEB):
+                c = (b << 8) | theirsce.read_uint8()
+                finalText += chars.get(c, "{%02X}{%02X}" % (c >> 8, c & 0xFF))
+                continue
+            
+            if b == 0x1:
+                finalText += ("\n")
+                continue
+            
+            # ASCII text
+            if chr(b) in self.PRINTABLE_CHARS:
+                finalText += chr(b)
+                continue
+            
+            # cp932 text
+            if 0xA0 < b < 0xE0:
+                finalText += struct.pack("B", b).decode("cp932")
+                continue
+
+            if b == 0x81:
                 next_b = theirsce.read(1)
                 if next_b == b"\x40":
                     finalText += "　"
                 else:
                     finalText += "{%02X}" % b
                     finalText += "{%02X}" % ord(next_b)
-            else:
-                finalText += "{%02X}" % b
-            b = theirsce.read(1)
+                continue
+            
+            # Simple Tags
+            if 0x3 <= b <= 0xF:
+                parameter = theirsce.read_uint32()
+
+                tag_name = tags.get(b, f"{b:02X}")
+                tag_param = self.jsonTblTags.get(tag_name.upper(), {}).get(parameter, None)  
+
+                if tag_param is not None:
+                    finalText += tag_param
+                else:
+                    finalText += f"<{tag_name}:{self.hex2(parameter)}>"
+
+                continue
+            
+            # Variable tags (same as above but using rsce bytecode as parameter)
+            if 0x13 <= b <= 0x1A:
+                tag_name = f"unk{b:02X}"
+                parameter = "".join([f"{c:02X}" for c in theirsce.read_tag_bytes()])
+         
+                finalText += f"<{tag_name}:{parameter}>"
+                continue
+            
+            # None of the above
+            finalText += "{%02X}" % b
        
-        end = theirsce.tell()
-        size = theirsce.tell() - pos - 1
-        theirsce.seek(pos)
-        hex_string = theirsce.read(size).hex()
-        hex_values = ' '.join(a+b for a,b in zip(hex_string[::2], hex_string[1::2]))
-        theirsce.seek(end)
-        #return finalText, hex_values
         return finalText
     
     def get_Node_Bytes(self, entry_node):
