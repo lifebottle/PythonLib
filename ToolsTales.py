@@ -540,7 +540,7 @@ class ToolsTales:
                 output += b"\x01"
             else:
                 for c in t:
-                    output += self.ijsonTblTags["TBL"].get(c, c.encode("cp932"))
+                    output += struct.pack(">H", self.ijsonTblTags["TBL"].get(c, int.from_bytes(c.encode("cp932"), "big")))
 
         return output
         
