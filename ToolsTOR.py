@@ -19,6 +19,7 @@ import io
 import pak2 as pak2lib
 from theirsce import Theirsce
 from theirsce_instructions import AluOperation, InstructionType, ReferenceScope, TheirsceBaseInstruction, TheirsceReferenceInstruction, TheirsceStringInstruction
+from tqdm import tqdm
 
 @dataclass
 class LineEntry:
@@ -801,7 +802,7 @@ class ToolsTOR(ToolsTales):
         pointers = self.get_pointers(self.POINTERS_BEGIN)
         total_files = len(pointers)
     
-        for i in range(total_files - 1):
+        for i in tqdm(range(total_files - 1)):
             remainder = pointers[i] & self.LOW_BITS
             start = pointers[i] & self.HIGH_BITS
             end = (pointers[i + 1] & self.HIGH_BITS) - remainder
@@ -837,9 +838,6 @@ class ToolsTOR(ToolsTales):
     
             with open(final_path, "wb") as output:
                 output.write(data)
-            print("Writing file %05d/%05d..." % (i, total_files), end="\r")
-    
-        print("Writing file %05d/%05d..." % (i, total_files))
         f.close()
         
         
