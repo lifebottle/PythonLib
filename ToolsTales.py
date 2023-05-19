@@ -148,21 +148,6 @@ class ToolsTales:
         with open(fileName+".res", "rb") as f:
             data = f.read()
             return data
-        
-    def get_pointers(self, start_offset):
-
-        f = open(self.elf_original , "rb")
-    
-        f.seek(start_offset, 0)
-        pointers = []
-    
-        while f.tell() < self.POINTERS_END:
-            
-            p = struct.unpack("<L", f.read(4))[0]
-            pointers.append(p)
-    
-        f.close()
-        return pointers
     
     def decode(self, data):
         if not data[0]:

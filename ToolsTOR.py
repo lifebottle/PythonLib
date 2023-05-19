@@ -748,6 +748,16 @@ class ToolsTOR(ToolsTales):
         df['Pointers_Offset'] = df['Pointers_Offset'].apply(lambda x: hex(x)[2:])
         df.to_excel('../{}.xlsx'.format(self.get_file_name(file_name)), index=False)
 
+            
+    def get_pointers(self) -> list[int]:
+
+        with open(self.elf_original , "rb") as elf:
+            elf.seek(self.POINTERS_BEGIN, 0)
+            blob = elf.read(self.POINTERS_END-self.POINTERS_BEGIN)
+            
+        return struct.unpack(f"<{len(blob)//4}L", blob)
+
+
     # Extract the file DAT.BIn to the different directorties
     def extract_Main_Archive(self):
         
