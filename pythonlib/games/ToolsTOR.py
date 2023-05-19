@@ -185,8 +185,8 @@ class ToolsTOR(ToolsTales):
         # TODO: use pathlib for everything
         folder_path = Path(self.story_XML_patch) / "XML"
         scpk_path = Path(self.dat_archive_extract) / "SCPK"
-        
-        for file in tqdm(scpk_path.glob("*.scpk")):
+
+        for file in tqdm(list(scpk_path.glob("*.scpk"))):
             theirsce = Theirsce(Scpk(file).rsce)
             xml_text = self.get_xml_from_theirsce(theirsce, "Story")
             self.id = 1
@@ -203,7 +203,7 @@ class ToolsTOR(ToolsTales):
         folder_path = Path(self.skit_XML_patch) / "XML"
         pak2_path = Path(self.dat_archive_extract) / "PAK2"
 
-        for file in tqdm(pak2_path.glob("*.pak2")):
+        for file in tqdm(list(pak2_path.glob("*.pak2"))):
             with open(file, "rb") as pak:
                 theirsce = pak2lib.get_theirsce_from_pak2(pak.read())
             
