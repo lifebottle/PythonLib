@@ -17,7 +17,7 @@ import pygsheets
 from googleapiclient.errors import HttpError
 from tqdm import tqdm
 
-import fps4 as fps4
+import pythonlib.formats.fps4 as fps4
 
 
 class ToolsTales:
@@ -277,7 +277,7 @@ class ToolsTales:
                     
         return pointers_offset, texts_offset
     
-    def get_extension(self, data):
+    def get_extension(self, data) -> str:
         if data[:4] == b"SCPK":
             return "scpk"
     
@@ -338,7 +338,7 @@ class ToolsTales:
         # Didn't match anything
         return "bin"
     
-    def get_pak_type(self,data):
+    def get_pak_type(self,data) -> Union[str, None]:
         is_aligned = False
         
         data_size = len(data)
@@ -683,7 +683,7 @@ class ToolsTales:
 
     def extract_Google_Sheets(self, googlesheet_id, sheet_name):
         
-        creds_path = "..\gsheet.json"
+        creds_path = r"..\gsheet.json"
         
         if os.path.exists(creds_path):      
             
@@ -800,7 +800,7 @@ class ToolsTales:
                             menu_file.seek( int(sections[section_id]['Text_Start']) )
                             pos = menu_file.tell()
                         else:
-                            break;
+                            break
                     
            
                     #Add the PointerOffset and TextOffset
@@ -1062,7 +1062,7 @@ class ToolsTales:
     def extractAllSkits(self):
         print("Extracting Skits")
         
-    def extract_Main_Archive(self):
+    def extract_main_archive(self):
         print("Main Archive")
         
         

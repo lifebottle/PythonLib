@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-import FileIO
-import comptolib
+from ..formats.FileIO import FileIO
+from ..utils import comptolib
 
 MAGIC = b"SCPK"
 

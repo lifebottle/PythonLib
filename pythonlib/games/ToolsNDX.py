@@ -937,7 +937,8 @@ class ToolsNDX(ToolsTales):
             if 'EBOOT' not in ele['File_Extract']:
                 
                 name = os.path.basename(ele['File_Extract']).split(".")[0]
-                self.make_Cab(name+".dat", (name+".cab").upper(), os.path.join(os.path.dirname(ele['File_Extract']), ".."))
+                self.make_Cab(name +".dat", (name+".cab").upper(), os.path.join(os.path.dirname(ele['File_Extract']),
+                                                                                "../.."))
             
         self.pack_Menu_Archives()
         
@@ -955,7 +956,7 @@ class ToolsNDX(ToolsTales):
             
             
     # Extract the file all.dat to the different directorties
-    def extract_Main_Archive(self):
+    def extract_main_archive(self):
         
         #Clean files and folders
         shutil.rmtree("../Data/{}/Menu/New".format(self.repo_name))
