@@ -1,6 +1,6 @@
-from ToolsTales import ToolsTales
+from .ToolsTales import ToolsTales
 import subprocess
-from dicttoxml import dicttoxml
+# from dicttoxml import dicttoxml
 import json
 import struct
 import shutil

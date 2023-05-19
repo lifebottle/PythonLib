@@ -1,15 +1,12 @@
-import ToolsTOR
-import ToolsNDX
-import json
 import argparse
-import textwrap
-import os
 import io
-import re
-import requests
+import os
 import subprocess
-import RepoFunctions
+
 import GoogleAPI
+import RepoFunctions
+import ToolsNDX
+import ToolsTOR
 
 repos_infos ={
     "TOR":
@@ -25,24 +22,24 @@ repos_infos ={
 }
 
 
-
 SCRIPT_VERSION = "0.0.3"
+
+
 def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xdelta"):
-    
+
     print("Create xdelta patch")
     original_path = "../Data/{}/Disc/Original/{}.iso".format(repo_name, repo_name)
     new_path = "../Data/{}/Disc/New/{}.iso".format(repo_name, repo_name)
     subprocess.run(["xdelta", "-f", "-s", original_path, new_path, xdelta_name])
-   
 
-    
+
 def get_directory_path(path):
     return os.path.dirname(os.path.abspath(path))
 
 def check_arguments(parser, args):
     if hasattr(args, "elf_path") and not args.elf_path:
         args.elf_path = get_directory_path(args.input) + "/SLPS_254.50"
-    
+
     if hasattr(args, "elf_out") and not args.elf_out:
         args.elf_out = get_directory_path(args.input) + "/NEW_SLPS_254.50"
 
@@ -52,6 +49,7 @@ def check_arguments(parser, args):
             args.output += "/" + args.input.split("/")[-1]
         else:
             args.output = args.input
+
 
 def get_arguments(argv=None):
     # Init argument parser
@@ -181,6 +179,7 @@ def get_arguments(argv=None):
 
     return args
 
+
 def send_xdelta():
    file_link = GoogleAPI.upload_xdelta(xdelta_name, "Stewie")            #Need to add user for the folder
             
@@ -205,22 +204,26 @@ def hex2bytes(tales_instance, hex_value):
     with open("text_dump.txt",  "w",encoding="utf-8") as f:
         f.write(txt)
 
+
 def getTalesInstance(game_name):
-    
+
     if game_name == "TOR":
         talesInstance = ToolsTOR.ToolsTOR("TBL_All.json")
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
+    else:
+        raise ValueError("Unkown game name")
 
     return talesInstance
-    
+
+
 if __name__ == "__main__":
 
     args = get_arguments()
     game_name = args.game
     tales_instance = getTalesInstance(game_name)
-    org = repos_infos[game_name]['Org']
-    repo_name = repos_infos[game_name]['Repo']
+    org = repos_infos[game_name]["Org"]
+    repo_name = repos_infos[game_name]["Repo"]
 
     if args.action == "insert":
 
@@ -243,7 +246,7 @@ if __name__ == "__main__":
             #generate_xdelta_patch(repo_name, xdelta_name)
 
     if args.action == "extract":
-        
+
         if args.file_type == "Iso":
             tales_instance.extract_Iso(args.iso)
             tales_instance.extract_Main_Archive()
@@ -253,7 +256,7 @@ if __name__ == "__main__":
             
         if args.file_type == "Menu":
             tales_instance.extract_All_Menu()
-            
+
         if args.file_type == "Story":
             tales_instance.extract_All_Story(args.replace)
 
