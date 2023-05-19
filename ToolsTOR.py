@@ -749,64 +749,51 @@ class ToolsTOR(ToolsTales):
         df.to_excel('../{}.xlsx'.format(self.get_file_name(file_name)), index=False)
 
             
-    def get_pointers(self) -> list[int]:
+    def get_datbin_file_data(self) -> dict[int, int]:
 
         with open(self.elf_original , "rb") as elf:
             elf.seek(self.POINTERS_BEGIN, 0)
             blob = elf.read(self.POINTERS_END-self.POINTERS_BEGIN)
             
-        return struct.unpack(f"<{len(blob)//4}L", blob)
-
-
-    # Extract the file DAT.BIn to the different directorties
-    def extract_Main_Archive(self):
+        pointers = struct.unpack(f"<{len(blob)//4}L", blob)
+        file_data: dict[int, int] = {}
+        for c, n in zip(pointers, pointers[1:]):
+            remainder = c & self.LOW_BITS
+            start = c & self.HIGH_BITS
+            end = (n & self.HIGH_BITS) - remainder
+            file_data[c] = end - start
         
-        print("Extracting DAT bin files")
-        self.mkdir("../Data/Tales-Of-Rebirth/DAT")
-               
+        return file_data
+
+    # Extract the file DAT.BIN to the different directorties
+    def extract_main_archive(self) -> None:
         
-        f = open( self.dat_bin_original, "rb")
-    
-        pointers = self.get_pointers(self.POINTERS_BEGIN)
-        total_files = len(pointers)
-    
-        for i in tqdm(range(total_files - 1)):
-            remainder = pointers[i] & self.LOW_BITS
-            start = pointers[i] & self.HIGH_BITS
-            end = (pointers[i + 1] & self.HIGH_BITS) - remainder
-            f.seek(start, 0)
-            size = end - start
-            if size == 0:
+        print("Extracting DAT bin files...")
+        with open( self.dat_bin_original, "rb") as f:
+            for i, (offset, size) in enumerate(tqdm(self.get_datbin_file_data().items(), desc="Extracting files", unit="file")):
+                
                 # Ignore 0 byte files
-                continue
-            data = f.read(size)
-            file_name = "%05d" % i
-            
-            
-            compto_flag = True
-            if self.is_compressed(data) and compto_flag:
-                c_type = struct.unpack("<b", data[:1])[0]
-                data = comptolib.decompress_data(data)
-                extension = self.get_extension(data)
-                final_path = self.dat_archive_extract + "/%s/%s.%d.%s" % (
-                    extension.upper(),
-                    file_name,
-                    c_type,
-                    extension,
-                )
-            else:
-                extension = self.get_extension(data)
-                final_path = self.dat_archive_extract + "/%s/%s.%s" % (
-                    extension.upper(),
-                    file_name,
-                    extension,
-                )
-            folderPath = os.path.join( self.dat_archive_extract, extension.upper())
-            self.mkdir( folderPath )
-    
-            with open(final_path, "wb") as output:
-                output.write(data)
-        f.close()
+                if size == 0:
+                    continue
+
+                f.seek(offset, 0)
+                data = f.read(size)
+                
+                if comptolib.is_compressed(data):
+                    c_type = struct.unpack("<b", data[:1])[0]
+                    data = comptolib.decompress_data(data)
+                    extension = self.get_extension(data)
+                    fname = f"{i:05d}.{c_type}.{extension}"
+                else:
+                    extension = self.get_extension(data)
+                    fname = f"{i:05d}.{extension}"
+                
+                # TODO: use pathlib for everything
+                final_path = Path(self.dat_archive_extract) / extension.upper()
+                final_path.mkdir(parents=True, exist_ok=True)
+        
+                with open(final_path / fname, "wb") as output:
+                    output.write(data)
         
         
     def pack_Main_Archive(self):
