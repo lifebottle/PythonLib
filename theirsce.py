@@ -1,10 +1,8 @@
-from itertools import tee, zip_longest
 from typing import Generator
-from FileIO import FileIO
-from dataclasses import dataclass, field
-from enum import Enum
-from theirsce_instructions import *
-from theirsce_funcs import *
+
+from .FileIO import FileIO
+from .theirsce_funcs import *
+from .theirsce_instructions import *
 
 # I followed other project when making this class
 # not sure how if it's the best approach

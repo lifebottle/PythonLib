@@ -1,25 +1,25 @@
-from dataclasses import dataclass
-from itertools import tee
-from ToolsTales import ToolsTales
-import subprocess
-from dicttoxml import dicttoxml
+import io
 import json
-import struct
-import shutil
 import os
 import re
-import pandas as pd
-import xml.etree.ElementTree as ET
-import lxml.etree as etree
-import comptolib
-from xml.dom import minidom
+import shutil
+import struct
+from dataclasses import dataclass
+from itertools import tee
 from pathlib import Path
-import string
-import io
+
+import lxml.etree as etree
+import pandas as pd
+from tqdm import tqdm
+from scpk import Scpk
+
+import comptolib as comptolib
 import pak2 as pak2lib
 from theirsce import Theirsce
-from theirsce_instructions import AluOperation, InstructionType, ReferenceScope, TheirsceBaseInstruction, TheirsceReferenceInstruction, TheirsceStringInstruction
-from tqdm import tqdm
+from theirsce_instructions import (AluOperation, InstructionType,
+                                                     TheirsceBaseInstruction)
+from .ToolsTales import ToolsTales
+
 
 @dataclass
 class LineEntry:
@@ -44,15 +44,15 @@ class ToolsTOR(ToolsTales):
     
     
     #Path to used
-    dat_bin_original   = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
-    dat_bin_new        = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
-    elf_original      = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
-    elf_new           = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
-    story_XML_new    = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
-    story_XML_patch  = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
-    skit_XML_patch   = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here
-    skit_XML_new = '../Tales-Of-Rebirth/Data/TOR/Skits/'
-    dat_archive_extract   = '../Data/Tales-Of-Rebirth/DAT/' 
+    dat_bin_original    = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
+    dat_bin_new         = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
+    elf_original        = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
+    elf_new             = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
+    story_XML_new       = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
+    story_XML_patch     = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
+    skit_XML_patch      = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here
+    skit_XML_new        = '../Tales-Of-Rebirth/Data/TOR/Skits/'
+    dat_archive_extract = '../Data/Tales-Of-Rebirth/DAT/' 
     
     def __init__(self, tbl):
         
@@ -67,8 +67,7 @@ class ToolsTOR(ToolsTales):
         for k, v in self.jsonTblTags.items():
             self.ijsonTblTags[k] = {v2: k2 for k2, v2 in v.items()}
         self.id = 1
-        
-        #byteCode 
+        # byteCode
         self.story_byte_code = b"\xF8"
         self.string_opcode = InstructionType.STRING
         self.list_status_insertion = ['Done', 'Proofreading', 'Editing']
@@ -81,8 +80,8 @@ class ToolsTOR(ToolsTales):
         return new.join(li)
 
     def add_line_break(self, text):
-        temp = "";
-        currentLineSize = 0;
+        temp = ""
+        currentLineSize = 0
 
         text_size = len(text)
         max_size = 32
@@ -619,8 +618,6 @@ class ToolsTOR(ToolsTales):
         
         #Open the original SCPK
         with open( self.dat_archive_extract + "SCPK/" + scpk_file_name, 'r+b') as scpk:
-              
-            
             #Get nb_files and files_size
             scpk.read(4)
             scpk.read(4)
@@ -641,10 +638,6 @@ class ToolsTOR(ToolsTales):
             for pointer_offset, fsize in file_size_dict.items():
                 
                 data_compressed = scpk.read(fsize)
-       
-                    
-                
-                
                 if self.is_compressed(data_compressed):
                     c_type = struct.unpack("<b", data_compressed[:1])[0]
                     #print("File {}   size: {}    ctype: {}".format(i, fsize,c_type))
@@ -669,8 +662,6 @@ class ToolsTOR(ToolsTales):
                         
                     else:
                         data_compressed = comptolib.compress_data(data_uncompressed, version=c_type)
-
-                    
                             
                 #Updating the header of the SCPK file to adjust the size
                 new_size = len(data_compressed)  

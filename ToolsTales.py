@@ -1,24 +1,24 @@
-import subprocess
-from dicttoxml import dicttoxml
 import json
-import struct
-import shutil
 import os
 import re
-import fps4
-import pandas as pd
-import xml.etree.ElementTree as ET
-import lxml.etree as etree
-from xml.dom import minidom
-import re
-import collections
-import comptolib
-import lxml.etree as ET
+import shutil
 import string
-import pygsheets
+import struct
+import subprocess
+from typing import Union
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import lxml.etree as etree
+import lxml.etree as ET
+import pandas as pd
 import pycdlib
-import collections
+import pygsheets
 from googleapiclient.errors import HttpError
+from tqdm import tqdm
+
+import fps4 as fps4
+
 
 class ToolsTales:
     
@@ -1167,14 +1167,10 @@ class ToolsTales:
                     iso.get_file_from_iso(os.path.join(extract_to, relname), **{pathname: ident_to_here})
                 
         iso.close()
-        
+
         if self.repo_name == "Narikiri-Dungeon-X":
-            
             for element in os.listdir(extract_to):
-                
                 if os.path.isdir(os.path.join(extract_to, element)):
                     os.rename(os.path.join(extract_to, element), os.path.join(extract_to, "PSP_GAME"))
                 else:
                     os.rename(os.path.join(extract_to, element), os.path.join(extract_to, "UMD_DATA.BIN"))
-
-        
