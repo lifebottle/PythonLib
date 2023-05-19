@@ -2,11 +2,11 @@ import argparse
 import io
 import os
 import subprocess
+from pathlib import Path
 
 import GoogleAPI
 import RepoFunctions
-import ToolsNDX
-import ToolsTOR
+from pythonlib.games import ToolsNDX, ToolsTOR
 
 repos_infos ={
     "TOR":
@@ -35,6 +35,7 @@ def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xde
 
 def get_directory_path(path):
     return os.path.dirname(os.path.abspath(path))
+
 
 def check_arguments(parser, args):
     if hasattr(args, "elf_path") and not args.elf_path:
@@ -228,7 +229,7 @@ if __name__ == "__main__":
     if args.action == "insert":
 
         if args.file_type == "Main":
-            tales_instance.pack_Main_Archive()
+            tales_instance.pack_main_archive()
 
         elif args.file_type == "Story":
             tales_instance.pack_All_Story()
@@ -248,20 +249,20 @@ if __name__ == "__main__":
     if args.action == "extract":
 
         if args.file_type == "Iso":
-            tales_instance.extract_Iso(args.iso)
-            tales_instance.extract_Main_Archive()
+            tales_instance.extract_Iso(Path(args.iso))
+            tales_instance.extract_main_archive()
 
         if args.file_type == "Main":
-            tales_instance.extract_Main_Archive()
-            
+            tales_instance.extract_main_archive()
+
         if args.file_type == "Menu":
-            tales_instance.extract_All_Menu()
+            tales_instance.extract_all_Menu()
 
         if args.file_type == "Story":
-            tales_instance.extract_All_Story(args.replace)
+            tales_instance.extract_all_story()
 
         if args.file_type == "Skits":
-            tales_instance.extract_All_Skits(args.replace)
+            tales_instance.extract_all_skits(args.replace)
 
     if args.action == "debug":
 
