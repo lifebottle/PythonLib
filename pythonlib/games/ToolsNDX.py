@@ -648,7 +648,7 @@ class ToolsNDX(ToolsTales):
         self.unpack_Folder( menu_file_path)
         
                 
-    def extract_All_Menu(self):
+    def extract_all_Menu(self):
         
         res = [self.prepare_Menu_File(ele) for ele in list(set([ele['Hashes_Name'] for ele in self.menu_files_json if ele['Hashes_Name'] != '']))]
         
@@ -660,9 +660,9 @@ class ToolsNDX(ToolsTales):
             #if file_definition['Hashes_Name'] != '':
             #    self.prepare_Menu_File(file_definition['Hashes_Name'])
                                    
-            self.extract_Menu_File(file_definition)
+            self.extract_menu_file(file_definition)
             
-    def extract_Menu_File(self, file_definition):
+    def extract_menu_file(self, file_definition):
         
         
         section_list = []
