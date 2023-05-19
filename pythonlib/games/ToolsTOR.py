@@ -709,14 +709,21 @@ class ToolsTOR(ToolsTales):
             remainder = c & self.LOW_BITS
             start = c & self.HIGH_BITS
             end = (n & self.HIGH_BITS) - remainder
-            file_data[c] = end - start
+            file_data[start] = end - start
         
         return file_data
 
     # Extract the file DAT.BIN to the different directorties
     def extract_main_archive(self) -> None:
         
-        print("Extracting DAT bin files...")
+        print("Cleaning extract folder...")
+        for path in Path(self.dat_archive_extract).glob("**/*"):
+            if path.is_file():
+                path.unlink()
+            elif path.is_dir():
+                shutil.rmtree(path)
+
+        print("Extracting DAT.BIN files...")
         with open( self.dat_bin_original, "rb") as f:
             for i, (offset, size) in enumerate(tqdm(self.get_datbin_file_data().items(), desc="Extracting files", unit="file")):
                 
