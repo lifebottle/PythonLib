@@ -995,7 +995,7 @@ class ToolsTales:
         
         
         
-    def extract_Menu_File(self, file_definition):
+    def extract_menu_file(self, file_definition):
         
         
         section_list = []
@@ -1042,7 +1042,7 @@ class ToolsTales:
         
         
         
-    def extract_All_Menu(self):
+    def extract_all_Menu(self):
 
         
         print("Extracting Menu Files")
@@ -1055,7 +1055,7 @@ class ToolsTales:
            
             print("...{}".format(file_definition['File_Extract']))
             
-            self.extract_Menu_File(file_definition)
+            self.extract_menu_file(file_definition)
             
     
         

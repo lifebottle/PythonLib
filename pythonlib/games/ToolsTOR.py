@@ -196,7 +196,7 @@ class ToolsTOR(ToolsTales):
 
             
     # Extract all the skits files
-    def extract_All_Skits(self, replace=False) -> None:
+    def extract_all_skits(self, replace=False) -> None:
         print("Extracting Skit files...")
 
         # TODO: use pathlib for everything
@@ -744,7 +744,7 @@ class ToolsTOR(ToolsTales):
                     output.write(data)
         
         
-    def pack_Main_Archive(self):
+    def pack_main_archive(self):
         sectors = [0]
         remainders = []
         buffer = 0
@@ -836,4 +836,4 @@ class ToolsTOR(ToolsTales):
         
         #Updates SCPK based on XMLs data
         
-        self.pack_Main_Archive()
+        self.pack_main_archive()
