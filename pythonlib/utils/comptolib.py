@@ -1,4 +1,6 @@
-import ctypes, os, struct
+import ctypes
+import struct
+from pathlib import Path
 
 # Error codes
 SUCCESS               =  0
@@ -9,26 +11,34 @@ ERROR_BAD_INPUT       = -4
 ERROR_UNKNOWN_VERSION = -5
 ERROR_FILES_MISMATCH  = -6
 
+
 class ComptoFileInputError(Exception):
     pass
+
 
 class ComptoFileOutputError(Exception):
     pass
 
+
 class ComptoMemoryAllocationError(Exception):
     pass
+
 
 class ComptoBadInputError(Exception):
     pass
 
+
 class ComptoUnknownVersionError(Exception):
     pass
+
 
 class ComptoMismatchedFilesError(Exception):
     pass
 
+
 class ComptoUnknownError(Exception):
     pass
+
 
 def RaiseError(error: int):
     if error == SUCCESS:
@@ -48,15 +58,28 @@ def RaiseError(error: int):
     else:
         raise ComptoUnknownError("Unknown error")
 
-comptolib_path = os.path.dirname(os.path.abspath(__file__)) + "/comptolib.dll"
 
-comptolib = ctypes.cdll.LoadLibrary(comptolib_path)
+comptolib_path = Path(__file__).parent / "comptolib.dll"
+
+comptolib = ctypes.cdll.LoadLibrary(str(comptolib_path))
 compto_decode = comptolib.Decode
-compto_decode.argtypes = ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint)
+compto_decode.argtypes = (
+    ctypes.c_int,
+    ctypes.c_void_p,
+    ctypes.c_int,
+    ctypes.c_void_p,
+    ctypes.POINTER(ctypes.c_uint),
+)
 compto_decode.restype = ctypes.c_int
 
 compto_encode = comptolib.Encode
-compto_encode.argtypes = ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint)
+compto_encode.argtypes = (
+    ctypes.c_int,
+    ctypes.c_void_p,
+    ctypes.c_int,
+    ctypes.c_void_p,
+    ctypes.POINTER(ctypes.c_uint),
+)
 compto_encode.restype = ctypes.c_int
 
 compto_fdecode = comptolib.DecodeFile
@@ -67,39 +90,64 @@ compto_fencode = comptolib.EncodeFile
 compto_fencode.argtypes = ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_int
 compto_fencode.restype = ctypes.c_int
 
-def compress_data(input: bytes, raw: bool=False, version: int=3):
+
+class ComptoFile:
+    def __init__(self, type: int, data: bytes) -> None:
+        self.type = type
+        self.data = data
+
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def __len__(self):
+        return len(self.data)
+
+
+def compress_data(input: bytes, raw: bool = False, version: int = 3) -> bytes:
     input_size = len(input)
     output_size = ((input_size * 9) // 8) + 10
     output = b"\x00" * output_size
     output_size = ctypes.c_uint(output_size)
     error = compto_encode(version, input, input_size, output, ctypes.byref(output_size))
     RaiseError(error)
-    
+
     if not raw:
-        output = struct.pack("<b", version) + struct.pack("<L", output_size.value) + struct.pack("<L", input_size) + output[:output_size.value]
-    
+        output = (
+            struct.pack("<b", version)
+            + struct.pack("<L", output_size.value)
+            + struct.pack("<L", input_size)
+            + output[: output_size.value]
+        )
+
     return output
 
-def decompress_data(input: bytes, raw: bool=False, version: int=3)->bytes:
+
+def decompress_data(input: bytes, raw: bool = False, version: int = 3) -> bytes:
     if raw:
         input_size = len(input)
         output_size = input_size * 10
     else:
-        version ,= struct.unpack("<b", input[:1])
+        version = struct.unpack("<b", input[:1])[0]
         input_size, output_size = struct.unpack("<2L", input[1:9])
-        
+
     output = b"\x00" * output_size
     input = input[9:]
-    
-    error = compto_decode(version, input, input_size, output, ctypes.byref(ctypes.c_uint(output_size)))
+
+    error = compto_decode(
+        version, input, input_size, output, ctypes.byref(ctypes.c_uint(output_size))
+    )
     RaiseError(error)
     return output
 
-def compress_file(input: str, output: str, raw: bool=False, version: int=3):
+
+def compress_file(input: str, output: str, raw: bool = False, version: int = 3) -> None:
     error = compto_fencode(input.encode("utf-8"), output.encode("utf-8"), raw, version)
     RaiseError(error)
 
-def decompress_file(input: str, output: str, raw: bool=False, version: int=3):
+
+def decompress_file(
+    input: str, output: str, raw: bool = False, version: int = 3
+) -> None:
     error = compto_fdecode(input.encode("utf-8"), output.encode("utf-8"), raw, version)
     RaiseError(error)
 

@@ -11,12 +11,12 @@ from pathlib import Path
 import lxml.etree as etree
 import pandas as pd
 from tqdm import tqdm
-from scpk import Scpk
+from pythonlib.formats.scpk import Scpk
 
-import comptolib as comptolib
-import pak2 as pak2lib
-from theirsce import Theirsce
-from theirsce_instructions import (AluOperation, InstructionType,
+import pythonlib.utils.comptolib as comptolib
+import pythonlib.formats.pak2 as pak2lib
+from pythonlib.formats.theirsce import Theirsce
+from pythonlib.formats.theirsce_instructions import (AluOperation, InstructionType,
                                                      TheirsceBaseInstruction)
 from .ToolsTales import ToolsTales
 
@@ -44,6 +44,7 @@ class ToolsTOR(ToolsTales):
     
     
     #Path to used
+    # fmt: off
     dat_bin_original    = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
     dat_bin_new         = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
     elf_original        = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
@@ -53,6 +54,7 @@ class ToolsTOR(ToolsTales):
     skit_XML_patch      = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here
     skit_XML_new        = '../Tales-Of-Rebirth/Data/TOR/Skits/'
     dat_archive_extract = '../Data/Tales-Of-Rebirth/DAT/' 
+    # fmt: on
     
     def __init__(self, tbl):
         
@@ -177,7 +179,6 @@ class ToolsTOR(ToolsTales):
                 print("File {} skipped because file is not found".format(file))
 
     # Extract the story files
-    def extract_All_Story(self,replace=False):
     def extract_all_story(self, replace=False) -> None:
         print("Extracting Story files...")
 
@@ -586,7 +587,7 @@ class ToolsTOR(ToolsTales):
             for pointer_offset, fsize in file_size_dict.items():
                 
                 data_compressed = scpk.read(fsize)
-                if self.is_compressed(data_compressed):
+                if comptolib.is_compressed(data_compressed):
                     c_type = struct.unpack("<b", data_compressed[:1])[0]
                     #print("File {}   size: {}    ctype: {}".format(i, fsize,c_type))
                     data_uncompressed = comptolib.decompress_data(data_compressed)
@@ -645,7 +646,6 @@ class ToolsTOR(ToolsTales):
             pak2_data = f_pak2.read()
         
         #Create the pak2 object
-        pak2_obj = pak2lib.pak2_file()
         pak2_obj = pak2lib.get_data(pak2_data)
         
         #Generate the new Theirsce based on the XML and replace the original one
@@ -658,7 +658,7 @@ class ToolsTOR(ToolsTales):
         with open(self.skit_XML_patch+ "New/" + pak2_file, "wb") as f2:
             f2.write(pak2lib.create_pak2(pak2_obj))
             
-        return pak2lib.create_pak2(pak2_obj)
+        return
 
     def pack_All_Skits(self):
 
@@ -769,7 +769,7 @@ class ToolsTOR(ToolsTales):
             dummies = 0
         
     
-            for file in sorted(file_list, key=self.get_file_name):
+            for file in tqdm(sorted(file_list, key=self.get_file_name)):
              
                 size = 0
                 remainder = 0
@@ -815,12 +815,6 @@ class ToolsTOR(ToolsTales):
                 buffer += size + remainder
                 sectors.append(buffer)
                 previous += 1
-        
-                #print(
-                #    "Writing file %05d/%05d..." % (current - dummies, len(file_list)), end="\r"
-                #)
-        
-            print("Writing file %05d/%05d..." % (current - dummies, len(file_list)))
         
         #Use the new SLPS updated and update the pointers for the SCPK
         with open("../Data/{}/Disc/New/SLPS_254.50".format(self.repo_name), "r+b") as output_elf:
