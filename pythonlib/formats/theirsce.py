@@ -67,9 +67,14 @@ class Theirsce(FileIO):
 
     def read_tag_bytes(self):
         data = b""
+        
+        while True:
+            c = self.read(1)
+            if c == b"\x80":
+                data += c
+                break
 
-        while self.read_uint8_at(self.tell() + 1) != 0x80:
-            data += self.read(1)
+            data += c
             opcode = data[-1]
             
             if opcode < 0x80: 
@@ -77,6 +82,9 @@ class Theirsce(FileIO):
                     data += self.read(2)
                 else:
                     data += self.read(1)
+                    
+            elif opcode < 0xC0:
+                continue
 
             elif opcode < 0xE0:
                 size_mask = (opcode >> 3) & 3
@@ -96,15 +104,19 @@ class Theirsce(FileIO):
                 elif opcode == 0xF6:
                     data += self.read(1)
                     for _ in range(data[-1]):
-                        if ord(data[-1]) & 8 != 0:
+                        cc = self.read_uint8()
+                        data += cc
+                        if cc & 8 != 0:
                             data += self.read(2) 
                         else:
                             data += self.read(3)
             
             elif opcode < 0xFC:
                 data += self.read(2)
+            
+            elif opcode == 0xFE:
+                continue
 
-        self.read(1)
         return data
 
     def read_opcode(self):
