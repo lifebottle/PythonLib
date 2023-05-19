@@ -496,7 +496,7 @@ class ToolsTales:
                                 i += 1
 
                         output += bytes.fromhex("80")
-                    elif "unk" in tag.lower:
+                    elif "unk" in tag.lower():
                         output += bytes.fromhex(param + "80")
                     else:
                         output += struct.pack("<I", param)
