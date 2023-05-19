@@ -178,89 +178,47 @@ class ToolsTOR(ToolsTales):
 
     # Extract the story files
     def extract_All_Story(self,replace=False):
+    def extract_all_story(self, replace=False) -> None:
+        print("Extracting Story files...")
 
-        print("Extracting Story files")
-        i = 1
-        self.mkdir( self.story_XML_patch + "XML")
-        listFiles = [self.dat_archive_extract + 'SCPK/' + ele for ele in os.listdir( os.path.join(self.dat_archive_extract, "SCPK"))]
-        for scpk_file in listFiles:
-
-            # Copy the original SCPK file to the folder used for the new version
-            file_name = self.get_file_name(scpk_file)
-            shutil.copy(self.dat_archive_extract + "SCPK/" + file_name + '.scpk', self.story_XML_patch + "New/" + file_name + '.scpk')
-
-            theirsce = self.get_theirsce_from_scpk(scpk_file)
-            self.extract_TheirSce_XML(theirsce, scpk_file, self.story_XML_patch, "Story", replace)
+        # TODO: use pathlib for everything
+        folder_path = Path(self.story_XML_patch) / "XML"
+        scpk_path = Path(self.dat_archive_extract) / "SCPK"
+        
+        for file in tqdm(scpk_path.glob("*.scpk")):
+            theirsce = Theirsce(Scpk(file).rsce)
+            xml_text = self.get_xml_from_theirsce(theirsce, "Story")
             self.id = 1
-            print("Writing file %05d.." % i, end="\r") # Not healthy
-            i += 1
-        print("Writing file %05d..." % (i-1))
+            
+            with open(folder_path / file.with_suffix(".xml").name, "wb") as xml:
+                xml.write(xml_text)
+
             
     # Extract all the skits files
-    def extract_All_Skits(self, replace=False):
-        i = 1
-        os.makedirs( self.skit_XML_patch + "XML", exist_ok=True)
-        list_pak2_files = [ self.dat_archive_extract + "PAK2/" + ele for ele in os.listdir(self.dat_archive_extract + "PAK2")]
-        for file_path in list_pak2_files:
-           
-            if os.path.isfile(file_path) and file_path.endswith(".pak2"):
+    def extract_All_Skits(self, replace=False) -> None:
+        print("Extracting Skit files...")
 
-                # Copy the original PAK2 file to the folder used for the new version
-                file_name = self.get_file_name(file_path)
-                shutil.copy(self.dat_archive_extract + "PAK2/" + file_name + '.pak2',
-                            self.skit_XML_patch + "New/" + file_name + '.pak2')
+        # TODO: use pathlib for everything
+        folder_path = Path(self.skit_XML_patch) / "XML"
+        pak2_path = Path(self.dat_archive_extract) / "PAK2"
 
-                with open(file_path, "rb") as pak:
-                    data = pak.read()
-                theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
-                self.extract_TheirSce_XML(theirsce, re.sub("\.\d+", "", file_path), self.skit_XML_patch, "Skits", replace)
-                
-                print("Writing file %05d" % i, end="\r")
-                i += 1
-    
-        print("Writing file %05d..." % (i-1))
-        return
-        
-    def get_theirsce_from_scpk(self, scpk_file_name, debug=False)->bytes:
-        
-        with open(scpk_file_name,"rb") as scpk:
-            header = scpk.read(4)
-        
-            if header != b"SCPK":
-                # sys.exit(f"{file} is not a .scpk file!")
-                raise ValueError("File is not a .scpk file!")
-        
-            scpk.read(4)
-            nbFiles = struct.unpack("<L", scpk.read(4))[0]
-            scpk.read(4)
-            filesSize = []
-            for i in range(nbFiles):
-                filesSize.append(struct.unpack("<L", scpk.read(4))[0])
-        
-            for i in range(nbFiles):
-                data = scpk.read(filesSize[i])
-    
-                if self.is_compressed(data) and data[:8] != b"THEIRSCE":
-                    data_decompressed = comptolib.decompress_data(data)
-                    
-                if data_decompressed[:8] == b"THEIRSCE":
-                
-                    return io.BytesIO(data_decompressed)
-    
-            return None
-    
-   
-        
-    
-        
+        for file in tqdm(pak2_path.glob("*.pak2")):
+            with open(file, "rb") as pak:
+                theirsce = pak2lib.get_theirsce_from_pak2(pak.read())
+            
+            xml_text = self.get_xml_from_theirsce(Theirsce(theirsce), "Skits")
+            
+            with open(folder_path / file.with_suffix(".xml").name, "wb") as xml:
+                xml.write(xml_text)
+
+
     # Extract THEIRSCE to XML
-    def extract_TheirSce_XML(self, theirsce, file_name, destination, section, replace):
+    def get_xml_from_theirsce(self, rsce: Theirsce, section: str) -> bytes:
      
         #Create the XML file
         # root = etree.Element('SceneText')
         # etree.SubElement(root, "OriginalName").text = file_name
 
-        rsce = Theirsce(path=theirsce)
         #pointers_offset, texts_offset = self.extract_Story_Pointers(rsce)
         names, lines = self.extract_lines_with_speaker(rsce)
 
@@ -273,8 +231,6 @@ class ToolsTOR(ToolsTales):
         # list_lines = ( ['Story', line.offset, line.text] for line in lines)
         # list_names = ( ['Story', line.offset, line.text] for i, (k, v) in enumerate(found_names.items()))
         #Build the XML Structure with the information  
-        
-        file_path = destination +"XML/"+ self.get_file_name(file_name)
 
         root = etree.Element("SceneText")
         speakers_node = etree.SubElement(root, 'Speakers')
@@ -285,17 +241,9 @@ class ToolsTOR(ToolsTales):
         self.make_speakers_section(speakers_node, names)
         self.make_strings_section(strings_node, lines, names)
         
-        #Write the XML file
-        txt=etree.tostring(root, encoding="UTF-8", pretty_print=True)
-    
-        with open(os.path.join( destination,"XML", self.get_file_name(file_name)+".xml"), "wb") as xmlFile:
-            xmlFile.write(txt)
+        # Return XML string
+        return etree.tostring(root, encoding="UTF-8", pretty_print=True)
 
-        if replace:
-            self.copy_XML_Translations(
-                '../{}/Data/{}/{}/XML/{}.xml'.format(self.repo_name, self.gameName, section, self.get_file_name(file_name)),
-                '../Data/{}/{}/XML/{}.xml'.format(self.repo_name,  section, self.get_file_name(file_name))
-            )
     
     def make_strings_section(self, root, lines: list[LineEntry], names: dict[str, NameEntry]):
         pass
