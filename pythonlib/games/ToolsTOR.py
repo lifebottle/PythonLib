@@ -428,7 +428,6 @@ class ToolsTOR(ToolsTales):
         if (offset > 0):
             theirsce.seek(offset, 0)
 
-        b = theirsce.read(1)
         while True:
             b = theirsce.read(1)
             if b == end_strings: break
