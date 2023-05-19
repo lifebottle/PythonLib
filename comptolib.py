@@ -102,3 +102,19 @@ def compress_file(input: str, output: str, raw: bool=False, version: int=3):
 def decompress_file(input: str, output: str, raw: bool=False, version: int=3):
     error = compto_fdecode(input.encode("utf-8"), output.encode("utf-8"), raw, version)
     RaiseError(error)
+
+
+def is_compressed(data: bytes) -> bool:
+    if len(data) < 0x09:
+        return False
+
+    expected_size = struct.unpack("<L", data[1:5])[0]
+    tail_data = abs(len(data) - (expected_size + 9))
+
+    if expected_size == len(data) - 9:
+        return True
+
+    if tail_data <= 0x10 and data[expected_size + 9 :] == b"#" * tail_data:
+        return True  # SCPK files have these trailing "#" bytes :(
+
+    return False
