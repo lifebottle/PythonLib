@@ -2,12 +2,12 @@ from io import BytesIO
 import struct
 
 class FileIO(object):
-    def __init__(self, path="", mode="r+b", endian="little"):
-        self.f = path
+    def __init__(self, path, mode="r+b", endian="little"):
         self.mode = mode
         self._isBitesIO = False
         if type(path) is bytes:
             self.path = None
+            self.f = path
             self.is_memory_file = True
         elif type(path) is BytesIO:
             self.path = None
