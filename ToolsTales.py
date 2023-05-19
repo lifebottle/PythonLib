@@ -489,7 +489,6 @@ class ToolsTales:
     def hex2(self, n):
         x = '%x' % (n,)
         return ('0' * (len(x) % 2)) + x
-
     
     
     #Convert text to Bytes object to reinsert text into THEIRSCE and other files
@@ -894,7 +893,7 @@ class ToolsTales:
         for index,line in enumerate(lines):
             
             if "#WRITE" in line or  "#W32" in line:
-                pointer_offset = int(re.findall("\$(\w+)", line)[0],16)
+                pointer_offset = int(re.findall(r"\$(\w+)", line)[0],16)
                 
                 start = index+1
                 
@@ -986,7 +985,7 @@ class ToolsTales:
             f.seek(start_offset, 0)
             pointers_offset = []
             pointers_value  = []
-            split = [ele for ele in re.split('(P)|(\d+)', style) if ele != None and ele != '']
+            split = [ele for ele in re.split(r'(P)|(\d+)', style) if ele != None and ele != '']
             ok = True
             
             while ok:
