@@ -516,7 +516,7 @@ class ToolsNDX(ToolsTales):
         speaker_dict = dict()
         
         for speaker_node in root.findall("Speakers/Entry"):          
-            bytes_entry = self.get_Node_Bytes(speaker_node)
+            bytes_entry = self.get_node_bytes(speaker_node)
             speaker_id  = speaker_node.find("Id").text
             speaker_dict[speaker_id] = struct.pack("<I", tss.tell() - base_offset)
             tss.write(bytes_entry)
@@ -563,7 +563,7 @@ class ToolsNDX(ToolsTales):
                     tss.write( self.text_to_bytes(voice_final))
                     
                 
-                    bytes_text = self.get_Node_Bytes(struct_node)
+                    bytes_text = self.get_node_bytes(struct_node)
                     tss.write(bytes_text)
                     tss.write(b'\x0C')
             
@@ -585,7 +585,7 @@ class ToolsNDX(ToolsTales):
         string_dict = dict()
         for string_node in root.findall('Strings[Section="Other Strings"]/Entry'):
             string_dict[ int(string_node.find("PointerOffset").text)] = struct.pack("<I", tss.tell() - base_offset)
-            bytes_text = self.get_Node_Bytes(string_node)
+            bytes_text = self.get_node_bytes(string_node)
             tss.write(bytes_text)
             tss.write(b'\x00')
             

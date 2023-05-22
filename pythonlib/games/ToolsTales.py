@@ -710,7 +710,7 @@ class ToolsTales:
     # Insertion of texts and packing of files
     #
     #############################
-    def get_Node_Bytes(self, entry_node):
+    def get_node_bytes(self, entry_node):
         status = entry_node.find("Status").text
         japanese_text = entry_node.find("JapaneseText").text
         english_text = entry_node.find("EnglishText").text
