@@ -490,7 +490,7 @@ class ToolsTales:
                     else:
                         output += struct.pack("<I", bytes.fromhex(self.str2(param)))
                 else:
-                    for k, v in self.ijsonTblTags:
+                    for k, v in self.ijsonTblTags.items():
                         if tag in v:
                             output += struct.pack("B", self.ijsonTblTags["TAGS"][k.lower()])
                             output += struct.pack("<I", v[tag])
@@ -501,7 +501,10 @@ class ToolsTales:
                 output += b"\x01"
             else:
                 for c in t:
-                    output += struct.pack(">H", self.ijsonTblTags["TBL"].get(c, int.from_bytes(c.encode("cp932"), "big")))
+                    if c in self.PRINTABLE_CHARS:
+                        output += c.encode("cp932")
+                    else:
+                        output += struct.pack(">H", self.ijsonTblTags["TBL"].get(c, int.from_bytes(c.encode("cp932"), "big")))
 
         return output
         
