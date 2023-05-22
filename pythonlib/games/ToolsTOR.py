@@ -187,7 +187,7 @@ class ToolsTOR(ToolsTales):
         scpk_path = Path(self.dat_archive_extract) / "SCPK"
 
         for file in tqdm(list(scpk_path.glob("*.scpk"))):
-            theirsce = Theirsce(Scpk(file).rsce)
+            theirsce = Theirsce(Scpk().from_path(file).rsce)
             xml_text = self.get_xml_from_theirsce(theirsce, "Story")
             self.id = 1
             
@@ -648,13 +648,26 @@ class ToolsTOR(ToolsTales):
             
         return
 
-    def pack_All_Skits(self):
+    def pack_all_skits(self):
+        print("Recreating Skit files...")
 
-        print("Recreating Skits files")
-        listFiles = [ele for ele in os.listdir(self.skit_XML_patch + "New/")]
-        for pak2_file in listFiles:
-            self.pack_Skit_File(pak2_file)
-            print("Writing file {} ...".format(pak2_file))
+        # TODO: use pathlib for everything
+        out_path = Path(self.skit_XML_patch) / "New"
+        xml_path = Path(self.skit_XML_patch) / "XML"
+        pak2_path = Path(self.dat_archive_extract) / "SCPK"
+
+        for file in tqdm(list(pak2_path.glob("*.pak2"))):
+            with open(file, "rb") as f:
+                pak2_data = f.read()
+            pak2_obj = pak2lib.get_data(pak2_data)
+
+            old_rsce = Theirsce(pak2_obj.chunks.theirsce)
+            new_rsce = self.get_new_theirsce(old_rsce, xml_path / file.with_suffix(".xml").name)
+            new_rsce.seek(0)
+            pak2_obj.chunks.theirsce = new_data = new_rsce.read()
+            
+            with open(out_path / file.name, "wb") as f:
+                f.write(pak2lib.create_pak2(pak2_obj))
 
     def debug_Story_Skits(self, section, file_name, text=False):
 
