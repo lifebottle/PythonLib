@@ -232,10 +232,10 @@ if __name__ == "__main__":
             tales_instance.pack_main_archive()
 
         elif args.file_type == "Story":
-            tales_instance.pack_All_Story()
+            tales_instance.pack_all_story()
 
         elif args.file_type == "Skits":
-            tales_instance.pack_All_Skits()
+            tales_instance.pack_all_skits()
 
         elif args.file_type == "Elf":
             
