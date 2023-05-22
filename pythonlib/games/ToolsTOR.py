@@ -489,7 +489,7 @@ class ToolsTOR(ToolsTales):
        
         return finalText
     
-    def get_Node_Bytes(self, entry_node):
+    def get_node_bytes(self, entry_node):
         
         #Grab the fields from the Entry in the XML
         status = entry_node.find("Status").text
