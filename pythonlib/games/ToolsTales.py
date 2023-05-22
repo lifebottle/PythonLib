@@ -463,6 +463,9 @@ class ToolsTales:
         x = '%x' % (n,)
         return ('0' * (len(x) % 2)) + x
     
+    def str2(self, n):
+        return ('0' * (len(n) % 2)) + n
+    
     
     #Convert text to Bytes object to reinsert text into THEIRSCE and other files
     def text_to_bytes(self, text):
@@ -482,24 +485,10 @@ class ToolsTales:
                 if param is not None:
                     output += struct.pack("B", self.ijsonTblTags["TAGS"].get(tag, int(tag, 16)))
                     # FIXME
-                    if tag.lower() in ("unk13", "unk17", "unk1a"):
-                        splat = re.findall("..", param)
-                        i = 0
-                        while i < len(splat):
-                            if splat[i] == "38" and i + 2 < len(splat):
-                                output += bytes.fromhex(splat[i])
-                                output += bytes.fromhex(splat[i + 2])
-                                output += bytes.fromhex(splat[i + 1])
-                                i += 3
-                            else:
-                                output += bytes.fromhex(splat[i])
-                                i += 1
-
-                        output += bytes.fromhex("80")
-                    elif "unk" in tag.lower():
-                        output += bytes.fromhex(param + "80")
+                    if "unk" in tag.lower():
+                        output += bytes.fromhex(self.str2(param))
                     else:
-                        output += struct.pack("<I", param)
+                        output += struct.pack("<I", bytes.fromhex(self.str2(param)))
                 else:
                     for k, v in self.ijsonTblTags:
                         if tag in v:
