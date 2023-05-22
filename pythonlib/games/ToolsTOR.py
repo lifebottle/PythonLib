@@ -512,25 +512,19 @@ class ToolsTOR(ToolsTales):
         
         return bytes_entry   
     
-    def get_New_Theirsce(self, theirsce, scpk_file_name, destination):
+    def get_new_theirsce(self, theirsce: Theirsce, xml: Path) -> Theirsce:
         
         #To store the new text_offset and pointers to update
         new_text_offsets = dict()
-        
-        #Grab strings_offset for pointers
-        theirsce.read(12)
-        strings_offset = struct.unpack("<L", theirsce.read(4))[0]
               
         #Read the XML for the corresponding THEIRSCE
-        file = destination +"XML/"+ self.get_file_name(scpk_file_name)+'.xml'
-        #print("XML : {}".format(self.get_file_name(scpk_file_name)+'.xml'))
         
-        tree = etree.parse(file)
+        tree = etree.parse(xml)
         root = tree.getroot()
 
         #Go at the start of the dialog
         #Loop on every Entry and reinsert
-        theirsce.seek(strings_offset+1)
+        theirsce.seek(theirsce.strings_offset + 1)
         nodes = [ele for ele in root.iter('Entry') if ele.find('Id').text != "-1"]
         nodes = [ele for ele in nodes if ele.find('PointerOffset').text != "-1"]
 
@@ -539,7 +533,7 @@ class ToolsTOR(ToolsTales):
             #Add the PointerOffset and TextOffset
             new_text_offsets[entry_node.find("PointerOffset").text] = theirsce.tell()
             #Use the node to get the new bytes
-            bytes_entry = self.get_Node_Bytes(entry_node)
+            bytes_entry = self.get_node_bytes(entry_node)
 
             #Write to the file
             theirsce.write(bytes_entry + b'\x00')
@@ -548,21 +542,16 @@ class ToolsTOR(ToolsTales):
         for pointer_offset, text_offset in new_text_offsets.items():
             
             pointers_list = pointer_offset.split(",")
-            new_value = text_offset - strings_offset
-
+            new_value = text_offset - theirsce.strings_offset
 
             for pointer in pointers_list:
-                
                 theirsce.seek(int(pointer))
                 theirsce.write( struct.pack("<H", new_value))
             
         return theirsce
             
     #Repack SCPK files for Story
-    def pack_Story_File(self, scpk_file_name):
-        
-        #Copy the original SCPK file to the folder used for the new version
-        shutil.copy( self.dat_archive_extract + "SCPK/" + scpk_file_name, self.story_XML_patch + "New/" + scpk_file_name)
+    def pack_story_file(self, scpk_file_name) -> bytes:
         
         #Open the original SCPK
         with open( self.dat_archive_extract + "SCPK/" + scpk_file_name, 'r+b') as scpk:
@@ -601,7 +590,7 @@ class ToolsTOR(ToolsTales):
                         #    f.write(data_uncompressed)
                             
                         #Update THEIRSCE uncompressed file
-                        theirsce = self.get_New_Theirsce(io.BytesIO(data_uncompressed), scpk_file_name, self.story_XML_new)
+                        theirsce = self.get_new_theirsce(io.BytesIO(data_uncompressed), scpk_file_name, self.story_XML_new)
                         
                             
                         theirsce.seek(0)
@@ -648,7 +637,7 @@ class ToolsTOR(ToolsTales):
         pak2_obj = pak2lib.get_data(pak2_data)
         
         #Generate the new Theirsce based on the XML and replace the original one
-        theirsce_io = self.get_New_Theirsce(io.BytesIO(pak2_obj.chunks.theirsce), os.path.basename(pak2_file_path).split(".")[0], self.skit_XML_new)
+        theirsce_io = self.get_new_theirsce(io.BytesIO(pak2_obj.chunks.theirsce), os.path.basename(pak2_file_path).split(".")[0], self.skit_XML_new)
         theirsce_io.seek(0)
         new_data = theirsce_io.read()
         pak2_obj.chunks.theirsce = new_data
@@ -830,13 +819,24 @@ class ToolsTOR(ToolsTales):
                 output_elf.write(struct.pack("<L", sectors[i] + remainders[i]))
     
         
-    def pack_All_Story(self):
-        
-        print("Recreating Story files")
-        listFiles = [ele for ele in os.listdir( self.story_XML_patch + "New/")]
-        for scpk_file in listFiles:
-            self.pack_Story_File(scpk_file)
-            print("Writing file {} ...".format(scpk_file))
+    def pack_all_story(self):
+        print("Recreating Story files...")
+
+        # TODO: use pathlib for everything
+        out_path = Path(self.story_XML_patch) / "New"
+        xml_path = Path(self.story_XML_patch) / "XML"
+        scpk_path = Path(self.dat_archive_extract) / "SCPK"
+
+        for file in tqdm(list(scpk_path.glob("*.scpk"))):
+            curr_scpk = Scpk().from_path(file)
+            old_rsce = Theirsce(curr_scpk.rsce)
+            new_rsce = self.get_new_theirsce(old_rsce, xml_path / file.with_suffix(".xml").name)
+            new_rsce.seek(0)
+            curr_scpk.rsce = new_rsce.read()
+            
+            with open(out_path / file.name, "wb") as f:
+                f.write(curr_scpk.to_bytes())
+
             
     def insert_All(self):
         
