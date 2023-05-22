@@ -480,15 +480,15 @@ class ToolsTales:
             
             # Tags
             elif re.match(self.COMMON_TAG, t):
-                tag, param, *_ = t[3][1:-1].split(":") + [None]
+                tag, param, *_ = t[1:-1].split(":") + [None]
 
                 if param is not None:
-                    output += struct.pack("B", self.ijsonTblTags["TAGS"].get(tag, int(tag, 16)))
+                    output += struct.pack("B", self.ijsonTblTags["TAGS"].get(tag) or int(tag, 16))
                     # FIXME
                     if "unk" in tag.lower():
                         output += bytes.fromhex(self.str2(param))
                     else:
-                        output += struct.pack("<I", bytes.fromhex(self.str2(param)))
+                        output += struct.pack("<I", int(param, 16))
                 else:
                     for k, v in self.ijsonTblTags.items():
                         if tag in v:
