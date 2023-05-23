@@ -702,19 +702,19 @@ class ToolsTOR(ToolsTales):
         df.to_excel('../{}.xlsx'.format(self.get_file_name(file_name)), index=False)
 
             
-    def get_datbin_file_data(self) -> dict[int, int]:
+    def get_datbin_file_data(self) -> list[tuple[int, int]]:
 
         with open(self.elf_original , "rb") as elf:
             elf.seek(self.POINTERS_BEGIN, 0)
             blob = elf.read(self.POINTERS_END-self.POINTERS_BEGIN)
             
         pointers = struct.unpack(f"<{len(blob)//4}L", blob)
-        file_data: dict[int, int] = {}
+        file_data: list[tuple[int, int]] = []
         for c, n in zip(pointers, pointers[1:]):
             remainder = c & self.LOW_BITS
             start = c & self.HIGH_BITS
             end = (n & self.HIGH_BITS) - remainder
-            file_data[start] = end - start
+            file_data.append((start, end - start)) 
         
         return file_data
 
@@ -730,7 +730,7 @@ class ToolsTOR(ToolsTales):
 
         print("Extracting DAT.BIN files...")
         with open( self.dat_bin_original, "rb") as f:
-            for i, (offset, size) in enumerate(tqdm(self.get_datbin_file_data().items(), desc="Extracting files", unit="file")):
+            for i, (offset, size) in enumerate(tqdm(self.get_datbin_file_data(), desc="Extracting files", unit="file")):
                 
                 # Ignore 0 byte files
                 if size == 0:
