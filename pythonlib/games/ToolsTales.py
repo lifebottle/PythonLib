@@ -484,7 +484,6 @@ class ToolsTales:
 
                 if param is not None:
                     output += struct.pack("B", self.ijsonTblTags["TAGS"].get(tag) or int(tag, 16))
-                    # FIXME
                     if "unk" in tag.lower():
                         output += bytes.fromhex(self.str2(param))
                     else:
@@ -501,7 +500,7 @@ class ToolsTales:
                 output += b"\x01"
             else:
                 for c in t:
-                    if c in self.PRINTABLE_CHARS:
+                    if c in self.PRINTABLE_CHARS or c == "\u3000":
                         output += c.encode("cp932")
                     else:
                         output += struct.pack(">H", self.ijsonTblTags["TBL"].get(c, int.from_bytes(c.encode("cp932"), "big")))
