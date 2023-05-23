@@ -209,7 +209,8 @@ class ToolsTOR(ToolsTales):
             
             xml_text = self.get_xml_from_theirsce(Theirsce(theirsce), "Skits")
             
-            with open(folder_path / file.with_suffix(".xml").name, "wb") as xml:
+            xml_name = file.name.split(".")[0] + ".xml"
+            with open(folder_path / xml_name, "wb") as xml:
                 xml.write(xml_text)
 
 
@@ -654,7 +655,7 @@ class ToolsTOR(ToolsTales):
 
         # TODO: use pathlib for everything
         out_path = Path(self.skit_XML_patch) / "New"
-        xml_path = Path(self.skit_XML_patch) / "XML"
+        xml_path = Path(self.skit_XML_new) / "XML"
         pak2_path = Path(self.dat_archive_extract) / "PAK2"
 
         for file in (pbar:= tqdm(list(pak2_path.glob("*.pak2")))):
@@ -664,9 +665,10 @@ class ToolsTOR(ToolsTales):
             pak2_obj = pak2lib.get_data(pak2_data)
 
             old_rsce = Theirsce(pak2_obj.chunks.theirsce)
-            new_rsce = self.get_new_theirsce(old_rsce, xml_path / file.with_suffix(".xml").name)
+            xml_name = file.name.split(".")[0] + ".xml"
+            new_rsce = self.get_new_theirsce(old_rsce, xml_path / xml_name)
             new_rsce.seek(0)
-            pak2_obj.chunks.theirsce = new_data = new_rsce.read()
+            pak2_obj.chunks.theirsce = new_rsce.read()
             
             with open(out_path / file.name, "wb") as f:
                 f.write(pak2lib.create_pak2(pak2_obj))
@@ -839,7 +841,7 @@ class ToolsTOR(ToolsTales):
 
         # TODO: use pathlib for everything
         out_path = Path(self.story_XML_patch) / "New"
-        xml_path = Path(self.story_XML_patch) / "XML"
+        xml_path = Path(self.story_XML_new) / "XML"
         scpk_path = Path(self.dat_archive_extract) / "SCPK"
 
         for file in (pbar:= tqdm(list(scpk_path.glob("*.scpk")))):
