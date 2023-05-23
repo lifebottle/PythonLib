@@ -510,7 +510,8 @@ class ToolsTOR(ToolsTales):
         #Convert the text values to bytes using TBL, TAGS, COLORS, ...
         bytes_entry = self.text_to_bytes(final_text)
         
-        return bytes_entry   
+        return bytes_entry
+    
     
     def get_new_theirsce(self, theirsce: Theirsce, xml: Path) -> Theirsce:
         
@@ -656,7 +657,8 @@ class ToolsTOR(ToolsTales):
         xml_path = Path(self.skit_XML_patch) / "XML"
         pak2_path = Path(self.dat_archive_extract) / "PAK2"
 
-        for file in tqdm(list(pak2_path.glob("*.pak2"))):
+        for file in (pbar:= tqdm(list(pak2_path.glob("*.pak2")))):
+            pbar.set_description_str(file.name)
             with open(file, "rb") as f:
                 pak2_data = f.read()
             pak2_obj = pak2lib.get_data(pak2_data)
@@ -840,7 +842,8 @@ class ToolsTOR(ToolsTales):
         xml_path = Path(self.story_XML_patch) / "XML"
         scpk_path = Path(self.dat_archive_extract) / "SCPK"
 
-        for file in tqdm(list(scpk_path.glob("*.scpk"))):
+        for file in (pbar:= tqdm(list(scpk_path.glob("*.scpk")))):
+            pbar.set_description_str(file.name)
             curr_scpk = Scpk.from_path(file)
             old_rsce = Theirsce(curr_scpk.rsce)
             new_rsce = self.get_new_theirsce(old_rsce, xml_path / file.with_suffix(".xml").name)
