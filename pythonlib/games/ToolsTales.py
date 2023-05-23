@@ -29,6 +29,24 @@ class ToolsTales:
         )
     VALID_FILE_NAME = r"([0-9]{2,5})(?:\.)?([1,3])?\.(\w+)$"
     VALID_VOICEID = ['VSM_', 'voice_', 'VCT_']
+
+    MAGIC_CHECK = {
+        b"SCPK": "scpk",
+        b"TIM2": "tm2",
+        b"\x7FELF": "irx",
+        b"MFH\x00": "mfh",
+        b"EBG\x00": "ebg",
+        b"anp3": "anp3",
+        b"MSCF": "cab",
+        b"fps4": "fps4",
+        b"EFFE": "effe",
+        b"THEI": "theirsce",
+        # jr ra :: nop
+        b"\x08\x00\xe0\x03": "ovl",
+        # lui a2,0x2e :: XX XX 03 24  li v1,XXXX
+        b"\x2E\x00\x06\x3C": "ovl",
+        b"\x2F\x00\x06\x3C": "ovl",
+    }
     
     def __init__(self, gameName, tblFile, repo_name):
         self.jsonTblTags = {}
@@ -278,15 +296,9 @@ class ToolsTales:
         return pointers_offset, texts_offset
     
     def get_extension(self, data) -> str:
-        if data[:4] == b"SCPK":
-            return "scpk"
-    
-        if data[:4] == b"TIM2":
-            return "tm2"
-    
-        if data[:4] == b"\x7FELF":
-            return "irx"
-    
+        if data[:4] in self.MAGIC_CHECK:
+            return self.MAGIC_CHECK[data[:4]]
+        
         if data[:8] == b"IECSsreV":
             if data[0x50:0x58] == b"IECSigaV":
                 return "hd"
@@ -296,25 +308,7 @@ class ToolsTales:
         if data[:16] == b"\x00" * 0x10:
             if data[16:18] != b"\x00\x00":
                 return "bd"
-    
-        if data[:8] == b"THEIRSCE":
-            return "theirsce"
-    
-        if data[:3] == b"MFH":
-            return "mfh"
-        
-        if data[:4] == b"MSCF":
-            return "cab"
-        
-        if data[:4] == b"EBG\x00":
-            return "ebg"
-    
-        if data[:4] == b"anp3":
-            return "anp3"
-    
-        if data[:4] == b"EFFE":
-            return "effe"
-    
+            
         # 0x####BD27 is the masked addiu sp,sp,#### mips instruction
         # These are overlay files, containing compiled MIPS assembly
         if data[2:4] == b"\xBD\x27":
@@ -322,9 +316,6 @@ class ToolsTales:
     
         if data[6:8] == b"\xBD\x27":
             return "ovl"
-        
-        if data[:4] == b"FPS4":
-            return "fps4"
     
         is_pak = self.get_pak_type(data)
         if is_pak != None:
@@ -730,9 +721,9 @@ class ToolsTales:
         bytes_entry = self.text_to_bytes(final_text)
         
         return bytes_entry
+    
+    
     def pack_Menu_File(self, menu_file_path):
-        
-        
         #Load all the banks for insertion and load XML
         new_text_offsets = dict()
 
