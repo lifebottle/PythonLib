@@ -654,7 +654,7 @@ class ToolsTOR(ToolsTales):
         # TODO: use pathlib for everything
         out_path = Path(self.skit_XML_patch) / "New"
         xml_path = Path(self.skit_XML_patch) / "XML"
-        pak2_path = Path(self.dat_archive_extract) / "SCPK"
+        pak2_path = Path(self.dat_archive_extract) / "PAK2"
 
         for file in tqdm(list(pak2_path.glob("*.pak2"))):
             with open(file, "rb") as f:
@@ -841,7 +841,7 @@ class ToolsTOR(ToolsTales):
         scpk_path = Path(self.dat_archive_extract) / "SCPK"
 
         for file in tqdm(list(scpk_path.glob("*.scpk"))):
-            curr_scpk = Scpk().from_path(file)
+            curr_scpk = Scpk.from_path(file)
             old_rsce = Theirsce(curr_scpk.rsce)
             new_rsce = self.get_new_theirsce(old_rsce, xml_path / file.with_suffix(".xml").name)
             new_rsce.seek(0)

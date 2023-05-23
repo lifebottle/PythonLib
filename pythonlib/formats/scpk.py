@@ -22,19 +22,21 @@ class Scpk():
         self._rsce_pos = 0
 
     
-    def from_path(self, path="") -> typing.Self:
+    @staticmethod
+    def from_path(path="") -> 'Scpk':
         with FileIO(path) as f:
             if f.read(4) != MAGIC:
                 raise ValueError("Not an SCPK file!")
-
+            
+            self = Scpk()
             self.unk1 = f.read_uint16()
             self.unk2 = f.read_uint16()
-            self.file_amount = f.read_uint32()
+            file_amount = f.read_uint32()
             assert f.read_uint32() == 0, "scpk padding is not zero!"  # padding?
             self.files = []
 
             sizes = []
-            for _ in range(self.file_amount):
+            for _ in range(file_amount):
                 sizes.append(f.read_uint32())
 
             for i, size in enumerate(sizes):
