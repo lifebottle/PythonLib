@@ -187,7 +187,7 @@ class ToolsTOR(ToolsTales):
         scpk_path = Path(self.dat_archive_extract) / "SCPK"
 
         for file in tqdm(list(scpk_path.glob("*.scpk"))):
-            theirsce = Theirsce(Scpk().from_path(file).rsce)
+            theirsce = Theirsce(Scpk.from_path(file).rsce)
             xml_text = self.get_xml_from_theirsce(theirsce, "Story")
             self.id = 1
             
