@@ -156,13 +156,19 @@ def is_compressed(data: bytes) -> bool:
     if len(data) < 0x09:
         return False
 
+    if data[0] not in (0, 1, 3):
+        return False
+
     expected_size = struct.unpack("<L", data[1:5])[0]
+    aligned_size = (expected_size + 9) + (0x100 - ((expected_size + 9) % 0x100))
     tail_data = abs(len(data) - (expected_size + 9))
 
-    if expected_size == len(data) - 9:
+    if expected_size == len(data) - 9 or aligned_size == len(data):
         return True
 
-    if tail_data <= 0x10 and data[expected_size + 9 :] == b"#" * tail_data:
+    if (tail_data <= 0x10 and data[expected_size + 9 :] == b"#" * tail_data) or (
+        tail_data <= 0x4 and data[expected_size + 9 :] == b"\x00" * tail_data
+    ):
         return True  # SCPK files have these trailing "#" bytes :(
 
     return False

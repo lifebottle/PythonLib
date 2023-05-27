@@ -648,7 +648,7 @@ class ToolsNDX(ToolsTales):
         self.unpack_Folder( menu_file_path)
         
                 
-    def extract_all_Menu(self):
+    def extract_all_menu(self):
         
         res = [self.prepare_Menu_File(ele) for ele in list(set([ele['Hashes_Name'] for ele in self.menu_files_json if ele['Hashes_Name'] != '']))]
         
@@ -688,7 +688,7 @@ class ToolsNDX(ToolsTales):
                 if isinstance(pointers_offset, list):
                     pointers_offset, pointers_value = self.get_Direct_Pointers(text_start, text_end, base_offset, pointers_offset, section,file_path)
                 else:
-                    pointers_offset, pointers_value = self.get_Style_Pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Style'], file_path)
+                    pointers_offset, pointers_value = self.get_style_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Style'], file_path)
           
               
                 #Extract Text from the pointers

@@ -65,11 +65,12 @@ class Theirsce(FileIO):
             yield opcode
             self.seek(pos)
 
-    def read_tag_bytes(self):
+    @staticmethod
+    def read_tag_bytes(src) -> bytes:
         data = b""
         
         while True:
-            c = self.read(1)
+            c = src.read(1)
             if c == b"\x80":
                 data += c
                 break
@@ -79,9 +80,9 @@ class Theirsce(FileIO):
             
             if opcode < 0x80: 
                 if opcode & 8 != 0: 
-                    data += self.read(2)
+                    data += src.read(2)
                 else:
-                    data += self.read(1)
+                    data += src.read(1)
                     
             elif opcode < 0xC0:
                 continue
@@ -89,30 +90,30 @@ class Theirsce(FileIO):
             elif opcode < 0xE0:
                 size_mask = (opcode >> 3) & 3
 
-                if size_mask == 1: data += self.read(1)
-                elif size_mask == 2: data += self.read(2)
-                elif size_mask == 3: data += self.read(4)
+                if size_mask == 1: data += src.read(1)
+                elif size_mask == 2: data += src.read(2)
+                elif size_mask == 3: data += src.read(4)
 
             elif opcode < 0xF0:
-                data += self.read(1)
+                data += src.read(1)
             
             elif opcode < 0xF8:
                 if (0xF2 <= opcode < 0xF5) or opcode == 0xF7:
-                    data += self.read(2)
+                    data += src.read(2)
                 elif opcode == 0xF5:
-                    data += self.read(4)
+                    data += src.read(4)
                 elif opcode == 0xF6:
-                    data += self.read(1)
+                    data += src.read(1)
                     for _ in range(data[-1]):
-                        cc = self.read_uint8()
+                        cc = src.read_uint8()
                         data += cc
                         if cc & 8 != 0:
-                            data += self.read(2) 
+                            data += src.read(2) 
                         else:
-                            data += self.read(3)
+                            data += src.read(3)
             
             elif opcode < 0xFC:
-                data += self.read(2)
+                data += src.read(2)
             
             elif opcode == 0xFE:
                 continue

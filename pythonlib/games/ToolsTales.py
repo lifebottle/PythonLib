@@ -16,8 +16,10 @@ import pycdlib
 import pygsheets
 from googleapiclient.errors import HttpError
 from tqdm import tqdm
+from pythonlib.formats.FileIO import FileIO
 
 import pythonlib.formats.fps4 as fps4
+from pythonlib.formats.pak import Pak
 
 
 class ToolsTales:
@@ -932,7 +934,7 @@ class ToolsTales:
 
         return [pointers_offset, pointers_value]
     
-    def get_Style_Pointers(self, text_start, text_max, base_offset, start_offset, style, file_path):
+    def get_style_pointers(self, text_start, text_max, base_offset, start_offset, style, file_path):
         
         f_size = os.path.getsize(file_path)
         with open(file_path , "rb") as f:
@@ -940,7 +942,7 @@ class ToolsTales:
             f.seek(start_offset, 0)
             pointers_offset = []
             pointers_value  = []
-            split = [ele for ele in re.split(r'(P)|(\d+)', style) if ele != None and ele != '']
+            split = [ele for ele in re.split(r'(P)|(\d+)', style) if ele]
             ok = True
             
             while ok:
@@ -999,7 +1001,7 @@ class ToolsTales:
                   
                 #Extract Pointers of the file
                 print("Extract Pointers")
-                pointers_offset, pointers_value = self.get_Style_Pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Style'], file_path)
+                pointers_offset, pointers_value = self.get_style_pointers( text_start, text_end, base_offset, section['Pointer_Offset_Start'], section['Style'], file_path)
                 print([hex(pointers_value) for ele in pointers_value])
               
                 #Extract Text from the pointers

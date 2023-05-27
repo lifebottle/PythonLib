@@ -11,6 +11,8 @@ from pathlib import Path
 import lxml.etree as etree
 import pandas as pd
 from tqdm import tqdm
+from pythonlib.formats.FileIO import FileIO
+from pythonlib.formats.pak import Pak
 from pythonlib.formats.scpk import Scpk
 
 import pythonlib.utils.comptolib as comptolib
@@ -52,6 +54,7 @@ class ToolsTOR(ToolsTales):
     story_XML_new       = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
     story_XML_patch     = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
     skit_XML_patch      = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here
+    menu_XML_patch      = '../Tales-Of-Rebirth/Data/TOR/Menu/'
     skit_XML_new        = '../Tales-Of-Rebirth/Data/TOR/Skits/'
     dat_archive_extract = '../Data/Tales-Of-Rebirth/DAT/' 
     # fmt: on
@@ -421,22 +424,22 @@ class ToolsTOR(ToolsTales):
         return pointers_offset, texts_offset
 
     #Convert a bytes object to text using TAGS and TBL in the json file
-    def bytes_to_text(self, theirsce: Theirsce, offset=-1, end_strings = b"\x00"):
+    def bytes_to_text(self, src: FileIO, offset=-1, end_strings = b"\x00"):
         finalText = ""
         tags = self.jsonTblTags['TAGS']
         chars = self.jsonTblTags['TBL']
 
         if (offset > 0):
-            theirsce.seek(offset, 0)
+            src.seek(offset, 0)
 
         while True:
-            b = theirsce.read(1)
+            b = src.read(1)
             if b == end_strings: break
 
             b = ord(b)
             # Custom Encoded Text
             if (0x99 <= b <= 0x9F) or (0xE0 <= b <= 0xEB):
-                c = (b << 8) | theirsce.read_uint8()
+                c = (b << 8) | src.read_uint8()
                 finalText += chars.get(c, "{%02X}{%02X}" % (c >> 8, c & 0xFF))
                 continue
             
@@ -455,7 +458,7 @@ class ToolsTOR(ToolsTales):
                 continue
 
             if b == 0x81:
-                next_b = theirsce.read(1)
+                next_b = src.read(1)
                 if next_b == b"\x40":
                     finalText += "　"
                 else:
@@ -465,13 +468,13 @@ class ToolsTOR(ToolsTales):
             
             # Simple Tags
             if 0x3 <= b <= 0xF:
-                parameter = theirsce.read_uint32()
+                parameter = src.read_uint32()
 
                 tag_name = tags.get(b, f"{b:02X}")
                 tag_param = self.jsonTblTags.get(tag_name.upper(), {}).get(parameter, None)  
 
                 if tag_param is not None:
-                    finalText += tag_param
+                    finalText += f"<{tag_param}>"
                 else:
                     finalText += f"<{tag_name}:{self.hex2(parameter)}>"
 
@@ -480,7 +483,7 @@ class ToolsTOR(ToolsTales):
             # Variable tags (same as above but using rsce bytecode as parameter)
             if 0x13 <= b <= 0x1A:
                 tag_name = f"unk{b:02X}"
-                parameter = "".join([f"{c:02X}" for c in theirsce.read_tag_bytes()])
+                parameter = "".join([f"{c:02X}" for c in Theirsce.read_tag_bytes(src)])
          
                 finalText += f"<{tag_name}:{parameter}>"
                 continue
@@ -754,6 +757,98 @@ class ToolsTOR(ToolsTales):
         
                 with open(final_path / fname, "wb") as output:
                     output.write(data)
+
+
+    def get_style_pointers(self, text_start, text_max, base_offset, start_offset, style, file: FileIO):
+        file.seek(0, 2)
+        f_size = file.tell()
+    
+        file.seek(start_offset)
+        pointers_offset = []
+        pointers_value  = []
+        split = [ele for ele in re.split(r'(P)|(\d+)', style) if ele]
+        ok = True
+        
+        while ok:
+            for step in split:
+                if step == "P":
+                    text_offset = struct.unpack("<I", file.read(4))[0] + base_offset
+
+                    if text_offset < f_size and text_offset >= text_start and text_offset < text_max:
+                        pointers_value.append(text_offset)
+                        pointers_offset.append(file.tell()-4)
+                        
+                    else:
+                        ok = False
+                else:
+                    file.read(int(step))
+        
+        return pointers_offset, pointers_value
+    
+
+    def extract_all_menu(self) -> None:
+        print("Extracting Menu Files...")
+        
+        #Prepare the menu files (Unpack PAK files and use comptoe)
+        xml_path = Path(self.menu_XML_patch) / "XML"
+        xml_path.mkdir(exist_ok=True)
+
+        for entry in tqdm(self.menu_files_json):
+            file_path = Path(entry["file_path"])
+            if entry["is_pak"]:
+                pak = Pak.from_path(file_path, int(entry["pak_type"]))
+
+                for p_file in entry["files"]:
+                    f_index = int(p_file["file"])
+                    with FileIO(pak[f_index].data, "rb") as f:
+                        xml_data = self.extract_menu_file(p_file, f)
+
+                    with open(xml_path / f"{file_path.stem}_{f_index:03d}.xml", "wb") as xmlFile:
+                        xmlFile.write(xml_data)
+
+            else:
+                with FileIO(entry["file_path"], "rb") as f:
+                    xml_data = self.extract_menu_file(entry, f)
+
+                with open(xml_path / f"{file_path.stem}.xml", "wb") as xmlFile:
+                    xmlFile.write(xml_data)
+            
+
+    def extract_menu_file(self, file_def, f: FileIO):
+        section_list = []
+        pointers_offset_list = []
+        texts_list = []
+
+        base_offset = int(file_def["base_offset"])
+        # print("BaseOffset:{}".format(base_offset))
+
+        for section in file_def['sections']:
+            
+            text_start = int(section['text_start'])
+            text_end = int(section['text_end'])
+            
+            #Extract Pointers of the file
+            # print("Extract Pointers")
+            pointers_offset, pointers_value = self.get_style_pointers(text_start, text_end, base_offset, section['pointers_start'], section['style'], f)
+            # print([hex(pv) for pv in pointers_value])
+        
+            #Extract Text from the pointers
+            # print("Extract Text")
+            texts = [ self.bytes_to_text(f, ele) for ele in pointers_value]
+            
+            #Make a list
+            section_list.extend( [section['section']] * len(texts)) 
+            pointers_offset_list.extend( pointers_offset)
+            texts_list.extend( texts )
+    
+        #Remove duplicates
+        list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
+
+        #Build the XML Structure with the information
+        root = self.create_Node_XML("", list_informations, "Menu", "MenuText")
+        
+        #Write to XML file
+        return etree.tostring(root, encoding="UTF-8", pretty_print=True)
         
         
     def pack_main_archive(self):
