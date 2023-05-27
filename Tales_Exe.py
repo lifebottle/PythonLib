@@ -256,7 +256,7 @@ if __name__ == "__main__":
             tales_instance.extract_main_archive()
 
         if args.file_type == "Menu":
-            tales_instance.extract_all_Menu()
+            tales_instance.extract_all_menu()
 
         if args.file_type == "Story":
             tales_instance.extract_all_story()
