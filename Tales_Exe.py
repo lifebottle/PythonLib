@@ -64,6 +64,16 @@ def get_arguments(argv=None):
         metavar="game",
         help="Options: TOR, NDX",
     )
+
+    parser.add_argument(
+        "-p",
+        "--project",
+        required=True,
+        type=Path,
+        metavar="project",
+        help="project.json file path",
+    )
+
     sp = parser.add_subparsers(title="Available actions", required=False, dest="action")
 
     # # Utility commands
@@ -139,6 +149,15 @@ def get_arguments(argv=None):
         help="(Required) - Options: Iso, Init, Main, Elf, Story, Skits",
     )
 
+    sp_insert.add_argument(
+        "-i",
+        "--iso",
+        required=False,
+        default="../b-topndxj.iso",
+        metavar="iso",
+        help="(Optional) - Only for extract Iso command",
+    )
+
     # Debug commands
     sp_debug = sp.add_parser(
         "debug",
@@ -206,10 +225,10 @@ def hex2bytes(tales_instance, hex_value):
         f.write(txt)
 
 
-def getTalesInstance(game_name):
+def getTalesInstance(args, game_name):
 
     if game_name == "TOR":
-        talesInstance = ToolsTOR.ToolsTOR("TBL_All.json")
+        talesInstance = ToolsTOR.ToolsTOR(args.project.resolve())
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
     else:
@@ -222,7 +241,7 @@ if __name__ == "__main__":
 
     args = get_arguments()
     game_name = args.game
-    tales_instance = getTalesInstance(game_name)
+    tales_instance = getTalesInstance(args, game_name)
     org = repos_infos[game_name]["Org"]
     repo_name = repos_infos[game_name]["Repo"]
 

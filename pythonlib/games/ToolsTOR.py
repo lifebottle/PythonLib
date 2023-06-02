@@ -10,6 +10,7 @@ from pathlib import Path
 
 import lxml.etree as etree
 import pandas as pd
+import pycdlib
 from tqdm import tqdm
 from pythonlib.formats.FileIO import FileIO
 from pythonlib.formats.pak import Pak
@@ -59,11 +60,19 @@ class ToolsTOR(ToolsTales):
     dat_archive_extract = '../Data/Tales-Of-Rebirth/DAT/' 
     # fmt: on
     
-    def __init__(self, tbl):
+    def __init__(self, project_file: Path) -> None:
+        base_path = project_file.parent
+        self.jsonTblTags = {}
+        self.ijsonTblTags = {}
+        with open(project_file, encoding="utf-8") as f:
+            jsonRaw = json.load(f)
+
+        self.paths: dict[str, Path] = {k: base_path / v for k, v in jsonRaw["paths"].items()}
+        self.main_exe_name = jsonRaw["main_exe_name"]
+
+        # super().__init__("TOR", str(self.paths["encoding_table"]), "Tales-Of-Rebirth")
         
-        super().__init__("TOR", tbl, "Tales-Of-Rebirth")
-        
-        with open("../{}/Data/{}/Misc/{}".format(self.repo_name, self.gameName, self.tblFile), encoding="utf-8") as f:
+        with open(self.paths["encoding_table"], encoding="utf-8") as f:
             jsonRaw = json.load(f)
 
         for k, v in jsonRaw.items():
@@ -185,9 +194,9 @@ class ToolsTOR(ToolsTales):
     def extract_all_story(self, replace=False) -> None:
         print("Extracting Story files...")
 
-        # TODO: use pathlib for everything
-        folder_path = Path(self.story_XML_patch) / "XML"
-        scpk_path = Path(self.dat_archive_extract) / "SCPK"
+        folder_path = self.paths["story_files"]
+        folder_path.mkdir(exist_ok=True)
+        scpk_path = self.paths["extracted_files"] / "DAT" / "SCPK"
 
         for file in tqdm(list(scpk_path.glob("*.scpk"))):
             theirsce = Theirsce(Scpk.from_path(file).rsce)
@@ -202,9 +211,9 @@ class ToolsTOR(ToolsTales):
     def extract_all_skits(self, replace=False) -> None:
         print("Extracting Skit files...")
 
-        # TODO: use pathlib for everything
-        folder_path = Path(self.skit_XML_patch) / "XML"
-        pak2_path = Path(self.dat_archive_extract) / "PAK2"
+        folder_path = self.paths["skit_files"]
+        folder_path.mkdir(exist_ok=True)
+        pak2_path = self.paths["extracted_files"] / "DAT" / "PAK2"
 
         for file in tqdm(list(pak2_path.glob("*.pak2"))):
             with open(file, "rb") as pak:
@@ -424,7 +433,7 @@ class ToolsTOR(ToolsTales):
         return pointers_offset, texts_offset
 
     #Convert a bytes object to text using TAGS and TBL in the json file
-    def bytes_to_text(self, src: FileIO, offset=-1, end_strings = b"\x00"):
+    def bytes_to_text(self, src: FileIO, offset: int = -1) -> str:
         finalText = ""
         tags = self.jsonTblTags['TAGS']
         chars = self.jsonTblTags['TBL']
@@ -434,7 +443,7 @@ class ToolsTOR(ToolsTales):
 
         while True:
             b = src.read(1)
-            if b == end_strings: break
+            if b == b"\x00": break
 
             b = ord(b)
             # Custom Encoded Text
@@ -476,7 +485,7 @@ class ToolsTOR(ToolsTales):
                 if tag_param is not None:
                     finalText += f"<{tag_param}>"
                 else:
-                    finalText += f"<{tag_name}:{self.hex2(parameter)}>"
+                    finalText += f"<{tag_name}:{parameter:X}>"
 
                 continue
             
@@ -656,10 +665,10 @@ class ToolsTOR(ToolsTales):
     def pack_all_skits(self):
         print("Recreating Skit files...")
 
-        # TODO: use pathlib for everything
-        out_path = Path(self.skit_XML_patch) / "New"
-        xml_path = Path(self.skit_XML_new) / "XML"
-        pak2_path = Path(self.dat_archive_extract) / "PAK2"
+        out_path = self.paths["temp_files"] / "DAT" / "PAK2"
+        out_path.mkdir(parents=True, exist_ok=True)
+        xml_path = self.paths["skit_files"]
+        pak2_path = self.paths["extracted_files"] / "DAT" / "PAK2"
 
         for file in (pbar:= tqdm(list(pak2_path.glob("*.pak2")))):
             pbar.set_description_str(file.name)
@@ -706,12 +715,12 @@ class ToolsTOR(ToolsTales):
 
             
     def get_datbin_file_data(self) -> list[tuple[int, int]]:
-
-        with open(self.elf_original , "rb") as elf:
+        slps_path = self.paths["original_files"] / self.main_exe_name
+        with open(slps_path, "rb") as elf:
             elf.seek(self.POINTERS_BEGIN, 0)
             blob = elf.read(self.POINTERS_END-self.POINTERS_BEGIN)
             
-        pointers = struct.unpack(f"<{len(blob)//4}L", blob)
+        pointers = struct.unpack(f"<{len(blob)//4}I", blob)
         file_data: list[tuple[int, int]] = []
         for c, n in zip(pointers, pointers[1:]):
             remainder = c & self.LOW_BITS
@@ -723,13 +732,12 @@ class ToolsTOR(ToolsTales):
 
     # Extract the file DAT.BIN to the different directorties
     def extract_main_archive(self) -> None:
+        dat_bin_path = self.paths["extracted_files"] / "DAT"
         
-        print("Cleaning extract folder...")
-        for path in Path(self.dat_archive_extract).glob("**/*"):
-            if path.is_file():
-                path.unlink()
-            elif path.is_dir():
-                shutil.rmtree(path)
+        if dat_bin_path.exists():
+            print("Cleaning extract folder...")
+            shutil.rmtree(dat_bin_path)
+        dat_bin_path.mkdir(exist_ok=True)
 
         print("Extracting DAT.BIN files...")
         with open( self.dat_bin_original, "rb") as f:
@@ -751,9 +759,8 @@ class ToolsTOR(ToolsTales):
                     extension = self.get_extension(data)
                     fname = f"{i:05d}.{extension}"
                 
-                # TODO: use pathlib for everything
-                final_path = Path(self.dat_archive_extract) / extension.upper()
-                final_path.mkdir(parents=True, exist_ok=True)
+                final_path = dat_bin_path / extension.upper()
+                final_path.mkdir(exist_ok=True)
         
                 with open(final_path / fname, "wb") as output:
                     output.write(data)
@@ -788,13 +795,21 @@ class ToolsTOR(ToolsTales):
 
     def extract_all_menu(self) -> None:
         print("Extracting Menu Files...")
-        
-        #Prepare the menu files (Unpack PAK files and use comptoe)
-        xml_path = Path(self.menu_XML_patch) / "XML"
+
+        xml_path = self.paths["menu_xml"]
         xml_path.mkdir(exist_ok=True)
 
-        for entry in tqdm(self.menu_files_json):
-            file_path = Path(entry["file_path"])
+        # Read json descriptor file
+        with open(self.paths["menu_table"], encoding="utf-8") as f:
+            menu_json = json.load(f)
+
+        for entry in tqdm(menu_json):
+
+            if entry["file_path"] == "${main_exe}":
+                file_path = self.paths["original_files"] / self.main_exe_name
+            else:
+                file_path = self.paths["extracted_files"] / "DAT" / entry["file_path"]
+
             if entry["is_pak"]:
                 pak = Pak.from_path(file_path, int(entry["pak_type"]))
 
@@ -807,7 +822,7 @@ class ToolsTOR(ToolsTales):
                         xmlFile.write(xml_data)
 
             else:
-                with FileIO(entry["file_path"], "rb") as f:
+                with FileIO(file_path, "rb") as f:
                     xml_data = self.extract_menu_file(entry, f)
 
                 with open(xml_path / f"{file_path.stem}.xml", "wb") as xmlFile:
@@ -820,6 +835,7 @@ class ToolsTOR(ToolsTales):
         texts_list = []
 
         base_offset = int(file_def["base_offset"])
+        xml_root = etree.Element("MenuText")
         # print("BaseOffset:{}".format(base_offset))
 
         for section in file_def['sections']:
@@ -841,94 +857,89 @@ class ToolsTOR(ToolsTales):
             pointers_offset_list.extend( pointers_offset)
             texts_list.extend( texts )
     
-        #Remove duplicates
-        list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
+            #Remove duplicates
+            list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
 
-        #Build the XML Structure with the information
-        root = self.create_Node_XML("", list_informations, "Menu", "MenuText")
+            #Build the XML Structure with the information
+            xml_section = self.create_Node_XML(xml_root, list_informations, section['section'])
         
         #Write to XML file
-        return etree.tostring(root, encoding="UTF-8", pretty_print=True)
+        return etree.tostring(xml_root, encoding="UTF-8", pretty_print=True)
         
+
+    def create_Node_XML(self, root, list_informations, section):
+        strings_node = etree.SubElement(root, 'Strings')
+        etree.SubElement(strings_node, 'Section').text = section
+
+        for s, pointers_offset, text in list_informations:
+            self.create_Entry(strings_node,  pointers_offset, text)
+         
+        return root
+
         
     def pack_main_archive(self):
-        sectors = [0]
-        remainders = []
+        sectors: list[int] = [0]
+        remainders: list[int] = []
         buffer = 0
 
         # Copy the original SLPS to Disc/New
         shutil.copy(self.elf_original, self.elf_new)
    
-        output_dat_path = self.dat_bin_new
-        with open(output_dat_path, "wb") as output_dat:
+        print("Packing DAT.BIN files...")
+        output_dat_path = self.paths["final_files"] / "DAT.BIN"
+        original_files = self.paths["extracted_files"] / "DAT"
+        total_files = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
     
-            print("Packing files into %s..." % os.path.basename(output_dat_path))
             
-            #Make a list with all the files of DAT.bin
-            file_list = []
-            for path, subdir, filenames in os.walk(self.dat_archive_extract):
-                if len(filenames) > 0:
-                    file_list.extend( [os.path.join(path,file) for file in filenames])
-                
-                
-            list_test = [os.path.splitext(os.path.basename(ele))[0] for ele in file_list]
-            previous = -1
-            dummies = 0
-        
-    
-            for file in tqdm(sorted(file_list, key=self.get_file_name)):
-             
-                size = 0
-                remainder = 0
-                current = int(re.search(self.VALID_FILE_NAME, file).group(1))
-                
-                if current != previous + 1:
-                    while previous < current - 1:
-                        remainders.append(remainder)
-                        buffer += size + remainder
-                        sectors.append(buffer)
-                        previous += 1
-                        dummies += 1
-                file_name = self.get_file_name(file)
-                
-                if ".scpk" in file:
-                    path = os.path.join(self.story_XML_patch, 'New', '{}.scpk'.format(file_name))
-                    print(path)
+        # Get all original DAT.BIN files
+        file_list: dict[int, Path] = {}
+        for file in original_files.glob("*/*"):
+            file_index = int(file.name[:5])
+            file_list[file_index] = file
 
-                elif ".pak2" in file:
-                    path = os.path.join(self.skit_XML_patch, 'New', '{}.pak2'.format(file_name))
-                    print(path)
-                else:
-                    path = file
+        # Overlay whatever we have compiled
+        file_list: dict[int, Path] = {}
+        for file in self.paths["patched_temp"].glob("*/*"):
+            file_index = int(file.name[:5])
+            file_list[file_index] = file
+                
+        with open(output_dat_path, "wb") as output_dat:
+            for i in tqdm(range(total_files)):
+                file = file_list.get(i)
+                if not file:
+                    remainders.append(0); sectors.append(buffer)
+                    continue
 
-                with open(path, "rb") as f2:
+                with open(file, "rb") as f2:
                     data = f2.read()
-                #data = f2.read()  
                 
-                comp_type = re.search(self.VALID_FILE_NAME, file).group(2)
+                comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
                 if comp_type != None:
                     data = comptolib.compress_data(data, version=int(comp_type))
             
                 output_dat.write(data)
                 size = len(data)
-                #print("file: {}   size: {}".format(file, size))
                 remainder = 0x40 - (size % 0x40)
-                if remainder == 0x40:
-                    remainder = 0
+                if remainder == 0x40: remainder = 0
                 output_dat.write(b"\x00" * remainder)
               
         
                 remainders.append(remainder)
                 buffer += size + remainder
                 sectors.append(buffer)
-                previous += 1
         
         #Use the new SLPS updated and update the pointers for the SCPK
-        with open("../Data/{}/Disc/New/SLPS_254.50".format(self.repo_name), "r+b") as output_elf:
-            output_elf.seek(self.POINTERS_BEGIN)
+        original_slps = self.paths["original_files"] / self.main_exe_name
+        patched_slps = self.paths["final_files"] / self.main_exe_name
+        with open(original_slps, "rb") as f:
+            slps = f.read()
+
+        with open(patched_slps, "wb") as f:
+            f.write(slps)
+            f.seek(self.POINTERS_BEGIN)
+            for sector, remainder in zip(sectors, remainders):
+                f.write(struct.pack("<I", sector + remainder))
         
-            for i in range(len(sectors) - 1):
-                output_elf.write(struct.pack("<L", sectors[i] + remainders[i]))
     
         
     def pack_all_story(self):
@@ -956,3 +967,30 @@ class ToolsTOR(ToolsTales):
         #Updates SCPK based on XMLs data
         
         self.pack_main_archive()
+
+
+    def extract_Iso(self, umd_iso: Path) -> None:  
+
+        print("Extracting ISO files...")
+        
+        iso = pycdlib.PyCdlib()
+        iso.open(str(umd_iso))
+
+        extract_to = self.paths["original_files"]
+        shutil.rmtree(extract_to)
+
+        files = []
+        for dirname, _, filelist in iso.walk(iso_path="/"):
+            files += [dirname + x for x in filelist]
+                
+        for file in files:   
+            out_path = extract_to / file[1:]   
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            with iso.open_file_from_iso(iso_path=file) as f, open(str(out_path).split(";")[0], "wb+") as output:
+                with tqdm(total=f.length(), desc=f"Extracting {file[1:].split(';')[0]}", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
+                    while data := f.read(2048):
+                        output.write(data)
+                        pbar.update(len(data))
+
+        iso.close()
