@@ -86,7 +86,6 @@ class ToolsTOR(ToolsTales):
         self.string_opcode = InstructionType.STRING
         self.list_status_insertion = ['Done', 'Proofreading', 'Editing']
     
-        self.mkdir('../Data/{}/DAT'.format(self.repo_name))
 
     # Replace n occurences of a string starting from the right
     def rreplace(self, s, old, new, occurrence):
