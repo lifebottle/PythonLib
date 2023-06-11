@@ -193,7 +193,7 @@ class ToolsTOR(ToolsTales):
     def extract_all_story(self, replace=False) -> None:
         print("Extracting Story files...")
 
-        folder_path = self.paths["story_files"]
+        folder_path = self.paths["story_xml"]
         folder_path.mkdir(exist_ok=True)
         scpk_path = self.paths["extracted_files"] / "DAT" / "SCPK"
 
@@ -210,7 +210,7 @@ class ToolsTOR(ToolsTales):
     def extract_all_skits(self, replace=False) -> None:
         print("Extracting Skit files...")
 
-        folder_path = self.paths["skit_files"]
+        folder_path = self.paths["skit_xml"]
         folder_path.mkdir(exist_ok=True)
         pak2_path = self.paths["extracted_files"] / "DAT" / "PAK2"
 
@@ -666,7 +666,7 @@ class ToolsTOR(ToolsTales):
 
         out_path = self.paths["temp_files"] / "DAT" / "PAK2"
         out_path.mkdir(parents=True, exist_ok=True)
-        xml_path = self.paths["skit_files"]
+        xml_path = self.paths["skit_xml"]
         pak2_path = self.paths["extracted_files"] / "DAT" / "PAK2"
 
         for file in (pbar:= tqdm(list(pak2_path.glob("*.pak2")))):
