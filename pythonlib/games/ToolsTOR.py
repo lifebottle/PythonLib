@@ -1,6 +1,5 @@
 import io
-import json
-import os
+import pyjson5 as json
 import re
 import shutil
 import struct
@@ -569,27 +568,20 @@ class ToolsTOR(ToolsTales):
                     output.write(data)
 
 
-    def get_style_pointers(self, text_start, text_max, base_offset, start_offset, style, file: FileIO):
-        file.seek(0, 2)
-        f_size = file.tell()
-    
-        file.seek(start_offset)
-        pointers_offset = []
-        pointers_value  = []
-        split = [ele for ele in re.split(r'(P)|(\d+)', style) if ele]
-        ok = True
+    def get_style_pointers(self, file: FileIO, pointers_start: int, pointers_end: int, base_offset: int, style: str) -> tuple[list[int], list[int]]:
+
+        file.seek(pointers_start)
+        pointers_offset: list[int] = []
+        pointers_value: list[int]  = []
+        split: list[str] = [ele for ele in re.split(r'(P)|(\d+)', style) if ele]
         
-        while ok:
+        while file.tell() < pointers_end:
             for step in split:
                 if step == "P":
-                    text_offset = struct.unpack("<I", file.read(4))[0] + base_offset
-
-                    if text_offset < f_size and text_offset >= text_start and text_offset < text_max:
-                        pointers_value.append(text_offset)
-                        pointers_offset.append(file.tell()-4)
-                        
-                    else:
-                        ok = False
+                    off = file.read_uint32()
+                    if base_offset < 0 and off == 0: continue
+                    pointers_offset.append(file.tell() - 4)
+                    pointers_value.append(base_offset + off)
                 else:
                     file.read(int(step))
         
@@ -641,43 +633,74 @@ class ToolsTOR(ToolsTales):
         xml_root = etree.Element("MenuText")
         # print("BaseOffset:{}".format(base_offset))
 
+        # Collect the canonical pointer for the embedded
+        emb = dict()
+        for pair in file_def["embedded"]:
+            f.seek(pair["HI"][0] + base_offset)
+            hi = f.read_uint16() << 0x10
+            f.seek(pair["LO"][0] + base_offset)
+            lo = f.read_int16()
+            emb[(hi + lo) + base_offset] = [pair["HI"], pair["LO"]]
+
         for section in file_def['sections']:
-            
-            text_start = int(section['text_start'])
-            text_end = int(section['text_end'])
+            pointers_start = int(section["pointers_start"])
+            pointers_end = int(section["pointers_end"])
             
             #Extract Pointers of the file
             # print("Extract Pointers")
-            pointers_offset, pointers_value = self.get_style_pointers(text_start, text_end, base_offset, section['pointers_start'], section['style'], f)
+            pointers_offset, pointers_value = self.get_style_pointers(f, pointers_start, pointers_end, base_offset, section['style'])
             # print([hex(pv) for pv in pointers_value])
         
             #Extract Text from the pointers
             # print("Extract Text")
-            texts = [ self.bytes_to_text(f, ele) for ele in pointers_value]
+            # texts = [ self.bytes_to_text(f, ele) for ele in pointers_value]
             
             #Make a list
-            section_list.extend( [section['section']] * len(texts)) 
-            pointers_offset_list.extend( pointers_offset)
-            texts_list.extend( texts )
+            #section_list.append(section['section']) 
+            #pointers_offset_list.extend(pointers_offset)
+            #texts_list.extend( texts )
+            temp = dict()
+            for off, val in zip(pointers_offset, pointers_value):
+                text = self.bytes_to_text(f, val)
+                temp.setdefault(text, dict()).setdefault("ptr", []).append(off)
+                    
+                if val in emb:
+                    temp[text]["emb"] = emb.pop(val, None)
     
             #Remove duplicates
-            list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts_list)
+            #list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts)
+            list_informations = [(k, str(v['ptr'])[1:-1], v.setdefault('emb', None)) for k, v in temp.items()]
 
             #Build the XML Structure with the information
-            xml_section = self.create_Node_XML(xml_root, list_informations, section['section'])
+            self.create_Node_XML(xml_root, list_informations, section['section'])
+
+        # Write the embedded pointers section last
+        temp = dict()
+        for k, v in emb.items():
+            text = self.bytes_to_text(f, k)
+            temp[text] = dict()
+            temp[text]["ptr"] = []
+            temp[text]["emb"] = v
+
+        #Remove duplicates
+        #list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts)
+        list_informations = [(k, str(v['ptr'])[1:-1], v.setdefault('emb', None)) for k, v in temp.items()]
+
+        #Build the XML Structure with the information
+        self.create_Node_XML(xml_root, list_informations, "MIPS PTR TEXT")
+
         
         #Write to XML file
         return etree.tostring(xml_root, encoding="UTF-8", pretty_print=True)
         
 
-    def create_Node_XML(self, root, list_informations, section):
+
+    def create_Node_XML(self, root, list_informations, section) -> None:
         strings_node = etree.SubElement(root, 'Strings')
         etree.SubElement(strings_node, 'Section').text = section
 
-        for s, pointers_offset, text in list_informations:
-            self.create_Entry(strings_node,  pointers_offset, text)
-         
-        return root
+        for text, pointers_offset, emb in list_informations:
+            self.create_Entry(strings_node,  pointers_offset, text, emb)
 
         
     def pack_main_archive(self):
