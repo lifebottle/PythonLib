@@ -543,7 +543,7 @@ class ToolsTOR(ToolsTales):
         self.clean_folder(dat_bin_path)
 
         print("Extracting DAT.BIN files...")
-        with open( self.dat_bin_original, "rb") as f:
+        with open(self.paths["original_files"] / "DAT.BIN", "rb") as f:
             for i, (offset, size) in enumerate(tqdm(self.get_datbin_file_data(), desc="Extracting files", unit="file")):
                 
                 # Ignore 0 byte files
@@ -702,7 +702,7 @@ class ToolsTOR(ToolsTales):
 
         # Overlay whatever we have compiled
         file_list: dict[int, Path] = {}
-        for file in self.paths["patched_temp"].glob("*/*"):
+        for file in self.paths["temp_files"].glob("*/*"):
             file_index = int(file.name[:5])
             file_list[file_index] = file
                 
