@@ -770,11 +770,11 @@ class ToolsTOR(ToolsTales):
         
     def pack_all_story(self):
         print("Recreating Story files...")
-
-        # TODO: use pathlib for everything
-        out_path = Path(self.story_XML_patch) / "New"
-        xml_path = Path(self.story_XML_new) / "XML"
-        scpk_path = Path(self.dat_archive_extract) / "SCPK"
+        
+        out_path = self.paths["temp_files"] / "DAT" / "SCPK"
+        out_path.mkdir(parents=True, exist_ok=True)
+        xml_path = self.paths["story_xml"]
+        scpk_path = self.paths["extracted_files"] / "DAT" / "SCPK"
 
         for file in (pbar:= tqdm(list(scpk_path.glob("*.scpk")))):
             pbar.set_description_str(file.name)
