@@ -605,11 +605,17 @@ class ToolsTales:
         with open(new_XML_path, "wb") as xmlFile:
             xmlFile.write(txt)
         
-    def create_Entry(self, strings_node, pointer_offset, text):
+    def create_Entry(self, strings_node, pointer_offset, text, emb = None):
         
         #Add it to the XML node
         entry_node = etree.SubElement(strings_node, "Entry")
         etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset)
+
+        if emb is not None:
+            emb_node = etree.SubElement(entry_node,"EmbedOffset")
+            etree.SubElement(emb_node, "hi").text = str(emb[0])[1:-1]
+            etree.SubElement(emb_node, "lo").text = str(emb[1])[1:-1]
+
         text_split = re.split(self.COMMON_TAG, text)
         
         if len(text_split) > 1 and any(possible_value in text for possible_value in self.VALID_VOICEID):
