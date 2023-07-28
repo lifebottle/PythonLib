@@ -353,6 +353,10 @@ class ToolsTOR(ToolsTales):
                 finalText += ("\n")
                 continue
             
+            if b == 0x2:
+                finalText += "<" + tags.get(b, f"{b:02X}") + ">"
+                continue
+            
             # ASCII text
             if chr(b) in self.PRINTABLE_CHARS:
                 finalText += chr(b)
