@@ -536,10 +536,7 @@ class ToolsTOR(ToolsTales):
     def extract_main_archive(self) -> None:
         dat_bin_path = self.paths["extracted_files"] / "DAT"
         
-        if dat_bin_path.exists():
-            print("Cleaning extract folder...")
-            shutil.rmtree(dat_bin_path)
-        dat_bin_path.mkdir(exist_ok=True)
+        self.clean_folder(dat_bin_path)
 
         print("Extracting DAT.BIN files...")
         with open( self.dat_bin_original, "rb") as f:
@@ -779,7 +776,7 @@ class ToolsTOR(ToolsTales):
         iso.open(str(umd_iso))
 
         extract_to = self.paths["original_files"]
-        shutil.rmtree(extract_to)
+        self.clean_folder(extract_to)
 
         files = []
         for dirname, _, filelist in iso.walk(iso_path="/"):
@@ -796,3 +793,14 @@ class ToolsTOR(ToolsTales):
                         pbar.update(len(data))
 
         iso.close()
+
+
+    def clean_folder(self, path: Path) -> None:
+        target_files = list(path.iterdir())
+        if len(target_files) != 0:
+            print("Cleaning folder...")
+            for file in target_files:
+                if file.is_dir():
+                    shutil.rmtree(file)
+                elif file.name.lower() != ".gitignore":
+                    file.unlink(missing_ok=False)
