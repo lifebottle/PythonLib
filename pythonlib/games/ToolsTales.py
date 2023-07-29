@@ -482,6 +482,9 @@ class ToolsTales:
                     else:
                         output += struct.pack("<I", int(param, 16))
                 else:
+                    if tag in self.ijsonTblTags["TAGS"]:
+                        output += struct.pack("B", self.ijsonTblTags["TAGS"][tag])
+                        continue
                     for k, v in self.ijsonTblTags.items():
                         if tag in v:
                             output += struct.pack("B", self.ijsonTblTags["TAGS"][k.lower()])
