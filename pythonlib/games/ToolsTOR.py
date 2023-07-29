@@ -603,7 +603,7 @@ class ToolsTOR(ToolsTales):
             if entry["file_path"] == "${main_exe}":
                 file_path = self.paths["original_files"] / self.main_exe_name
             else:
-                file_path = self.paths["extracted_files"] / "DAT" / entry["file_path"]
+                file_path = self.paths["extracted_files"] / entry["file_path"]
 
             if entry["is_pak"]:
                 pak = Pak.from_path(file_path, int(entry["pak_type"]))
@@ -613,7 +613,7 @@ class ToolsTOR(ToolsTales):
                     with FileIO(pak[f_index].data, "rb") as f:
                         xml_data = self.extract_menu_file(p_file, f)
 
-                    with open(xml_path / f"{file_path.stem}_{f_index:03d}.xml", "wb") as xmlFile:
+                    with open(xml_path / f"{file_path.stem}_{f_index:04d}.xml", "wb") as xmlFile:
                         xmlFile.write(xml_data)
 
             else:
@@ -693,6 +693,173 @@ class ToolsTOR(ToolsTales):
         #Write to XML file
         return etree.tostring(xml_root, encoding="UTF-8", pretty_print=True)
         
+    def pack_all_menu(self) -> None:
+        print("Packing Menu Files...")
+
+        xml_path = self.paths["menu_xml"]
+        out_path = self.paths["temp_files"]
+
+        # Read json descriptor file
+        with open(self.paths["menu_table"], encoding="utf-8") as f:
+            menu_json = json.load(f)
+
+        for entry in tqdm(menu_json):
+
+            if entry["file_path"] == "${main_exe}":
+                file_path = self.paths["original_files"] / self.main_exe_name
+            else:
+                file_path = self.paths["extracted_files"] / entry["file_path"]
+
+            if entry["is_pak"]:
+                pak = Pak.from_path(file_path, int(entry["pak_type"]))
+
+                
+                for p_file in entry["files"]:
+                    f_index = int(p_file["file"])
+                    pools: list[list[int, int]] = [[x[0] + int(p_file["base_offset"]), x[1]-x[0]] for x in p_file["safe_areas"]] 
+                    pools.sort(key=lambda x: x[1])
+                    with open(xml_path / f"{file_path.stem}_{f_index:04d}.xml", "r", encoding='utf-8') as xmlFile:
+                        root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
+                    
+                    with FileIO(pak[f_index].data, "rb") as f:
+                        for line in root.iter("Entry"):
+                            hi = []
+                            lo = []
+                            
+                            flat_ptrs = []
+                            poff = line.find("PointerOffset")
+                            p = line.find("EmbedOffset")
+                            if p is not None:
+                                hi = [int(x) for x in p.find("hi").text.split(",")]
+                                lo = [int(x) for x in p.find("lo").text.split(",")]
+                            if poff.text is not None:
+                                flat_ptrs = [int(x) for x in poff.text.split(",")]
+                            
+                            #Grab the fields from the Entry in the XML
+                            status = line.find("Status").text
+                            japanese_text = line.find("JapaneseText").text
+                            english_text = line.find("EnglishText").text
+                            
+                            #Use the values only for Status = Done and use English if non empty
+                            final_text = ''
+                            if (status not in ['Problematic', 'To Do']):
+                                final_text = english_text or japanese_text or ''
+                            else:
+                                final_text = japanese_text or ''
+                            text_bytes = self.text_to_bytes(final_text) + b"\x00"
+
+                            for pool in pools:
+                                l = len(text_bytes)
+                                if l <= pool[1]:
+                                    str_pos = pool[0]
+                                    pool[0] += l
+                                    pool[1] -= l
+                                    break
+                            else:
+                                raise ValueError("Ran out of space")
+                            
+                            f.seek(str_pos)
+                            f.write(text_bytes)
+                            virt_pos = str_pos + abs(int(p_file["base_offset"]))
+                            for off in flat_ptrs:
+                                f.seek(off)
+                                f.write_uint32(virt_pos)
+                            
+                            for _h, _l in zip(hi, lo):
+                                if virt_pos & 0xffff >= 0x8000:
+                                    f.seek(_h + int(p_file["base_offset"]))
+                                    f.write_uint16(((virt_pos >> 0x10) + 1) & 0xFFFF)
+                                    f.seek(_l + int(p_file["base_offset"]))
+                                    f.write_uint16(virt_pos & 0xFFFF)
+                                else:
+                                    f.seek(_h + int(p_file["base_offset"]))
+                                    f.write_uint16(((virt_pos >> 0x10)) & 0xFFFF)
+                                    f.seek(_l + int(p_file["base_offset"]))
+                                    f.write_uint16(virt_pos & 0xFFFF)
+
+                        f.seek(0)
+                        pak[f_index].data = f.read()
+                        # out_path.mkdir(parents=True, exist_ok=True)
+                        # with open(out_path / f"dbg_{file_path.stem}_{f_index:04d}.bin", "wb") as g:
+                        #     g.write(pak[f_index].data)
+
+                (out_path / entry["file_path"]).parent.mkdir(parents=True, exist_ok=True)
+                with open(out_path / entry["file_path"], "wb") as f:
+                    f.write(pak.to_bytes(int(entry["pak_type"])))
+
+
+            else:
+                pools: list[list[int, int]] = [[x[0] + int(entry["base_offset"]), x[1]-x[0]] for x in entry["safe_areas"]] 
+                pools.sort(key=lambda x: x[1])
+                with open(xml_path / f"{file_path.stem}.xml", "r", encoding='utf-8') as xmlFile:
+                    root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
+                
+                with open(file_path, "rb") as f:
+                    file_b = f.read()
+                
+                with FileIO(file_b, "wb") as f:
+                    for line in root.iter("Entry"):
+                        hi = []
+                        lo = []
+                        
+                        flat_ptrs = []
+                        poff = line.find("PointerOffset")
+                        p = line.find("EmbedOffset")
+                        if p is not None:
+                            hi = [int(x) for x in p.find("hi").text.split(",")]
+                            lo = [int(x) for x in p.find("lo").text.split(",")]
+                        if poff.text is not None:
+                            flat_ptrs = [int(x) for x in poff.text.split(",")]
+                        
+                        #Grab the fields from the Entry in the XML
+                        status = line.find("Status").text
+                        japanese_text = line.find("JapaneseText").text
+                        english_text = line.find("EnglishText").text
+                        
+                        #Use the values only for Status = Done and use English if non empty
+                        final_text = ''
+                        if (status not in ['Problematic', 'To Do']):
+                            final_text = english_text or japanese_text or ''
+                        else:
+                            final_text = japanese_text or ''
+                        text_bytes = self.text_to_bytes(final_text) + b"\x00"
+
+                        for pool in pools:
+                            l = len(text_bytes)
+                            if l <= pool[1]:
+                                str_pos = pool[0]
+                                pool[0] += l
+                                pool[1] -= l
+                                break
+                        else:
+                            raise ValueError("Ran out of space")
+                        
+                        f.seek(str_pos)
+                        f.write(text_bytes)
+                        virt_pos = str_pos + abs(int(entry["base_offset"]))
+                        for off in flat_ptrs:
+                            f.seek(off)
+                            f.write_uint32(virt_pos)
+                        
+                        for _h, _l in zip(hi, lo):
+                            if virt_pos & 0xffff >= 0x8000:
+                                f.seek(_h + int(entry["base_offset"]))
+                                f.write_uint16(((virt_pos >> 0x10) + 1) & 0xFFFF)
+                                f.seek(_l + int(entry["base_offset"]))
+                                f.write_uint16(virt_pos & 0xFFFF)
+                            else:
+                                f.seek(_h + int(entry["base_offset"]))
+                                f.write_uint16(((virt_pos >> 0x10)) & 0xFFFF)
+                                f.seek(_l + int(entry["base_offset"]))
+                                f.write_uint16(virt_pos & 0xFFFF)
+
+                    f.seek(0)
+                    (out_path).parent.mkdir(parents=True, exist_ok=True)
+                    with open(out_path / file_path.name, "wb") as g:
+                        g.write(f.read())
+                    # out_path.mkdir(parents=True, exist_ok=True)
+                    # with open(out_path / f"dbg_{file_path.stem}_{f_index:04d}.bin", "wb") as g:
+                    #     g.write(pak[f_index].data)
 
 
     def create_Node_XML(self, root, list_informations, section) -> None:
@@ -709,7 +876,7 @@ class ToolsTOR(ToolsTales):
         buffer = 0
 
         # Copy the original SLPS to Disc/New
-        shutil.copy(self.elf_original, self.elf_new)
+        # shutil.copy(self.elf_original, self.elf_new)
    
         print("Packing DAT.BIN files...")
         output_dat_path = self.paths["final_files"] / "DAT.BIN"
@@ -724,8 +891,8 @@ class ToolsTOR(ToolsTales):
             file_list[file_index] = file
 
         # Overlay whatever we have compiled
-        file_list: dict[int, Path] = {}
-        for file in self.paths["temp_files"].glob("*/*"):
+        # file_list: dict[int, Path] = {}
+        for file in (self.paths["temp_files"] / "DAT").glob("*/*"):
             file_index = int(file.name[:5])
             file_list[file_index] = file
                 
@@ -755,7 +922,8 @@ class ToolsTOR(ToolsTales):
                 sectors.append(buffer)
         
         #Use the new SLPS updated and update the pointers for the SCPK
-        original_slps = self.paths["original_files"] / self.main_exe_name
+        # original_slps = self.paths["original_files"] / self.main_exe_name
+        original_slps = self.paths["temp_files"] / self.main_exe_name
         patched_slps = self.paths["final_files"] / self.main_exe_name
         with open(original_slps, "rb") as f:
             slps = f.read()
@@ -770,7 +938,7 @@ class ToolsTOR(ToolsTales):
         
     def pack_all_story(self):
         print("Recreating Story files...")
-        
+
         out_path = self.paths["temp_files"] / "DAT" / "SCPK"
         out_path.mkdir(parents=True, exist_ok=True)
         xml_path = self.paths["story_xml"]
