@@ -60,6 +60,11 @@ class Pak():
                 for offset, size in zip(offsets, sizes):
                     f.seek(offset)
                     blobs.append(f.read(size))
+        
+            for off in offsets:
+                if off % 0x10 == 0:
+                    self.align = True
+                break
 
         for blob in blobs:
             is_compressed = comptolib.is_compressed(blob)
@@ -164,10 +169,15 @@ class Pak():
         # Pak3
         elif compose_mode == 3:
             offset = 4 + (4 * len(blobs))
-            for _ in range(len(blobs)):
+            if self.align:
+                offset = offset + (0x10 - (offset % 0x10))
+
+            cur = offset
+            for blob in blobs:
+                out += struct.pack("<I", cur)
+                cur += len(blob)
                 if self.align:
-                    offset = offset + (0x10 - (offset % 0x10))
-                out += struct.pack("<I", offset)
+                    cur += (0x10 - (cur % 0x10))
 
         # add files
         for blob in blobs:
