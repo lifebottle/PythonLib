@@ -24,7 +24,7 @@ from pythonlib.formats.pak import Pak
 
 class ToolsTales:
     
-    COMMON_TAG = r"(<\w+:?\w+>)"
+    COMMON_TAG = r"(<[\w/]+:?\w+>)"
     HEX_TAG    = r"(\{[0-9A-F]{2}\})"
     PRINTABLE_CHARS = "".join(
             (string.digits, string.ascii_letters, string.punctuation, " ")
