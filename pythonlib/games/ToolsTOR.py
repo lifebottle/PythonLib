@@ -43,21 +43,7 @@ class ToolsTOR(ToolsTales):
     POINTERS_END   = 0xE60C8                                            # Offset to DAT.BIN pointer list end in SLPS_254.50 file
     HIGH_BITS      = 0xFFFFFFC0
     LOW_BITS       = 0x3F
-    
-    
-    #Path to used
-    # fmt: off
-    dat_bin_original    = '../Data/Tales-Of-Rebirth/Disc/Original/DAT.BIN'
-    dat_bin_new         = '../Data/Tales-Of-Rebirth/Disc/New/DAT.BIN'
-    elf_original        = '../Data/Tales-Of-Rebirth/Disc/Original/SLPS_254.50'
-    elf_new             = '../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50'
-    story_XML_new       = '../Tales-Of-Rebirth/Data/TOR/Story/'                        #Story XML files will be extracted here                      
-    story_XML_patch     = '../Data/Tales-Of-Rebirth/Story/'               #Story XML files will be extracted here
-    skit_XML_patch      = '../Data/Tales-Of-Rebirth/Skits/'                        #Skits XML files will be extracted here
-    menu_XML_patch      = '../Tales-Of-Rebirth/Data/TOR/Menu/'
-    skit_XML_new        = '../Tales-Of-Rebirth/Data/TOR/Skits/'
-    dat_archive_extract = '../Data/Tales-Of-Rebirth/DAT/' 
-    # fmt: on
+
     
     def __init__(self, project_file: Path) -> None:
         base_path = project_file.parent
@@ -465,8 +451,6 @@ class ToolsTOR(ToolsTales):
         return theirsce
     
 
-
-
     def pack_all_skits(self):
         print("Recreating Skit files...")
 
@@ -789,7 +773,7 @@ class ToolsTOR(ToolsTales):
 
 
             else:
-                pools: list[list[int, int]] = [[x[0] + int(entry["base_offset"]), x[1]-x[0]] for x in entry["safe_areas"]] 
+                pools: list[list[int]] = [[x[0] + int(entry["base_offset"]), x[1]-x[0]] for x in entry["safe_areas"]] 
                 pools.sort(key=lambda x: x[1])
                 with open(xml_path / f"{file_path.stem}.xml", "r", encoding='utf-8') as xmlFile:
                     root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
