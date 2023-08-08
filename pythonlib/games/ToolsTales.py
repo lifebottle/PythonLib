@@ -612,12 +612,12 @@ class ToolsTales:
         
         #Add it to the XML node
         entry_node = etree.SubElement(strings_node, "Entry")
-        etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset)
+        etree.SubElement(entry_node,"PointerOffset").text = str(pointer_offset).replace(", ",",")
 
         if emb is not None:
             emb_node = etree.SubElement(entry_node,"EmbedOffset")
-            etree.SubElement(emb_node, "hi").text = str(emb[0])[1:-1]
-            etree.SubElement(emb_node, "lo").text = str(emb[1])[1:-1]
+            etree.SubElement(emb_node, "hi").text = str(emb[0])[1:-1].replace(", ",",")
+            etree.SubElement(emb_node, "lo").text = str(emb[1])[1:-1].replace(", ",",")
 
         text_split = re.split(self.COMMON_TAG, text)
         
