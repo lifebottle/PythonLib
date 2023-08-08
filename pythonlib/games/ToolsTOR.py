@@ -676,7 +676,8 @@ class ToolsTOR(ToolsTales):
         
         #Write to XML file
         return etree.tostring(xml_root, encoding="UTF-8", pretty_print=True)
-        
+
+
     def pack_all_menu(self) -> None:
         print("Packing Menu Files...")
 
@@ -691,90 +692,42 @@ class ToolsTOR(ToolsTales):
 
             if entry["file_path"] == "${main_exe}":
                 file_path = self.paths["original_files"] / self.main_exe_name
+                file_last = self.main_exe_name
             else:
                 file_path = self.paths["extracted_files"] / entry["file_path"]
+                file_last = entry["file_path"]
 
             if entry["is_pak"]:
                 pak = Pak.from_path(file_path, int(entry["pak_type"]))
-
                 
                 for p_file in entry["files"]:
-                    f_index = int(p_file["file"])
-                    pools: list[list[int, int]] = [[x[0] + int(p_file["base_offset"]), x[1]-x[0]] for x in p_file["safe_areas"]] 
+                    f_index = p_file["file"]
+                    base_offset = p_file["base_offset"]
+                    
+                    # Create pools of valid free spots
+                    pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in p_file["safe_areas"]] 
                     pools.sort(key=lambda x: x[1])
+
+                    # Get the xml
                     with open(xml_path / f"{file_path.stem}_{f_index:04d}.xml", "r", encoding='utf-8') as xmlFile:
                         root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
                     
+
                     with FileIO(pak[f_index].data, "rb") as f:
-                        for line in root.iter("Entry"):
-                            hi = []
-                            lo = []
-                            
-                            flat_ptrs = []
-                            poff = line.find("PointerOffset")
-                            p = line.find("EmbedOffset")
-                            if p is not None:
-                                hi = [int(x) for x in p.find("hi").text.split(",")]
-                                lo = [int(x) for x in p.find("lo").text.split(",")]
-                            if poff.text is not None:
-                                flat_ptrs = [int(x) for x in poff.text.split(",")]
-                            
-                            #Grab the fields from the Entry in the XML
-                            status = line.find("Status").text
-                            japanese_text = line.find("JapaneseText").text
-                            english_text = line.find("EnglishText").text
-                            
-                            #Use the values only for Status = Done and use English if non empty
-                            final_text = ''
-                            if (status not in ['Problematic', 'To Do']):
-                                final_text = english_text or japanese_text or ''
-                            else:
-                                final_text = japanese_text or ''
-                            text_bytes = self.text_to_bytes(final_text) + b"\x00"
-
-                            for pool in pools:
-                                l = len(text_bytes)
-                                if l <= pool[1]:
-                                    str_pos = pool[0]
-                                    pool[0] += l
-                                    pool[1] -= l
-                                    break
-                            else:
-                                raise ValueError("Ran out of space")
-                            
-                            f.seek(str_pos)
-                            f.write(text_bytes)
-                            virt_pos = str_pos + abs(int(p_file["base_offset"]))
-                            for off in flat_ptrs:
-                                f.seek(off)
-                                f.write_uint32(virt_pos)
-                            
-                            for _h, _l in zip(hi, lo):
-                                if virt_pos & 0xffff >= 0x8000:
-                                    f.seek(_h + int(p_file["base_offset"]))
-                                    f.write_uint16(((virt_pos >> 0x10) + 1) & 0xFFFF)
-                                    f.seek(_l + int(p_file["base_offset"]))
-                                    f.write_uint16(virt_pos & 0xFFFF)
-                                else:
-                                    f.seek(_h + int(p_file["base_offset"]))
-                                    f.write_uint16(((virt_pos >> 0x10)) & 0xFFFF)
-                                    f.seek(_l + int(p_file["base_offset"]))
-                                    f.write_uint16(virt_pos & 0xFFFF)
-
+                        self.pack_menu_file(root, pools, base_offset, f)
+                        
                         f.seek(0)
                         pak[f_index].data = f.read()
-                        # out_path.mkdir(parents=True, exist_ok=True)
-                        # with open(out_path / f"dbg_{file_path.stem}_{f_index:04d}.bin", "wb") as g:
-                        #     g.write(pak[f_index].data)
 
-                (out_path / entry["file_path"]).parent.mkdir(parents=True, exist_ok=True)
-                with open(out_path / entry["file_path"], "wb") as f:
-                    f.write(pak.to_bytes(int(entry["pak_type"])))
-
+                (out_path / file_last).parent.mkdir(parents=True, exist_ok=True)
+                with open(out_path / file_last, "wb") as f:
+                    f.write(pak.to_bytes(entry["pak_type"]))
 
             else:
-                pools: list[list[int]] = [[x[0] + int(entry["base_offset"]), x[1]-x[0]] for x in entry["safe_areas"]] 
+                base_offset = entry["base_offset"]
+                pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in entry["safe_areas"]] 
                 pools.sort(key=lambda x: x[1])
+
                 with open(xml_path / f"{file_path.stem}.xml", "r", encoding='utf-8') as xmlFile:
                     root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
                 
@@ -782,68 +735,55 @@ class ToolsTOR(ToolsTales):
                     file_b = f.read()
                 
                 with FileIO(file_b, "wb") as f:
-                    for line in root.iter("Entry"):
-                        hi = []
-                        lo = []
-                        
-                        flat_ptrs = []
-                        poff = line.find("PointerOffset")
-                        p = line.find("EmbedOffset")
-                        if p is not None:
-                            hi = [int(x) for x in p.find("hi").text.split(",")]
-                            lo = [int(x) for x in p.find("lo").text.split(",")]
-                        if poff.text is not None:
-                            flat_ptrs = [int(x) for x in poff.text.split(",")]
-                        
-                        #Grab the fields from the Entry in the XML
-                        status = line.find("Status").text
-                        japanese_text = line.find("JapaneseText").text
-                        english_text = line.find("EnglishText").text
-                        
-                        #Use the values only for Status = Done and use English if non empty
-                        final_text = ''
-                        if (status not in ['Problematic', 'To Do']):
-                            final_text = english_text or japanese_text or ''
-                        else:
-                            final_text = japanese_text or ''
-                        text_bytes = self.text_to_bytes(final_text) + b"\x00"
-
-                        for pool in pools:
-                            l = len(text_bytes)
-                            if l <= pool[1]:
-                                str_pos = pool[0]
-                                pool[0] += l
-                                pool[1] -= l
-                                break
-                        else:
-                            raise ValueError("Ran out of space")
-                        
-                        f.seek(str_pos)
-                        f.write(text_bytes)
-                        virt_pos = str_pos + abs(int(entry["base_offset"]))
-                        for off in flat_ptrs:
-                            f.seek(off)
-                            f.write_uint32(virt_pos)
-                        
-                        for _h, _l in zip(hi, lo):
-                            if virt_pos & 0xffff >= 0x8000:
-                                f.seek(_h + int(entry["base_offset"]))
-                                f.write_uint16(((virt_pos >> 0x10) + 1) & 0xFFFF)
-                                f.seek(_l + int(entry["base_offset"]))
-                                f.write_uint16(virt_pos & 0xFFFF)
-                            else:
-                                f.seek(_h + int(entry["base_offset"]))
-                                f.write_uint16(((virt_pos >> 0x10)) & 0xFFFF)
-                                f.seek(_l + int(entry["base_offset"]))
-                                f.write_uint16(virt_pos & 0xFFFF)
+                    self.pack_menu_file(root, pools, base_offset, f)
 
                     f.seek(0)
-                    (out_path).parent.mkdir(parents=True, exist_ok=True)
-                    with open(out_path / file_path.name, "wb") as g:
+                    (out_path / file_last).parent.mkdir(parents=True, exist_ok=True)
+                    with open(out_path / file_last, "wb") as g:
                         g.write(f.read())
-                    # out_path.mkdir(parents=True, exist_ok=True)
-                    # with open(out_path / f"dbg_{file_path.stem}_{f_index:04d}.bin", "wb") as g:
-                    #     g.write(pak[f_index].data)
+
+
+    def pack_menu_file(self, root, pools: list[list[int]], base_offset: int, f: FileIO) -> None:
+        for line in root.iter("Entry"):
+            hi = []
+            lo = []
+            flat_ptrs = []
+
+            p = line.find("EmbedOffset")
+            if p is not None:
+                hi = [int(x) - base_offset for x in p.find("hi").text.split(",")]
+                lo = [int(x) - base_offset for x in p.find("lo").text.split(",")]
+
+            poff = line.find("PointerOffset")
+            if poff.text is not None:
+                flat_ptrs = [int(x) for x in poff.text.split(",")]
+            
+            text_bytes = self.get_node_bytes(line) + b"\x00"
+
+            for pool in pools:
+                l = len(text_bytes)
+                if l <= pool[1]:
+                    str_pos = pool[0]
+                    pool[0] += l; pool[1] -= l
+                    break
+            else:
+                raise ValueError("Ran out of space")
+            
+            f.seek(str_pos)
+            f.write(text_bytes)
+            virt_pos = str_pos + base_offset
+            for off in flat_ptrs:
+                f.write_uint32_at(off, virt_pos)
+            
+            for _h, _l in zip(hi, lo):
+                val_hi = (virt_pos >> 0x10) & 0xFFFF
+                val_lo = (virt_pos) & 0xFFFF
+                
+                # can't encode the lui+addiu directly
+                if val_lo >= 0x8000: val_hi += 1
+
+                f.write_uint16_at(_h, val_hi)
+                f.write_uint16_at(_l, val_lo)
 
 
     def create_Node_XML(self, root, list_informations, section) -> None:
