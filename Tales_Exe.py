@@ -143,10 +143,10 @@ def get_arguments(argv=None):
     sp_insert.add_argument(
         "-ft",
         "--file_type",
-        choices=["Iso", "Main", "Elf", "Story", "Skits"],
+        choices=["Iso", "Main", "Menu", "Story", "Skits", "All", "Asm"], 
         required=True,
         metavar="file_type",
-        help="(Required) - Options: Iso, Init, Main, Elf, Story, Skits",
+        help="(Required) - Options: Iso, Init, Main, Elf, Story, Skits, All, Asm",
     )
 
     sp_insert.add_argument(
@@ -256,14 +256,22 @@ if __name__ == "__main__":
         elif args.file_type == "Skits":
             tales_instance.pack_all_skits()
 
-        elif args.file_type == "Elf":
-            
-            #SLPS
-            tales_instance.pack_Menu_File("../Data/Tales-Of-Rebirth/Disc/New/SLPS_254.50")
-            
-            #Generate Iso
-            #xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/{}.xdelta".format(args.iso.replace(".iso",""))
-            #generate_xdelta_patch(repo_name, xdelta_name)
+        elif args.file_type == "Menu":
+            tales_instance.pack_all_menu()
+        
+        elif args.file_type == "Asm":
+            tales_instance.patch_binaries()
+
+        elif args.file_type == "All":
+            tales_instance.pack_all_story()
+            tales_instance.pack_all_skits()
+            tales_instance.pack_all_menu()
+            tales_instance.patch_binaries()
+            tales_instance.pack_main_archive()
+
+            # Generate Iso - not yet
+            # xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/{}.xdelta".format(args.iso.replace(".iso",""))
+            # generate_xdelta_patch(repo_name, xdelta_name)
 
     if args.action == "extract":
 
