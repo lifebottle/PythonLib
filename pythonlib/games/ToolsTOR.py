@@ -315,6 +315,7 @@ class ToolsTOR(ToolsTales):
                     
         return pointers_offset, texts_offset
 
+
     #Convert a bytes object to text using TAGS and TBL in the json file
     def bytes_to_text(self, src: FileIO, offset: int = -1) -> str:
         finalText = ""
@@ -389,7 +390,8 @@ class ToolsTOR(ToolsTales):
        
         return finalText
     
-    def get_node_bytes(self, entry_node):
+
+    def get_node_bytes(self, entry_node) -> bytes:
         
         #Grab the fields from the Entry in the XML
         status = entry_node.find("Status").text
@@ -491,6 +493,7 @@ class ToolsTOR(ToolsTales):
             file_data.append((start, end - start)) 
         
         return file_data
+
 
     # Extract the file DAT.BIN to the different directorties
     def extract_main_archive(self) -> None:
