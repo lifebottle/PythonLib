@@ -474,35 +474,7 @@ class ToolsTOR(ToolsTales):
             with open(out_path / file.name, "wb") as f:
                 f.write(pak2lib.create_pak2(pak2_obj))
 
-    def debug_Story_Skits(self, section, file_name, text=False):
 
-        if section == "Story":
-            theirsce = self.get_theirsce_from_scpk(self.dat_archive_extract + 'SCPK/' + self.get_file_name(file_name) + '.scpk')
-        else:
-            with open(self.dat_archive_extract + "PAK2/" + file_name.split(".")[0] + '.3.pak2', "rb") as pak:
-                data = pak.read()
-            theirsce = io.BytesIO(pak2lib.get_theirsce_from_pak2(data))
-
-        rsce = Theirsce(path=theirsce)
-        # pointers_offset, texts_offset = self.extract_Story_Pointers(rsce)
-        names, lines = self.extract_lines_with_speaker(rsce)
-
-        for i, (k, v) in enumerate(names.items(), -1):
-            names[k] = NameEntry(i, v)
-
-        with open('../{}.theirsce'.format(file_name), 'wb') as f:
-            f.write(theirsce.getvalue())
-
-        text_list = []
-        if text:
-            text_list = [line.text for line in lines]
-
-        df = pd.DataFrame({"Jap_Text": text_list})
-        df['Text_Offset'] = df['Text_Offset'].apply(lambda x: hex(x)[2:])
-        df['Pointers_Offset'] = df['Pointers_Offset'].apply(lambda x: hex(x)[2:])
-        df.to_excel('../{}.xlsx'.format(self.get_file_name(file_name)), index=False)
-
-            
     def get_datbin_file_data(self) -> list[tuple[int, int]]:
         slps_path = self.paths["original_files"] / self.main_exe_name
         with open(slps_path, "rb") as elf:
