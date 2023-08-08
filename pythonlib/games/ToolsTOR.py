@@ -21,7 +21,7 @@ from pythonlib.formats.theirsce import Theirsce
 from pythonlib.formats.theirsce_instructions import (AluOperation, InstructionType,
                                                      TheirsceBaseInstruction)
 from .ToolsTales import ToolsTales
-
+import subprocess
 
 @dataclass
 class LineEntry:
@@ -54,6 +54,7 @@ class ToolsTOR(ToolsTales):
 
         self.paths: dict[str, Path] = {k: base_path / v for k, v in jsonRaw["paths"].items()}
         self.main_exe_name = jsonRaw["main_exe_name"]
+        self.asm_file = jsonRaw["asm_file"]
 
         # super().__init__("TOR", str(self.paths["encoding_table"]), "Tales-Of-Rebirth")
         
@@ -745,6 +746,18 @@ class ToolsTOR(ToolsTales):
 
                 f.write_uint16_at(_h, val_hi)
                 f.write_uint16_at(_l, val_lo)
+
+
+    def patch_binaries(self):
+        subprocess.run(
+            [
+                str(self.paths["tools"] / "asm" / "armips.exe"),
+                str(self.paths["tools"] / "asm" / self.asm_file),
+                "-strequ",
+                "__SLPS_PATH__", 
+                str(self.paths["temp_files"] / self.main_exe_name),
+            ]
+        )
 
 
     def create_Node_XML(self, root, list_informations, section) -> None:
