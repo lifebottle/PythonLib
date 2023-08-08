@@ -524,20 +524,20 @@ class ToolsTOR(ToolsTales):
                     output.write(data)
 
 
-    def get_style_pointers(self, file: FileIO, pointers_start: int, pointers_end: int, base_offset: int, style: str) -> tuple[list[int], list[int]]:
+    def get_style_pointers(self, file: FileIO, ptr_range: tuple[int, int], base_offset: int, style: str) -> tuple[list[int], list[int]]:
 
-        file.seek(pointers_start)
+        file.seek(ptr_range[0])
         pointers_offset: list[int] = []
         pointers_value: list[int]  = []
         split: list[str] = [ele for ele in re.split(r'(P)|(\d+)', style) if ele]
         
-        while file.tell() < pointers_end:
+        while file.tell() < ptr_range[1]:
             for step in split:
                 if step == "P":
                     off = file.read_uint32()
-                    if base_offset < 0 and off == 0: continue
+                    if base_offset != 0 and off == 0: continue
                     pointers_offset.append(file.tell() - 4)
-                    pointers_value.append(base_offset + off)
+                    pointers_value.append(off - base_offset)
                 else:
                     file.read(int(step))
         
@@ -579,42 +579,32 @@ class ToolsTOR(ToolsTales):
                 with open(xml_path / f"{file_path.stem}.xml", "wb") as xmlFile:
                     xmlFile.write(xml_data)
             
+            self.id = 1
+            
 
-    def extract_menu_file(self, file_def, f: FileIO):
-        section_list = []
-        pointers_offset_list = []
-        texts_list = []
+    def extract_menu_file(self, file_def, f: FileIO) -> bytes:
 
-        base_offset = int(file_def["base_offset"])
+        base_offset = file_def["base_offset"]
         xml_root = etree.Element("MenuText")
-        # print("BaseOffset:{}".format(base_offset))
 
-        # Collect the canonical pointer for the embedded
+        # Collect the canonical pointer for the embedded pairs
         emb = dict()
         for pair in file_def["embedded"]:
-            f.seek(pair["HI"][0] + base_offset)
+            f.seek(pair["HI"][0] - base_offset)
             hi = f.read_uint16() << 0x10
-            f.seek(pair["LO"][0] + base_offset)
+            f.seek(pair["LO"][0] - base_offset)
             lo = f.read_int16()
-            emb[(hi + lo) + base_offset] = [pair["HI"], pair["LO"]]
+            emb[(hi + lo) - base_offset] = [pair["HI"], pair["LO"]]
 
         for section in file_def['sections']:
             pointers_start = int(section["pointers_start"])
             pointers_end = int(section["pointers_end"])
             
-            #Extract Pointers of the file
-            # print("Extract Pointers")
-            pointers_offset, pointers_value = self.get_style_pointers(f, pointers_start, pointers_end, base_offset, section['style'])
-            # print([hex(pv) for pv in pointers_value])
-        
-            #Extract Text from the pointers
-            # print("Extract Text")
-            # texts = [ self.bytes_to_text(f, ele) for ele in pointers_value]
+            # Extract Pointers list out of the file
+            pointers_offset, pointers_value = self.get_style_pointers(f, (pointers_start, pointers_end), base_offset, section['style'])
             
-            #Make a list
-            #section_list.append(section['section']) 
-            #pointers_offset_list.extend(pointers_offset)
-            #texts_list.extend( texts )
+            # Make a list, we also merge the emb pointers with the 
+            # other kind in the case they point to the same text
             temp = dict()
             for off, val in zip(pointers_offset, pointers_value):
                 text = self.bytes_to_text(f, val)
@@ -623,11 +613,10 @@ class ToolsTOR(ToolsTales):
                 if val in emb:
                     temp[text]["emb"] = emb.pop(val, None)
     
-            #Remove duplicates
-            #list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts)
+            # Remove duplicates
             list_informations = [(k, str(v['ptr'])[1:-1], v.setdefault('emb', None)) for k, v in temp.items()]
 
-            #Build the XML Structure with the information
+            # Build the XML Structure with the information
             self.create_Node_XML(xml_root, list_informations, section['section'])
 
         # Write the embedded pointers section last
