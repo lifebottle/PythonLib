@@ -35,6 +35,12 @@ class FileIO(object):
 
     def tell(self):
         return self.f.tell()
+    
+    def truncate(self, size=None):
+        if size is None:
+            self.f.truncate(self.f.tell())
+        else:
+            self.f.truncate(size)
 
     def seek(self, pos, whence=0):
         self.f.seek(pos, whence)

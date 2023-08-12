@@ -428,6 +428,7 @@ class ToolsTOR(ToolsTales):
         #Go at the start of the dialog
         #Loop on every Entry and reinsert
         theirsce.seek(theirsce.strings_offset + 1)
+        theirsce.truncate()
         nodes = [ele for ele in root.iter('Entry') if ele.find('Id').text != "-1"]
         nodes = [ele for ele in nodes if ele.find('PointerOffset').text != "-1"]
 
