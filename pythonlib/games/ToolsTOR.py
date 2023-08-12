@@ -498,6 +498,7 @@ class ToolsTOR(ToolsTales):
     # Extract the file DAT.BIN to the different directorties
     def extract_main_archive(self) -> None:
         dat_bin_path = self.paths["extracted_files"] / "DAT"
+        dat_bin_path.mkdir(exist_ok=True)
         
         self.clean_folder(dat_bin_path)
 
