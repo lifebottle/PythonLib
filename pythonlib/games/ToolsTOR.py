@@ -575,14 +575,14 @@ class ToolsTOR(ToolsTales):
                     with FileIO(pak[f_index].data, "rb") as f:
                         xml_data = self.extract_menu_file(p_file, f)
 
-                    with open(xml_path / f"{file_path.stem}_{f_index:04d}.xml", "wb") as xmlFile:
+                    with open(xml_path / (p_file["friendly_name"] + ".xml"), "wb") as xmlFile:
                         xmlFile.write(xml_data)
 
             else:
                 with FileIO(file_path, "rb") as f:
                     xml_data = self.extract_menu_file(entry, f)
 
-                with open(xml_path / f"{file_path.stem}.xml", "wb") as xmlFile:
+                with open(xml_path / (entry["friendly_name"] + ".xml"), "wb") as xmlFile:
                     xmlFile.write(xml_data)
             
             self.id = 1
@@ -676,7 +676,7 @@ class ToolsTOR(ToolsTales):
                     pools.sort(key=lambda x: x[1])
 
                     # Get the xml
-                    with open(xml_path / f"{file_path.stem}_{f_index:04d}.xml", "r", encoding='utf-8') as xmlFile:
+                    with open(xml_path / (p_file["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
                         root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
                     
 
@@ -695,7 +695,7 @@ class ToolsTOR(ToolsTales):
                 pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in entry["safe_areas"]] 
                 pools.sort(key=lambda x: x[1])
 
-                with open(xml_path / f"{file_path.stem}.xml", "r", encoding='utf-8') as xmlFile:
+                with open(xml_path / (entry["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
                     root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
                 
                 with open(file_path, "rb") as f:
