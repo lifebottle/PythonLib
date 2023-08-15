@@ -535,7 +535,7 @@ class ToolsTOR(ToolsTales):
         file.seek(ptr_range[0])
         pointers_offset: list[int] = []
         pointers_value: list[int]  = []
-        split: list[str] = [ele for ele in re.split(r'(P)|(\d+)', style) if ele]
+        split: list[str] = [ele for ele in re.split(r'([PT])|(\d+)', style) if ele]
         
         while file.tell() < ptr_range[1]:
             for step in split:
@@ -544,6 +544,10 @@ class ToolsTOR(ToolsTales):
                     if base_offset != 0 and off == 0: continue
                     pointers_offset.append(file.tell() - 4)
                     pointers_value.append(off - base_offset)
+                elif step == "T":
+                    off = file.tell()
+                    pointers_offset.append(off)
+                    pointers_value.append(off)
                 else:
                     file.read(int(step))
         
@@ -603,6 +607,7 @@ class ToolsTOR(ToolsTales):
             emb[(hi + lo) - base_offset] = [pair["HI"], pair["LO"]]
 
         for section in file_def['sections']:
+            max_len = 0
             pointers_start = int(section["pointers_start"])
             pointers_end = int(section["pointers_end"])
             
@@ -623,7 +628,8 @@ class ToolsTOR(ToolsTales):
             list_informations = [(k, str(v['ptr'])[1:-1], v.setdefault('emb', None)) for k, v in temp.items()]
 
             # Build the XML Structure with the information
-            self.create_Node_XML(xml_root, list_informations, section['section'])
+            if section['style'][0] == "T": max_len = int(section['style'][1:])
+            self.create_Node_XML(xml_root, list_informations, section['section'], max_len)
 
         # Write the embedded pointers section last
         temp = dict()
@@ -638,7 +644,8 @@ class ToolsTOR(ToolsTales):
         list_informations = [(k, str(v['ptr'])[1:-1], v.setdefault('emb', None)) for k, v in temp.items()]
 
         #Build the XML Structure with the information
-        self.create_Node_XML(xml_root, list_informations, "MIPS PTR TEXT")
+        if len(list_informations) != 0:
+            self.create_Node_XML(xml_root, list_informations, "MIPS PTR TEXT")
 
         
         #Write to XML file
@@ -724,6 +731,18 @@ class ToolsTOR(ToolsTales):
             poff = line.find("PointerOffset")
             if poff.text is not None:
                 flat_ptrs = [int(x) for x in poff.text.split(",")]
+
+            mlen = line.find("MaxLength")
+            if mlen is not None:
+                max_len = int(mlen.text)
+                f.seek(flat_ptrs[0])
+                text_bytes = self.get_node_bytes(line) + b"\x00"
+                if len(text_bytes) > max_len:
+                    tqdm.write(f"Line id {line.find('Id').text} ({line.find('JapaneseText').text}) too long, truncating...")
+                    f.write(text_bytes[:max_len-1] + b"\x00")
+                else:
+                    f.write(text_bytes + (b"\x00" * (max_len-len(text_bytes))))
+                continue
             
             text_bytes = self.get_node_bytes(line) + b"\x00"
 
@@ -765,12 +784,12 @@ class ToolsTOR(ToolsTales):
         )
 
 
-    def create_Node_XML(self, root, list_informations, section) -> None:
+    def create_Node_XML(self, root, list_informations, section, max_len = 0) -> None:
         strings_node = etree.SubElement(root, 'Strings')
         etree.SubElement(strings_node, 'Section').text = section
 
         for text, pointers_offset, emb in list_informations:
-            self.create_Entry(strings_node,  pointers_offset, text, emb)
+            self.create_Entry(strings_node, pointers_offset, text, emb, max_len)
 
         
     def pack_main_archive(self):

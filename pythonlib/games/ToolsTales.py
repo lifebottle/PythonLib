@@ -608,7 +608,7 @@ class ToolsTales:
         with open(new_XML_path, "wb") as xmlFile:
             xmlFile.write(txt)
         
-    def create_Entry(self, strings_node, pointer_offset, text, emb = None):
+    def create_Entry(self, strings_node, pointer_offset, text, emb = None, max_len = 0):
         
         #Add it to the XML node
         entry_node = etree.SubElement(strings_node, "Entry")
@@ -618,6 +618,9 @@ class ToolsTales:
             emb_node = etree.SubElement(entry_node,"EmbedOffset")
             etree.SubElement(emb_node, "hi").text = str(emb[0])[1:-1].replace(", ",",")
             etree.SubElement(emb_node, "lo").text = str(emb[1])[1:-1].replace(", ",",")
+        
+        if max_len != 0:
+            etree.SubElement(entry_node,"MaxLength").text = str(max_len)
 
         text_split = re.split(self.COMMON_TAG, text)
         
