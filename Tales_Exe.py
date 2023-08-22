@@ -268,6 +268,7 @@ if __name__ == "__main__":
             tales_instance.pack_all_menu()
             tales_instance.patch_binaries()
             tales_instance.pack_main_archive()
+            tales_instance.make_iso(Path(args.iso))
 
             # Generate Iso - not yet
             # xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/{}.xdelta".format(args.iso.replace(".iso",""))
