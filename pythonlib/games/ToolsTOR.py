@@ -971,7 +971,7 @@ class ToolsTOR(ToolsTales):
                         pbar.update(len(data))
             
             # Align
-            new.write_padding(0x8000)
+            new.write_padding(0x800)
             # get end of volume spot
             end_lba = new.tell() // 0x800
 
@@ -980,14 +980,14 @@ class ToolsTOR(ToolsTales):
 
             # Now we update the file entries, DAT.BIN only need updated
             # size, FLD.BIN size and LBA, also update the PVD size
-            new.write_int32_at(dat_sz, 0x82992)
-            new.write_int32_at(fld_lba, 0x829C2)
-            new.write_int32_at(end_lba, 0x8050)
+            new.write_int32_at(0x82992, dat_sz)
+            new.write_int32_at(0x829C2, fld_lba)
+            new.write_int32_at(0x8050, end_lba)
             new.write_int32_at(end_lba - 1, end_lba - 0x7F4)
             new.set_endian("big")
-            new.write_int32_at(dat_sz, 0x82996)
-            new.write_int32_at(fld_lba, 0x829C6)
-            new.write_int32_at(end_lba, 0x8054)
+            new.write_int32_at(0x82996, dat_sz)
+            new.write_int32_at(0x829C6, fld_lba)
+            new.write_int32_at(0x8054, end_lba)
             new.set_endian("little")
 
             # Finally, the SLPS, it's at the same location and size
@@ -1009,9 +1009,9 @@ class ToolsTOR(ToolsTales):
 
 
     def clean_builds(self, path: Path) -> None:
-        target_files = sorted(list(path.glob("*.iso")))[5:]
+        target_files = sorted(list(path.glob("*.iso")), key=lambda x: x.name)[:-4]
         if len(target_files) != 0:
             print("Cleaning builds folder...")
             for file in target_files:
-                print(f"deleting {str(file)}...")
+                print(f"deleting {str(file.name)}...")
                 file.unlink()
