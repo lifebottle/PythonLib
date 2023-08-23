@@ -6,7 +6,7 @@ import struct
 from dataclasses import dataclass
 from itertools import tee
 from pathlib import Path
-from time import time 
+import datetime
 
 import lxml.etree as etree
 import pandas as pd
@@ -926,7 +926,9 @@ class ToolsTOR(ToolsTales):
         self.clean_builds(self.paths["game_builds"])
 
         # Set up new iso name
-        new_iso = self.paths["game_builds"] / f"TalesOfRebirth_{int(time())}.iso"
+        n: datetime.datetime = datetime.datetime.now()
+        new_iso = self.paths["game_builds"] 
+        new_iso /= f"TalesOfRebirth_{n.year:02d}{n.month:02d}{n.day:02d}{n.hour:02d}{n.minute:02d}.iso"
         
         with FileIO(new_iso, "wb+") as new:
 
