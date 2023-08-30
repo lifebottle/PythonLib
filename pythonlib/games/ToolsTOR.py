@@ -972,10 +972,14 @@ class ToolsTOR(ToolsTales):
                         new.write(data)
                         pbar.update(len(data))
             
-            # Align
-            new.write_padding(0x800)
+            # Align file
+            new.write_padding(0x8000)
+
+            # Add the 20MiB pad cdvdgen adds
+            new.write_padding(0x13F_F800)
             # get end of volume spot
-            end_lba = new.tell() // 0x800
+            end = new.tell()
+            end_lba = end // 0x800
 
             # Put the Anchor in place
             new.write(anchor_save)
@@ -985,7 +989,7 @@ class ToolsTOR(ToolsTales):
             new.write_int32_at(0x82992, dat_sz)
             new.write_int32_at(0x829C2, fld_lba)
             new.write_int32_at(0x8050, end_lba)
-            new.write_int32_at(end_lba - 1, end_lba - 0x7F4)
+            new.write_int32_at(end + 0xC, end_lba)
             new.set_endian("big")
             new.write_int32_at(0x82996, dat_sz)
             new.write_int32_at(0x829C6, fld_lba)
