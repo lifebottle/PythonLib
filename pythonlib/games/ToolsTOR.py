@@ -605,7 +605,11 @@ class ToolsTOR(ToolsTales):
             hi = f.read_uint16() << 0x10
             f.seek(pair["LO"][0] - base_offset)
             lo = f.read_int16()
-            emb[(hi + lo) - base_offset] = [pair["HI"], pair["LO"]]
+            if ((hi + lo) - base_offset) in emb:
+                emb[(hi + lo) - base_offset][0].append(*pair["HI"])
+                emb[(hi + lo) - base_offset][1].append(*pair["LO"])
+            else:
+                emb[(hi + lo) - base_offset] = [pair["HI"], pair["LO"]]
 
         for section in file_def['sections']:
             max_len = 0
@@ -636,9 +640,15 @@ class ToolsTOR(ToolsTales):
         temp = dict()
         for k, v in emb.items():
             text = self.bytes_to_text(f, k)
-            temp[text] = dict()
-            temp[text]["ptr"] = []
-            temp[text]["emb"] = v
+            if text not in temp:
+                temp[text] = dict()
+                temp[text]["ptr"] = []
+            
+            if "emb" in temp[text]:
+                temp[text]["emb"][0].append(*v[0])
+                temp[text]["emb"][1].append(*v[1])
+            else:
+                temp[text]["emb"] = v
 
         #Remove duplicates
         #list_informations = self.remove_duplicates(section_list, pointers_offset_list, texts)
