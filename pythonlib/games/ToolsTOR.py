@@ -402,7 +402,7 @@ class ToolsTOR(ToolsTales):
         #Use the values only for Status = Done and use English if non empty
         final_text = ''
         if (status in self.list_status_insertion):
-            final_text = english_text or japanese_text or ''
+            final_text = english_text or ''
         else:
             final_text = japanese_text or ''
         
