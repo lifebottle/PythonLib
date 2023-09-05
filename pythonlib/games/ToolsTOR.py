@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from itertools import tee
 from pathlib import Path
 import datetime
+from collections.abc import Iterable
 
 import lxml.etree as etree
 import pandas as pd
@@ -897,12 +898,12 @@ class ToolsTOR(ToolsTales):
         self.pack_main_archive()
 
 
-    def extract_Iso(self, umd_iso: Path) -> None:  
+    def extract_Iso(self, game_iso: Path) -> None:  
 
         print("Extracting ISO files...")
         
         iso = pycdlib.PyCdlib()
-        iso.open(str(umd_iso))
+        iso.open(str(game_iso))
 
         extract_to = self.paths["original_files"]
         self.clean_folder(extract_to)
@@ -917,11 +918,18 @@ class ToolsTOR(ToolsTales):
             
             with iso.open_file_from_iso(iso_path=file) as f, open(str(out_path).split(";")[0], "wb+") as output:
                 with tqdm(total=f.length(), desc=f"Extracting {file[1:].split(';')[0]}", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
-                    while data := f.read(2048):
+                    while data := f.read(0x8000):
                         output.write(data)
                         pbar.update(len(data))
 
         iso.close()
+
+        # Extract IMS part
+        with open(game_iso, "rb") as f, open(extract_to / "_header.ims", "wb+") as g:
+            f.seek(0)
+            g.write(f.read(273 * 0x800))
+            f.seek(-0x800, 2)
+            g.write(f.read(0x800))
     
 
     def make_iso(self, umd_iso: Path) -> None:  
