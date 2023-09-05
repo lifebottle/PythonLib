@@ -46,7 +46,7 @@ class ToolsTOR(ToolsTales):
     LOW_BITS       = 0x3F
 
     
-    def __init__(self, project_file: Path) -> None:
+    def __init__(self, project_file: Path, insert_mask: list[str]) -> None:
         base_path = project_file.parent
         self.jsonTblTags = {}
         self.ijsonTblTags = {}
@@ -71,7 +71,8 @@ class ToolsTOR(ToolsTales):
         # byteCode
         self.story_byte_code = b"\xF8"
         self.string_opcode = InstructionType.STRING
-        self.list_status_insertion: list[str] = ['Done', 'Proofreading', 'Editing']
+        self.list_status_insertion: list[str] = ['Done']
+        self.list_status_insertion.append(*insert_mask)
 
 
     # Extract the story files

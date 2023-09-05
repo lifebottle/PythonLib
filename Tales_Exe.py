@@ -158,6 +158,33 @@ def get_arguments(argv=None):
         help="(Optional) - Only for extract Iso command",
     )
 
+    sp_insert.add_argument(
+        "--with-proofreading",
+        required=False,
+        action="store_const",
+        const="Proofreading", 
+        default="",
+        help="(Optional) - Insert lines in 'Proofreading' status",
+    )
+
+    sp_insert.add_argument(
+        "--with-editing",
+        required=False,
+        action="store_const",
+        const="Editing", 
+        default="",
+        help="(Optional) - Insert lines in 'Editing' status",
+    )
+
+    sp_insert.add_argument(
+        "--with-problematic",
+        required=False,
+        action="store_const",
+        const="Problematic", 
+        default="",
+        help="(Optional) - Insert lines in 'Problematic' status",
+    )
+
     # Debug commands
     sp_debug = sp.add_parser(
         "debug",
@@ -228,7 +255,11 @@ def hex2bytes(tales_instance, hex_value):
 def getTalesInstance(args, game_name):
 
     if game_name == "TOR":
-        talesInstance = ToolsTOR.ToolsTOR(args.project.resolve())
+        if args.action == "insert":
+            insert_mask = [args.with_proofreading, args.with_editing, args.with_problematic]
+        else:
+            insert_mask = [""]
+        talesInstance = ToolsTOR.ToolsTOR(args.project.resolve(), insert_mask)
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
     else:
