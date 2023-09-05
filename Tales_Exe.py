@@ -258,7 +258,7 @@ def getTalesInstance(args, game_name):
         if args.action == "insert":
             insert_mask = [args.with_proofreading, args.with_editing, args.with_problematic]
         else:
-            insert_mask = [""]
+            insert_mask = []
         talesInstance = ToolsTOR.ToolsTOR(args.project.resolve(), insert_mask)
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")

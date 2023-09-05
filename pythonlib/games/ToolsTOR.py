@@ -72,7 +72,7 @@ class ToolsTOR(ToolsTales):
         self.story_byte_code = b"\xF8"
         self.string_opcode = InstructionType.STRING
         self.list_status_insertion: list[str] = ['Done']
-        self.list_status_insertion.append(*insert_mask)
+        self.list_status_insertion.extend(insert_mask)
 
 
     # Extract the story files
