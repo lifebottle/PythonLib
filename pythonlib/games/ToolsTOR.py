@@ -868,8 +868,49 @@ class ToolsTOR(ToolsTales):
             f.seek(self.POINTERS_BEGIN)
             for sector, remainder in zip(sectors, remainders):
                 f.write(struct.pack("<I", sector + remainder))
-        
+
+
+    def _pack_dat_iter(self, sectors: list[int], remainders: list[int]) -> Iterable[bytes]:
+        buffer = 0
+        original_files = self.paths["extracted_files"] / "DAT"
+        total_files = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
     
+            
+        # Get all original DAT.BIN files
+        file_list: dict[int, Path] = {}
+        for file in original_files.glob("*/*"):
+            file_index = int(file.name[:5])
+            file_list[file_index] = file
+
+        # Overlay whatever we have compiled
+        for file in (self.paths["temp_files"] / "DAT").glob("*/*"):
+            file_index = int(file.name[:5])
+            file_list[file_index] = file
+            
+        for i in range(total_files):
+            file = file_list.get(i)
+            if not file:
+                remainders.append(0); sectors.append(buffer)
+                yield b""
+                continue
+
+            with open(file, "rb") as f2:
+                data = f2.read()
+            
+            comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
+            if comp_type != None:
+                data = comptolib.compress_data(data, version=int(comp_type))
+        
+            size = len(data)
+            remainder = 0x40 - (size % 0x40)
+            if remainder == 0x40: remainder = 0
+    
+            remainders.append(remainder)
+            buffer += size + remainder
+            sectors.append(buffer)
+
+            yield data + (b"\x00" * remainder)
+
         
     def pack_all_story(self):
         print("Recreating Story files...")
@@ -932,7 +973,7 @@ class ToolsTOR(ToolsTales):
             g.write(f.read(0x800))
     
 
-    def make_iso(self, umd_iso: Path) -> None:  
+    def make_iso(self) -> None:  
 
         print("Creating new iso...")
 
@@ -951,30 +992,42 @@ class ToolsTOR(ToolsTales):
         
         with FileIO(new_iso, "wb+") as new:
 
-            # 1st copy the relevant contents from the original iso
-            # as we don't touch anything before the DAT.BIN that means
-            # copying the first 847549 LBAs from the original iso
-            with open(umd_iso, "rb") as og:
-                og_sz = 847549 * 0x800
-                with tqdm(total=og_sz, desc=f"Copying unchanged data", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
-                    for _ in range(og_sz // 0xCEEBD):
-                        new.write(og.read(0xCEEBD))
-                        pbar.update(0xCEEBD)
-            
-                # Now we grab the 2nd Anchor from the original iso too
-                # it's at the end of the image, so just grab the last LBA
-                og.seek(-0x800, 2)
-                anchor_save = og.read(0x800)
+            # 1st place the logo + iso data from the .ims file
+            with open(self.paths["original_files"] / "_header.ims", "rb") as f:
+                for _ in tqdm(range(273), desc=f"Copying iso header"):
+                    new.write(f.read(0x800))
+                anchor_save = f.read(0x800)
+
+
+            # place the file data in
+            files = [
+                self.paths["original_files"] / "SYSTEM.CNF",
+                self.paths["temp_files"] / "SLPS_254.50",
+                self.paths["original_files"] / "IOPRP300.IMG",
+                self.paths["original_files"] / "BOOT.IRX",
+                self.paths["original_files"] / "MOV.BIN",
+            ]
+
+            for file in files:
+                with open(file, "rb") as f:
+                    f.seek(0, 2)
+                    size = f.tell()
+                    f.seek(0)
+                    with tqdm(total=size, desc=f"Inserting {file.name}", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
+                        while data := f.read(0x8000):
+                            new.write(data)
+                            pbar.update(len(data))
+                new.write_padding(0x800)
+
             
             # Now we plop the new DAT.BIN in its legitimate spot
-            with open(self.paths["final_files"] / "DAT.BIN", "rb") as dt:
-                dt.seek(0, 2)
-                dat_sz = dt.tell()
-                dt.seek(0)
-                with tqdm(total=dat_sz, desc=f"Inserting DAT.BIN", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
-                    while data := dt.read(0x8000):
-                        new.write(data)
-                        pbar.update(len(data))
+            sectors: list[int] = [0]
+            remainders: list[int] = []
+            total = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
+            dat_sz = 0
+            for blob in tqdm(self._pack_dat_iter(sectors, remainders), total=total, desc=f"Inserting DAT.BIN"):
+                new.write(blob)
+                dat_sz += len(blob)
             
             # Align to nearest LBA
             new.write_padding(0x800)
@@ -991,11 +1044,9 @@ class ToolsTOR(ToolsTales):
                         new.write(data)
                         pbar.update(len(data))
             
-            # Align file
-            new.write_padding(0x8000)
+            # Align file and add the 20MiB pad cdvdgen adds
+            new.write_padding(0x8000); new.write(b"\x00" * 0x13F_F800)
 
-            # Add the 20MiB pad cdvdgen adds
-            new.write_padding(0x13F_F800)
             # get end of volume spot
             end = new.tell()
             end_lba = end // 0x800
@@ -1017,9 +1068,9 @@ class ToolsTOR(ToolsTales):
 
             # Finally, the SLPS, it's at the same location and size
             # so no problems for us
-            with open(self.paths["final_files"] / "SLPS_254.50", "rb") as sl:
-                new.seek(0x89000)
-                new.write(sl.read())
+            new.seek((274 * 0x800) + self.POINTERS_BEGIN)
+            for sector, remainder in zip(tqdm(sectors, desc="Updating SLPS offsets"), remainders):
+                new.write(struct.pack("<I", sector + remainder))
 
 
     def clean_folder(self, path: Path) -> None:

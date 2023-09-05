@@ -153,9 +153,9 @@ def get_arguments(argv=None):
         "-i",
         "--iso",
         required=False,
-        default="../b-topndxj.iso",
+        default="",
         metavar="iso",
-        help="(Optional) - Only for extract Iso command",
+        help="(Deprecated) - No longer in use for insertion",
     )
 
     sp_insert.add_argument(
@@ -298,8 +298,7 @@ if __name__ == "__main__":
             tales_instance.pack_all_skits()
             tales_instance.pack_all_menu()
             tales_instance.patch_binaries()
-            tales_instance.pack_main_archive()
-            tales_instance.make_iso(Path(args.iso))
+            tales_instance.make_iso()
 
             # Generate Iso - not yet
             # xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/{}.xdelta".format(args.iso.replace(".iso",""))
