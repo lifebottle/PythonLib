@@ -40,13 +40,24 @@ class ToolsTales:
         b"EBG\x00": "ebg",
         b"anp3": "anp3",
         b"MSCF": "cab",
+        b"MGLK": "mglk",
+        b"iSE2": "se2",
+        b"isdt": "sdt",
+        b"iTPK": "tpk",
+        b"iTMD": "tmd",
+        b"iTDT": "tdt",
+        b"XGG\x00": "xgg",
+        b"ORG\x00": "org",
         b"fps4": "fps4",
         b"EFFE": "effe",
         b"THEI": "theirsce",
+        b"TOD1": "tod1rsce",
         # jr ra :: nop
         b"\x08\x00\xe0\x03": "ovl",
         # lui a2,0x2e :: XX XX 03 24  li v1,XXXX
         b"\x2E\x00\x06\x3C": "ovl",
+        b"\x2C\x00\x03\x3C": "ovl",
+        b"\xFF\x00\xC6\x30": "ovl",
         b"\x2F\x00\x06\x3C": "ovl",
     }
     
@@ -306,6 +317,12 @@ class ToolsTales:
                 return "hd"
             elif data[0x30:0x38] == b"IECSidiM":
                 return "sq"
+            
+        if data[:6] == b"D1RXGM":
+            return "xgm"
+        
+        if data[:6] == b"D1RXGS":
+            return "xgs"
     
         if data[:16] == b"\x00" * 0x10:
             if data[16:18] != b"\x00\x00":
