@@ -24,6 +24,7 @@ from pythonlib.formats.theirsce_instructions import (AluOperation, InstructionTy
                                                      TheirsceBaseInstruction)
 from .ToolsTales import ToolsTales
 import subprocess
+from git import Repo
 
 @dataclass
 class LineEntry:
@@ -47,7 +48,7 @@ class ToolsTOR(ToolsTales):
     LOW_BITS       = 0x3F
 
     
-    def __init__(self, project_file: Path, insert_mask: list[str]) -> None:
+    def __init__(self, project_file: Path, insert_mask: list[str], changed_only: bool = False) -> None:
         base_path = project_file.parent
         self.jsonTblTags = {}
         self.ijsonTblTags = {}
@@ -74,6 +75,9 @@ class ToolsTOR(ToolsTales):
         self.string_opcode = InstructionType.STRING
         self.list_status_insertion: list[str] = ['Done']
         self.list_status_insertion.extend(insert_mask)
+        self.changed_only = changed_only
+        self.repo = Repo(base_path)
+        self.base_path = base_path
 
 
     # Extract the story files
@@ -466,7 +470,19 @@ class ToolsTOR(ToolsTales):
         xml_path = self.paths["skit_xml"]
         pak2_path = self.paths["extracted_files"] / "DAT" / "PAK2"
 
-        for file in (pbar:= tqdm(list(pak2_path.glob("*.pak2")))):
+        in_list = []
+        if self.changed_only:
+            for item in self.repo.index.diff(None):
+                item_path = Path(item.a_path)
+                if item_path.parent.name == "skits":
+                    in_list.append(pak2_path / item_path.with_suffix(".3.pak2").name)
+            if len(in_list) == 0:
+                print("No changed files to insert...")
+                return
+        else:
+            in_list = list(pak2_path.glob("*.pak2"))
+
+        for file in (pbar := tqdm(in_list)):
             pbar.set_description_str(file.name)
             with open(file, "rb") as f:
                 pak2_data = f.read()
@@ -920,7 +936,19 @@ class ToolsTOR(ToolsTales):
         xml_path = self.paths["story_xml"]
         scpk_path = self.paths["extracted_files"] / "DAT" / "SCPK"
 
-        for file in (pbar:= tqdm(list(scpk_path.glob("*.scpk")))):
+        in_list = []
+        if self.changed_only:
+            for item in self.repo.index.diff(None):
+                item_path = Path(item.a_path)
+                if item_path.parent.name == "story":
+                    in_list.append(scpk_path / item_path.with_suffix(".scpk").name)
+            if len(in_list) == 0:
+                print("No changed files to insert...")
+                return
+        else:
+            in_list = list(scpk_path.glob("*.scpk"))
+
+        for file in (pbar:= tqdm(in_list)):
             pbar.set_description_str(file.name)
             curr_scpk = Scpk.from_path(file)
             old_rsce = Theirsce(curr_scpk.rsce)

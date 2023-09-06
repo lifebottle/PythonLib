@@ -184,6 +184,13 @@ def get_arguments(argv=None):
         default="",
         help="(Optional) - Insert lines in 'Problematic' status",
     )
+    
+    sp_insert.add_argument(
+        "--only-changed",
+        required=False,
+        action="store_true",
+        help="(Optional) - Insert only changed files not yet commited",
+    )
 
     # Debug commands
     sp_debug = sp.add_parser(
@@ -259,7 +266,7 @@ def getTalesInstance(args, game_name):
             insert_mask = [args.with_proofreading, args.with_editing, args.with_problematic]
         else:
             insert_mask = []
-        talesInstance = ToolsTOR.ToolsTOR(args.project.resolve(), insert_mask)
+        talesInstance = ToolsTOR.ToolsTOR(args.project.resolve(), insert_mask, args.only_changed)
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
     else:
