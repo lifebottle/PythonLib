@@ -11,7 +11,7 @@ from pathlib import Path
 import lxml.etree as etree
 import pycdlib
 import pyjson5 as json
-from git import Repo
+from dulwich import porcelain
 from tqdm import tqdm
 
 import pythonlib.formats.pak2 as pak2lib
@@ -77,8 +77,7 @@ class ToolsTOR(ToolsTales):
         self.list_status_insertion: list[str] = ['Done']
         self.list_status_insertion.extend(insert_mask)
         self.changed_only = changed_only
-        self.repo = Repo(base_path)
-        self.base_path = base_path
+        self.repo_path = str(base_path)
 
 
     # Extract the story files
@@ -473,8 +472,8 @@ class ToolsTOR(ToolsTales):
 
         in_list = []
         if self.changed_only:
-            for item in self.repo.index.diff(None):
-                item_path = Path(item.a_path)
+            for item in porcelain.status(self.repo_path).unstaged:
+                item_path = Path(item.decode("utf-8"))
                 if item_path.parent.name == "skits":
                     in_list.append(pak2_path / item_path.with_suffix(".3.pak2").name)
             if len(in_list) == 0:
@@ -715,7 +714,7 @@ class ToolsTOR(ToolsTales):
                     # Get the xml
                     with open(xml_path / (p_file["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
                         root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
-                    
+
 
                     with FileIO(pak[f_index].data, "rb") as f:
                         self.pack_menu_file(root, pools, base_offset, f)
@@ -939,8 +938,8 @@ class ToolsTOR(ToolsTales):
 
         in_list = []
         if self.changed_only:
-            for item in self.repo.index.diff(None):
-                item_path = Path(item.a_path)
+            for item in porcelain.status(self.repo_path).unstaged:
+                item_path = Path(item.decode("utf-8"))
                 if item_path.parent.name == "story":
                     in_list.append(scpk_path / item_path.with_suffix(".scpk").name)
             if len(in_list) == 0:
