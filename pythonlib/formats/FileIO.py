@@ -1,13 +1,17 @@
-from io import BytesIO
+import io
 import struct
+from io import BytesIO
+from pathlib import Path
+from typing import Union
+
 
 class FileIO(object):
-    def __init__(self, path, mode="r+b", endian="little"):
-        self.mode = mode
+    def __init__(self, path: Union[Path, str, BytesIO, bytes], mode="r+b", endian="little"):
+        self.mode: str = mode
         self._isBitesIO = False
         if type(path) is bytes:
             self.path = None
-            self.f = path
+            self.f = path # type: ignore
             self.is_memory_file = True
         elif type(path) is BytesIO:
             self.path = None
@@ -21,9 +25,9 @@ class FileIO(object):
 
     def __enter__(self):
         if self.is_memory_file:
-            self.f = self.f if self._isBitesIO else BytesIO(self.f)
+            self.f: io.BufferedIOBase = self.f if self._isBitesIO else BytesIO(self.f) # type: ignore
         else:
-            self.f = open(self.path, self.mode)
+            self.f:io.BufferedIOBase = open(self.path, self.mode) # type: ignore
         self.f.seek(0)
         return self
 

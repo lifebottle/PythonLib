@@ -1,4 +1,6 @@
-from typing import Generator
+from io import BytesIO
+from pathlib import Path
+from typing import Generator, Union
 
 from .FileIO import FileIO
 from .theirsce_funcs import *
@@ -17,7 +19,7 @@ class subsection:
 
 
 class Theirsce(FileIO):
-    def __init__(self, path=""):
+    def __init__(self, path: Union[Path, str, BytesIO, bytes] ="") -> None:
         super().__init__(path, "r+b", "<")
         super().__enter__()
         self.magic = self.read(8)
@@ -32,7 +34,7 @@ class Theirsce(FileIO):
         self.frame_offset = self.read_uint16()
         self.entry_offset = self.read_uint16()
 
-        self.sections: list[subsection] = []
+        self.sections: list[list[subsection]] = []
         # section_stop = self.readUShort(); self.seek(-2, 1)
         #section_amount = (section_stop - 0x18) // 2
 
@@ -40,7 +42,7 @@ class Theirsce(FileIO):
             pos = self.tell() + 2
             self.seek(self.read_uint16())
 
-            subsections = []
+            subsections: list[subsection] = []
             for _ in range(self.read_uint16()):
                 sub = subsection(self.read_uint16(), self.read_uint16(), self.read_uint16() + self.code_offset)
                 subsections.append(sub)
@@ -53,7 +55,7 @@ class Theirsce(FileIO):
     def __exit__(self, exc_type, exc_value, traceback):
         return super().__exit__(exc_type, exc_value, traceback)
         
-    def walk_code(self, start=None, end=None) -> Generator[None, TheirsceBaseInstruction, None]:
+    def walk_code(self, start=None, end=None) -> Generator[TheirsceBaseInstruction, None, None]:
         start = self.code_offset if start is None else start
         end = self.strings_offset if end is None else end
 
@@ -120,7 +122,7 @@ class Theirsce(FileIO):
 
         return data
 
-    def read_opcode(self):
+    def read_opcode(self) -> TheirsceBaseInstruction:
         pos = self.tell()
         opcode = self.read_uint8()
 
@@ -179,7 +181,7 @@ class Theirsce(FileIO):
             elif size_mask == 2:
                 value = top << 16 | self.read_uint16()
                 value = value | 0xFF000000 | 0xF80000 if signed else value
-            elif size_mask == 3:
+            else: #if size_mask == 3:
                 value = self.read_uint32()
             
             # to signed
@@ -221,7 +223,7 @@ class Theirsce(FileIO):
             
                 return TheirsceAcquireInstruction(params=params,variables=variables, position=pos)
 
-            elif opcode == 0xF7:
+            else: # if opcode == 0xF7:
                 param = self.read_uint16() # Type?
                 return TheirsceBreakInstruction(param=param, position=pos)
         
@@ -231,12 +233,12 @@ class Theirsce(FileIO):
             return TheirsceStringInstruction(offset=value,text="", position=pos)
 
         # ?
-        elif opcode == 0xFE:
+        else: # if opcode == 0xFE:
             return TheirsceSpecialReferenceInstruction(position=pos)
         
         # Impossible
-        else:
-            raise ValueError(f"INVALID OPCODE 0x{opcode:2X}")
+        # else:
+        #     raise ValueError(f"INVALID OPCODE 0x{opcode:2X}")
     
 # if __name__ == "__main__":
 #     with Theirsce("./10233d.theirsce") as f:

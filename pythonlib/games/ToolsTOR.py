@@ -1,30 +1,31 @@
-import io
-import pyjson5 as json
+import datetime
 import re
 import shutil
 import struct
+import subprocess
+from collections.abc import Iterable
 from dataclasses import dataclass
 from itertools import tee
 from pathlib import Path
-import datetime
-from collections.abc import Iterable
 
 import lxml.etree as etree
-import pandas as pd
 import pycdlib
+import pyjson5 as json
+from git import Repo
 from tqdm import tqdm
+
+import pythonlib.formats.pak2 as pak2lib
+import pythonlib.utils.comptolib as comptolib
 from pythonlib.formats.FileIO import FileIO
 from pythonlib.formats.pak import Pak
 from pythonlib.formats.scpk import Scpk
-
-import pythonlib.utils.comptolib as comptolib
-import pythonlib.formats.pak2 as pak2lib
 from pythonlib.formats.theirsce import Theirsce
-from pythonlib.formats.theirsce_instructions import (AluOperation, InstructionType,
+from pythonlib.formats.theirsce_instructions import (AluOperation,
+                                                     InstructionType,
                                                      TheirsceBaseInstruction)
+
 from .ToolsTales import ToolsTales
-import subprocess
-from git import Repo
+
 
 @dataclass
 class LineEntry:

@@ -1,55 +1,9 @@
 import argparse
-import io
-import os
-import subprocess
 from pathlib import Path
 
-import GoogleAPI
-import RepoFunctions
 from pythonlib.games import ToolsNDX, ToolsTOR
 
-repos_infos ={
-    "TOR":
-        {
-            "Org": "SymphoniaLauren",
-            "Repo": "Tales-Of-Rebirth"
-        },
-    "NDX":
-        {
-            "Org": "Lifebottle",
-            "Repo": "Narikiri-Dungeon-X"
-        }
-}
-
-
 SCRIPT_VERSION = "0.0.3"
-
-
-def generate_xdelta_patch(repo_name, xdelta_name="Tales-Of-Rebirth_Patch_New.xdelta"):
-
-    print("Create xdelta patch")
-    original_path = "../Data/{}/Disc/Original/{}.iso".format(repo_name, repo_name)
-    new_path = "../Data/{}/Disc/New/{}.iso".format(repo_name, repo_name)
-    subprocess.run(["xdelta", "-f", "-s", original_path, new_path, xdelta_name])
-
-
-def get_directory_path(path):
-    return os.path.dirname(os.path.abspath(path))
-
-
-def check_arguments(parser, args):
-    if hasattr(args, "elf_path") and not args.elf_path:
-        args.elf_path = get_directory_path(args.input) + "/SLPS_254.50"
-
-    if hasattr(args, "elf_out") and not args.elf_out:
-        args.elf_out = get_directory_path(args.input) + "/NEW_SLPS_254.50"
-
-    if not args.output:
-        if not os.path.isdir(args.input):
-            args.output = get_directory_path(args.input)
-            args.output += "/" + args.input.split("/")[-1]
-        else:
-            args.output = args.input
 
 
 def get_arguments(argv=None):
@@ -76,30 +30,6 @@ def get_arguments(argv=None):
 
     sp = parser.add_subparsers(title="Available actions", required=False, dest="action")
 
-    # # Utility commands
-    # sp_utility = sp.add_parser(
-    #     "utility",
-    #     description="Usefull functions to be called from Translation App"
-    # )
-    #
-    #
-    #
-    # sp_utility.add_argument(
-    #     "function",
-    #     choices=["hex2bytes", "dumptext"],
-    #     metavar="function_name",
-    #     help="Options: hex2bytes, dumptext",
-    # )
-    #
-    # sp_utility.add_argument(
-    #     "param1",
-    #     help="First parameter of a function",
-    # )
-    #
-    # sp_utility.add_argument(
-    #     "param2",
-    #     help="Second parameter of a function",
-    # )
     # Extract commands
     sp_extract = sp.add_parser(
         "extract",
@@ -123,7 +53,7 @@ def get_arguments(argv=None):
         required=False,
         default="../b-topndxj.iso",
         metavar="iso",
-        help="(Optional) - Only for extract Iso command"
+        help="(Optional) - Only for extract Iso command",
     )
 
     sp_extract.add_argument(
@@ -132,18 +62,18 @@ def get_arguments(argv=None):
         required=False,
         metavar="replace",
         default=False,
-        help="(Optional) - Boolean to uses translations from the Repo to overwrite the one in the Data folder"
+        help="(Optional) - Boolean to uses translations from the Repo to overwrite the one in the Data folder",
     )
 
     sp_insert = sp.add_parser(
         "insert",
-        help="Take the new texts and recreate the files"
+        help="Take the new texts and recreate the files",
     )
 
     sp_insert.add_argument(
         "-ft",
         "--file_type",
-        choices=["Iso", "Main", "Menu", "Story", "Skits", "All", "Asm"], 
+        choices=["Iso", "Main", "Menu", "Story", "Skits", "All", "Asm"],
         required=True,
         metavar="file_type",
         help="(Required) - Options: Iso, Init, Main, Elf, Story, Skits, All, Asm",
@@ -162,7 +92,7 @@ def get_arguments(argv=None):
         "--with-proofreading",
         required=False,
         action="store_const",
-        const="Proofreading", 
+        const="Proofreading",
         default="",
         help="(Optional) - Insert lines in 'Proofreading' status",
     )
@@ -171,7 +101,7 @@ def get_arguments(argv=None):
         "--with-editing",
         required=False,
         action="store_const",
-        const="Editing", 
+        const="Editing",
         default="",
         help="(Optional) - Insert lines in 'Editing' status",
     )
@@ -180,11 +110,11 @@ def get_arguments(argv=None):
         "--with-problematic",
         required=False,
         action="store_const",
-        const="Problematic", 
+        const="Problematic",
         default="",
         help="(Optional) - Insert lines in 'Problematic' status",
     )
-    
+
     sp_insert.add_argument(
         "--only-changed",
         required=False,
@@ -192,81 +122,25 @@ def get_arguments(argv=None):
         help="(Optional) - Insert only changed files not yet commited",
     )
 
-    # Debug commands
-    sp_debug = sp.add_parser(
-        "debug",
-        description="Used to debug some files",
-        help="Used to debug some files",
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-
-    sp_debug.add_argument(
-        "-ft",
-        "--file_type",
-        choices=["Menu", "Story", "Skits"],
-        metavar="file_type",
-        help="Options: Menu, Story, Skits",
-    )
-
-    sp_debug.add_argument(
-        "-f",
-        "--file_name",
-        required=False,
-        help="File name to debug"
-    )
-
-    sp_debug.add_argument(
-        "-t",
-        "--text",
-        required=False,
-        help="Boolean to also extract the Japanese text"
-    )
-
-    # Export commands
-    sp_export = sp.add_parser("export", help="Exports, I guess.")
-    sp_export.add_argument(
-        "file", choices=["table"], metavar="file type", help="Exports data."
-    )
-
     args = parser.parse_args()
-    #check_arguments(parser, args)
 
     return args
-
-
-def send_xdelta():
-   file_link = GoogleAPI.upload_xdelta(xdelta_name, "Stewie")            #Need to add user for the folder
-            
-   message_text = """
-Hi {},
-
-here is your xdelta patch : 
-{}
-""".format('fortiersteven1@gmail.com', file_link)
-
-   message_text = message_text + "<br>" + RepoFunctions.get_pull_requests_message(org, repo_name)
-   GoogleAPI.send_message('fortiersteven1@gmail.com', 'fortiersteven1@gmail.com', game_name + " Patch", file_link, message_text)
-    
-def hex2bytes(tales_instance, hex_value):
-    
-    bytes_value =  bytes.fromhex(hex_value + " 00")
-    #print(bytes_value)
-    f = io.BytesIO(bytes_value)
-    f.seek(0)
-    txt, offset = tales_instance.bytesToText(f, -1, b'')
-    txt = "\n\n".join([ele for ele in txt.split("{00}") if ele != ""])
-    with open("text_dump.txt",  "w",encoding="utf-8") as f:
-        f.write(txt)
 
 
 def getTalesInstance(args, game_name):
 
     if game_name == "TOR":
         if args.action == "insert":
-            insert_mask = [args.with_proofreading, args.with_editing, args.with_problematic]
+            insert_mask = [
+                args.with_proofreading,
+                args.with_editing,
+                args.with_problematic,
+            ]
         else:
             insert_mask = []
-        talesInstance = ToolsTOR.ToolsTOR(args.project.resolve(), insert_mask, args.only_changed)
+        talesInstance = ToolsTOR.ToolsTOR(
+            args.project.resolve(), insert_mask, args.only_changed
+        )
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
     else:
@@ -280,8 +154,6 @@ if __name__ == "__main__":
     args = get_arguments()
     game_name = args.game
     tales_instance = getTalesInstance(args, game_name)
-    org = repos_infos[game_name]["Org"]
-    repo_name = repos_infos[game_name]["Repo"]
 
     if args.action == "insert":
 
@@ -296,7 +168,7 @@ if __name__ == "__main__":
 
         elif args.file_type == "Menu":
             tales_instance.pack_all_menu()
-        
+
         elif args.file_type == "Asm":
             tales_instance.patch_binaries()
 
@@ -306,10 +178,6 @@ if __name__ == "__main__":
             tales_instance.pack_all_menu()
             tales_instance.patch_binaries()
             tales_instance.make_iso()
-
-            # Generate Iso - not yet
-            # xdelta_name = "../Data/Tales-Of-Rebirth/Disc/New/{}.xdelta".format(args.iso.replace(".iso",""))
-            # generate_xdelta_patch(repo_name, xdelta_name)
 
     if args.action == "extract":
 
@@ -328,8 +196,3 @@ if __name__ == "__main__":
 
         if args.file_type == "Skits":
             tales_instance.extract_all_skits(args.replace)
-
-    if args.action == "debug":
-
-        if args.file_type in ["Story", "Skits"]:
-            tales_instance.debug_Story_Skits(args.file_type, args.file_name, args.text)

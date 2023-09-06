@@ -1,5 +1,7 @@
-from dataclasses import dataclass
 import struct
+from dataclasses import dataclass
+from pathlib import Path
+
 from ..formats.FileIO import FileIO
 from ..utils import comptolib
 
@@ -23,7 +25,7 @@ class Scpk():
 
     
     @staticmethod
-    def from_path(path="") -> 'Scpk':
+    def from_path(path: Path) -> 'Scpk':
         with FileIO(path) as f:
             if f.read(4) != MAGIC:
                 raise ValueError("Not an SCPK file!")

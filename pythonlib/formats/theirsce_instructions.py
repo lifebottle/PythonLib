@@ -83,8 +83,8 @@ class AluOperation(Enum):
 
 @dataclass
 class TheirsceBaseInstruction:
-    mnemonic: str = field(default=False, init=False)
-    type: InstructionType = field(default=False, init=False)
+    mnemonic: str = field(default=False, init=False) # type: ignore
+    type: InstructionType = field(default=False, init=False) # type: ignore
     #size: int
 
 
