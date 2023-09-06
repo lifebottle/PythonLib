@@ -108,6 +108,10 @@ def compress_data(input: bytes, raw: bool = False, version: int = 3) -> bytes:
     output_size = ((input_size * 9) // 8) + 10
     output = b"\x00" * output_size
     output_size = ctypes.c_uint(output_size)
+
+    if version == 0:
+        return b"\x00" + (struct.pack("<I", len(input)) * 2) + input
+
     error = compto_encode(version, input, input_size, output, ctypes.byref(output_size))
     RaiseError(error)
 
@@ -129,6 +133,9 @@ def decompress_data(input: bytes, raw: bool = False, version: int = 3) -> bytes:
     else:
         version = struct.unpack("<b", input[:1])[0]
         input_size, output_size = struct.unpack("<2L", input[1:9])
+
+    if version == 0:
+        return input[9:]
 
     output = b"\x00" * output_size
     input = input[9:]
