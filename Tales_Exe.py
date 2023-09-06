@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from pythonlib.games import ToolsNDX, ToolsTOR
+from pythonlib.games import ToolsNDX, ToolsTODDC, ToolsTOR
 
 SCRIPT_VERSION = "0.0.3"
 
@@ -13,10 +13,10 @@ def get_arguments(argv=None):
     parser.add_argument(
         "-g",
         "--game",
-        choices=["TOR", "NDX"],
+        choices=["TOR", "TODDC", "NDX"],
         required=True,
         metavar="game",
-        help="Options: TOR, NDX",
+        help="Options: TOR, TODDC, NDX",
     )
 
     parser.add_argument(
@@ -141,6 +141,8 @@ def getTalesInstance(args, game_name):
         talesInstance = ToolsTOR.ToolsTOR(
             args.project.resolve(), insert_mask, args.only_changed
         )
+    elif game_name == "TODDC":
+        talesInstance = ToolsTODDC.ToolsTODDC(args.project.resolve())
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
     else:
