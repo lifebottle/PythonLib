@@ -3,6 +3,7 @@ import re
 import shutil
 import struct
 import subprocess
+import types
 from collections.abc import Iterable
 from dataclasses import dataclass
 from itertools import tee
@@ -11,7 +12,7 @@ from pathlib import Path
 import lxml.etree as etree
 import pycdlib
 import pyjson5 as json
-from dulwich import porcelain
+from dulwich import line_ending, porcelain
 from tqdm import tqdm
 
 import pythonlib.formats.pak2 as pak2lib
@@ -40,6 +41,25 @@ class NameEntry:
 
 
 VARIABLE_NAME = "[VARIABLE]"
+
+
+# Bandage method to override autocrlf settings for peple without git
+def get_blob_normalizer_custom(self):
+    """Return a BlobNormalizer object."""
+    git_attributes = {}
+    config_stack = self.get_config_stack()
+    config_stack.set("core", "autocrlf", "true")
+    try:
+        tree = self.object_store[self.refs[b"HEAD"]].tree
+        return line_ending.TreeBlobNormalizer(
+            config_stack,
+            git_attributes,
+            self.object_store,
+            tree,
+        )
+    except KeyError:
+        return line_ending.BlobNormalizer(config_stack, git_attributes)
+
 
 class ToolsTOR(ToolsTales):
     
@@ -78,6 +98,12 @@ class ToolsTOR(ToolsTales):
         self.list_status_insertion.extend(insert_mask)
         self.changed_only = changed_only
         self.repo_path = str(base_path)
+
+
+    def get_repo_fixed(self):
+        r = porcelain.Repo(self.repo_path)
+        r.get_blob_normalizer = types.MethodType(get_blob_normalizer_custom, r)
+        return r
 
 
     # Extract the story files
@@ -404,7 +430,7 @@ class ToolsTOR(ToolsTales):
         status = entry_node.find("Status").text
         japanese_text = entry_node.find("JapaneseText").text
         english_text = entry_node.find("EnglishText").text
-        
+
         #Use the values only for Status = Done and use English if non empty
         final_text = ''
         if (status in self.list_status_insertion):
@@ -472,7 +498,7 @@ class ToolsTOR(ToolsTales):
 
         in_list = []
         if self.changed_only:
-            for item in porcelain.status(self.repo_path).unstaged:
+            for item in porcelain.status(self.get_repo_fixed()).unstaged:
                 item_path = Path(item.decode("utf-8"))
                 if item_path.parent.name == "skits":
                     in_list.append(pak2_path / item_path.with_suffix(".3.pak2").name)
@@ -938,7 +964,7 @@ class ToolsTOR(ToolsTales):
 
         in_list = []
         if self.changed_only:
-            for item in porcelain.status(self.repo_path).unstaged:
+            for item in porcelain.status(self.get_repo_fixed()).unstaged:
                 item_path = Path(item.decode("utf-8"))
                 if item_path.parent.name == "story":
                     in_list.append(scpk_path / item_path.with_suffix(".scpk").name)
