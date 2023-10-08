@@ -65,6 +65,13 @@ def get_arguments(argv=None):
         help="(Optional) - Boolean to uses translations from the Repo to overwrite the one in the Data folder",
     )
 
+    sp_extract.add_argument(
+        "--only-changed",
+        required=False,
+        action="store_true",
+        help="(Optional) - Insert only changed files not yet commited",
+    )
+
     sp_insert = sp.add_parser(
         "insert",
         help="Take the new texts and recreate the files",
