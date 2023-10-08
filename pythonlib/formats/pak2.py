@@ -152,11 +152,13 @@ if __name__ == "__main__":
     print()
 
     # Get new Theirsce, if there's no second arg just reinsert original
+    print(sys.argv[2])
     if len(sys.argv) > 2:
         with open(sys.argv[2], "rb+") as f:
             theirsce = f.read()
+        pak2.chunks.theirsce = theirsce
 
-    with open(sys.argv[2] + ".new", "wb+") as output:
+    with open(sys.argv[1] + ".new", "wb+") as output:
         output.write(create_pak2(pak2))
 
     print("Done!")
