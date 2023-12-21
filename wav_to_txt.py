@@ -1,12 +1,22 @@
-# Usage with IDLE:
-# path = "path/to/audio.wav"
-# print("\nFull text:", get_large_audio_transcription_on_silence(path))
-
-# importing libraries 
-import speech_recognition as sr 
-import os 
+# pip install SpeechRecognition pydub
+import speech_recognition as sr
+import os
+import argparse
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="A utility to extract transcribe audio files to Japanese.  To use this: python wav_to_txt.py file.wav")
+    parser.add_argument(
+        "file",
+        help="Path to audio file that needs be to transcribed to Japanese",
+        type=str,
+    )
+
+    args = parser.parse_args()
+
+    path = args.file
+    print("\nFull Text:\n", get_large_audio_transcription_on_silence(path))
 
 # create a speech recognition object
 r = sr.Recognizer()
@@ -41,6 +51,7 @@ def get_large_audio_transcription_on_silence(path):
     # create a directory to store the audio chunks
     if not os.path.isdir(folder_name):
         os.mkdir(folder_name)
+    f = open("whole_text.txt", "a", encoding="utf8")
     whole_text = ""
     # process each chunk 
     for i, audio_chunk in enumerate(chunks, start=1):
@@ -54,8 +65,13 @@ def get_large_audio_transcription_on_silence(path):
         except sr.UnknownValueError as e:
             print("Error:", str(e))
         else:
-            text = f"{text.capitalize()}. "
+            text = f"{text.capitalize()}"
             print(chunk_filename, ":", text)
-            whole_text += text
+            f.write(text + "\n")
+            whole_text+=text + "\n"
     # return the text for all chunks detected
+    f.close()
     return whole_text
+
+if __name__ == '__main__':
+    main()
