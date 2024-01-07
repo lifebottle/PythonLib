@@ -431,15 +431,17 @@ class ToolsTOR(ToolsTales):
         japanese_text = entry_node.find("JapaneseText").text
         english_text = entry_node.find("EnglishText").text
 
-        #Use the values only for Status = Done and use English if non empty
-        final_text = ''
-        if (status in self.list_status_insertion):
-            final_text = english_text or ''
-        else:
-            final_text = japanese_text or ''
+        # ElementTree saves self-closing nodes for empty strings ('')
+        # as such, japanese lines that are None are in fact just ''.
+        # For english lines however None means "use Japanese line"
+        # so honor that detail here
+
+        final_text = japanese_text or ''
+        if (status in self.list_status_insertion and english_text is not None):
+            final_text = english_text
         
         voiceId_node = entry_node.find("VoiceId")
-        if (voiceId_node != None):
+        if (voiceId_node is not None):
             final_text = '<voice:{}>'.format(voiceId_node.text) + final_text
             
         #Convert the text values to bytes using TBL, TAGS, COLORS, ...
