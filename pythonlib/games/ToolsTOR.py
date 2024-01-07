@@ -1112,12 +1112,12 @@ class ToolsTOR(ToolsTales):
             # size, FLD.BIN size and LBA, also update the PVD size
             new.write_int32_at(0x82992, dat_sz)
             new.write_int32_at(0x829C2, fld_lba)
-            new.write_int32_at(0x8050, end_lba)
-            new.write_int32_at(end + 0xC, end_lba)
+            new.write_int32_at(0x8050, end_lba + 1)
+            new.write_int32_at(end + 0xC, end_lba + 1)
             new.set_endian("big")
             new.write_int32_at(0x82996, dat_sz)
             new.write_int32_at(0x829C6, fld_lba)
-            new.write_int32_at(0x8054, end_lba)
+            new.write_int32_at(0x8054, end_lba + 1)
             new.set_endian("little")
 
             # Finally, the SLPS, it's at the same location and size
