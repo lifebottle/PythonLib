@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 SCRIPT_VERSION = "1.0"
 
+
 @dataclass
 class FileListData:
     path: Path
@@ -102,11 +103,9 @@ def get_arguments(argv=None):
 
 
 def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
-
     iso_files.mkdir(parents=True, exist_ok=True)
 
     with open(iso_path, "rb") as iso:
-
         # Traverse directory records recursively
         iso.seek(0x809E)
         path_parts = []
@@ -120,7 +119,6 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
         record_pos.append(0)
         iso.seek(dr_data_pos)
 
-
         while True:
             if iso.tell() >= record_ends[-1]:
                 if len(record_ends) == 1:
@@ -132,7 +130,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
 
             inode = iso.tell()
             dr_len = struct.unpack("<B", iso.read(1))[0]
-            dr_blob = iso.read(dr_len-1)
+            dr_blob = iso.read(dr_len - 1)
 
             (
                 dr_ea_len,
@@ -143,7 +141,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
                 dr_volume,
                 dr_name_len,
             ) = struct.unpack_from("<BI4xI4x7xBHH2xB", dr_blob)
-            
+
             assert dr_ea_len == 0, "ISOs with extra attributes are not supported!"
             assert dr_inter == 0, "Interleaved ISOs are not supported!"
             assert dr_volume == 1, "multi-volume ISOs are not supported!"
@@ -154,7 +152,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
 
             dr_data_pos *= 0x800
 
-            dr_name = dr_blob[32:32 + dr_name_len]
+            dr_name = dr_blob[32 : 32 + dr_name_len]
 
             if dr_name == b"\x00" or dr_name == b"\x01":
                 continue
@@ -163,7 +161,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
             if dr_name.endswith(";1"):
                 dr_name = dr_name[:-2]
             path_parts.append(dr_name)
-            
+
             # is it a directory?
             file_info.total_inodes += 1
             if (dr_flags & 0b10) != 0:
@@ -186,7 +184,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
                 file_info.files.append(FileListData(Path(fp), inode, dr_data_pos))
                 path_parts.pop()
 
-        file_info.files = sorted(file_info.files, key = lambda x: x.lba)
+        file_info.files = sorted(file_info.files, key=lambda x: x.lba)
 
         with open(filelist, "w", encoding="utf8") as f:
             for d in file_info.files:
@@ -197,16 +195,15 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
 def rebuild_iso(
     iso: Path, filelist: Path, iso_files: Path, output: Path, add_padding: bool
 ) -> None:
-
-    if filelist.exists() == False:
+    if filelist.exists() is False:
         print(f"Could not to find the '{filelist.name}' files log!")
         return
 
-    if iso_files.exists() == False:
+    if iso_files.exists() is False:
         print(f"Could not to find the '{iso_files.name}' files directory!")
         return
 
-    if iso_files.is_dir() == False:
+    if iso_files.is_dir() is False:
         print(f"'{iso_files.name}' is not a directory!")
         return
 
@@ -219,7 +216,7 @@ def rebuild_iso(
         p = Path(l[1])
         inode_data.append(FileListData(Path(*p.parts[1:]), int(l[0]), 0))
 
-    if lines[-1].startswith("//") == False:
+    if lines[-1].startswith("//") is False:
         print(f"Could not to find the '{filelist.name}' inode total!")
         return
 
@@ -253,7 +250,7 @@ def rebuild_iso(
         for inode in inode_data:
             fp = iso_files / inode.path
             start_pos = f.tell()
-            if fp.exists() == False:
+            if fp.exists() is False:
                 print(f"File '{inode.path}' not found!")
                 return
 
