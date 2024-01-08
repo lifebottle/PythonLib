@@ -103,31 +103,43 @@ def get_arguments(argv=None):
 
 
 def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
+
+    if iso_path.exists() is False:
+        print(f"Could not to find '{iso_path.name}'!")
+        return
+
     iso_files.mkdir(parents=True, exist_ok=True)
 
     with open(iso_path, "rb") as iso:
-        # Traverse directory records recursively
+        
         iso.seek(0x809E)
         path_parts = []
         record_ends = []
         record_pos = []
         file_info = FileListInfo([], 0)
 
+        # get the root directory record off the PVD
         dr_data_pos, dr_data_len = struct.unpack("<I4xI", iso.read(12))
         dr_data_pos *= 0x800
         record_ends.append(dr_data_pos + dr_data_len)
         record_pos.append(0)
         iso.seek(dr_data_pos)
 
+        # Traverse directory records recursively
+        # Did I mention that I won't do function recursion?
         while True:
+            # Have we reached the end of current dir record?
             if iso.tell() >= record_ends[-1]:
                 if len(record_ends) == 1:
+                    # If it's the last one, we finished
                     break
                 else:
+                    # Otherwise keep reading the previous one
                     record_ends.pop()
                     path_parts.pop()
                     iso.seek(record_pos.pop())
 
+            # Parse the record
             inode = iso.tell()
             dr_len = struct.unpack("<B", iso.read(1))[0]
             dr_blob = iso.read(dr_len - 1)
@@ -147,6 +159,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
             assert dr_volume == 1, "multi-volume ISOs are not supported!"
             assert (dr_flags & 0b1000000) == 0, "4GiB+ files are not supported!"
 
+            # the dir records always en on even addresses
             if (iso.tell() % 2) != 0:
                 iso.read(1)
 
@@ -154,6 +167,8 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
 
             dr_name = dr_blob[32 : 32 + dr_name_len]
 
+            # record with these names are the '.' and '..'
+            # directories respectively, so skip them
             if dr_name == b"\x00" or dr_name == b"\x01":
                 continue
 
@@ -162,9 +177,11 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
                 dr_name = dr_name[:-2]
             path_parts.append(dr_name)
 
-            # is it a directory?
             file_info.total_inodes += 1
+
+            # is it a directory?
             if (dr_flags & 0b10) != 0:
+                # Go to its directory record
                 record_pos.append(iso.tell())
                 record_ends.append(dr_data_pos + dr_data_len)
                 fp = iso_files / "/".join(path_parts)
@@ -172,6 +189,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
                 iso.seek(dr_data_pos)
                 continue
             else:
+                # Otherwise dump the file
                 fp = "/".join(path_parts)
                 print(f"saving {fp}")
 
@@ -184,6 +202,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
                 file_info.files.append(FileListData(Path(fp), inode, dr_data_pos))
                 path_parts.pop()
 
+        # The filelist file has the files ordered based on their disc position
         file_info.files = sorted(file_info.files, key=lambda x: x.lba)
 
         with open(filelist, "w", encoding="utf8") as f:
@@ -284,13 +303,14 @@ def rebuild_iso(
         al_end = (end_pos + 0x7FFF) & ~(0x7FFF)
         f.write(b"\x00" * (al_end - end_pos))
 
-        # Sony's cdvdgen tool starting with v2.00 by deafault adds
+        # Sony's cdvdgen tool starting with v2.00 by default adds
         # a 20MiB padding to the end of the PVD, add it here if requested
         # minus a whole LBA for the end of file Anchor
         if add_padding:
             f.write(b"\x00" * (0x140_0000 - 0x800))
 
-        last_pvd_lba = f.tell() // 0x800
+        # Last LBA includes the anchor
+        last_pvd_lba = (f.tell() // 0x800) + 1
 
         f.write(footer)
         f.seek(0x8050)
