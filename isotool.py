@@ -3,11 +3,13 @@ import argparse
 from pathlib import Path
 from dataclasses import dataclass
 
+SCRIPT_VERSION = "1.0"
 
 @dataclass
 class FileListData:
     path: Path
     inode: int
+    lba: int
 
 
 @dataclass
@@ -17,14 +19,14 @@ class FileListInfo:
 
 
 def main():
-    print("pyPS2 ISO Rebuilder")
+    print(f"pyPS2 ISO Rebuilder v{SCRIPT_VERSION}")
     print("Original by Raynê Games")
 
     args = get_arguments()
 
     if args.mode == "extract":
-        print("Dumping mode is not (re)implemented yet!")
-        # dump_iso(args.iso, args.filelist, args.files, args.output)
+        dump_iso(args.iso, args.filelist, args.files)
+        print("dumping finished")
     else:
         rebuild_iso(args.iso, args.filelist, args.files, args.output, args.with_padding)
         print("rebuild finished")
@@ -99,54 +101,97 @@ def get_arguments(argv=None):
     return args
 
 
-def dump_iso(
-    iso_path: Path, filelist: Path, iso_files: Path, output: Path, add_padding: bool
-) -> None:
-    # curr_file = (file_info *)malloc(24u);
-    # Both arrays have 6000 elements
-    # seen_lbas = (int *)malloc(0x5DC0u);
-    # fdata_arr = (file_data *)malloc(0x188940u);
+def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
 
-    # make path all uppercase
-    PathName = f"@{iso_path.name}".upper()
-    Path(PathName).mkdir(parents=True, exist_ok=True)
+    iso_files.mkdir(parents=True, exist_ok=True)
 
     with open(iso_path, "rb") as iso:
-        # Go to PathTableTypeL and check how many folders are there
-        # Original just kept going until it found a 0x00 byte, we'll
-        # trust the PVD about the size of the PathTable and parse each
-        # field
-        #
-        # Also, the original checked that the name was only A-Z 0-9 ' ' and _
-        # but didn't bail out or anything, so we'll skip the check and
-        # assume the folders have valid names
-        iso.seek(0x8084)
-        path_table_size = struct.unpack("<I", iso.read(4))[0]
 
-        total_folders = 0
-        iso.seek(0x80800)
-        while iso.tell() < 0x80800 + path_table_size:
-            name_len = struct.unpack("<B7x", iso.read(8))[0]
-            iso.read(name_len)
-            total_folders += 1
+        # Traverse directory records recursively
+        iso.seek(0x809E)
+        path_parts = []
+        record_ends = []
+        record_pos = []
+        file_info = FileListInfo([], 0)
 
-        found_files = 0
-        iso.seek(0x80802)
-        root_dir_record_start = struct.unpack("<I", iso.read(4))[0] * 0x800
-        iso.seek(root_dir_record_start + 10)
-        root_dir_record_end = (
-            root_dir_record_start + struct.unpack("<I", iso.read(4))[0]
-        )
-        root_file_records_start = root_dir_record_start + 0x60
-        iso.seek(root_dir_record_start + 0x60)
-        nested_folder_lba = 0
-        nested_folder_record_end = 0
-        root_folder_lba = 0
-        a3 = 0
-        root_dir_record_end_1 = root_dir_record_end + 1
-        v44 = "1"
+        dr_data_pos, dr_data_len = struct.unpack("<I4xI", iso.read(12))
+        dr_data_pos *= 0x800
+        record_ends.append(dr_data_pos + dr_data_len)
+        record_pos.append(0)
+        iso.seek(dr_data_pos)
 
-        # TODO: make the dumping logic
+
+        while True:
+            if iso.tell() >= record_ends[-1]:
+                if len(record_ends) == 1:
+                    break
+                else:
+                    record_ends.pop()
+                    path_parts.pop()
+                    iso.seek(record_pos.pop())
+
+            inode = iso.tell()
+            dr_len = struct.unpack("<B", iso.read(1))[0]
+            dr_blob = iso.read(dr_len-1)
+
+            (
+                dr_ea_len,
+                dr_data_pos,
+                dr_data_len,
+                dr_flags,
+                dr_inter,
+                dr_volume,
+                dr_name_len,
+            ) = struct.unpack_from("<BI4xI4x7xBHH2xB", dr_blob)
+            
+            assert dr_ea_len == 0, "ISOs with extra attributes are not supported!"
+            assert dr_inter == 0, "Interleaved ISOs are not supported!"
+            assert dr_volume == 1, "multi-volume ISOs are not supported!"
+            assert (dr_flags & 0b1000000) == 0, "4GiB+ files are not supported!"
+
+            if (iso.tell() % 2) != 0:
+                iso.read(1)
+
+            dr_data_pos *= 0x800
+
+            dr_name = dr_blob[32:32 + dr_name_len]
+
+            if dr_name == b"\x00" or dr_name == b"\x01":
+                continue
+
+            dr_name = dr_name.decode()
+            if dr_name.endswith(";1"):
+                dr_name = dr_name[:-2]
+            path_parts.append(dr_name)
+            
+            # is it a directory?
+            file_info.total_inodes += 1
+            if (dr_flags & 0b10) != 0:
+                record_pos.append(iso.tell())
+                record_ends.append(dr_data_pos + dr_data_len)
+                fp = iso_files / "/".join(path_parts)
+                fp.mkdir(exist_ok=True)
+                iso.seek(dr_data_pos)
+                continue
+            else:
+                fp = "/".join(path_parts)
+                print(f"saving {fp}")
+
+                save_pos = iso.tell()
+                with open(iso_files / fp, "wb+") as f:
+                    iso.seek(dr_data_pos)
+                    f.write(iso.read(dr_data_len))
+                iso.seek(save_pos)
+
+                file_info.files.append(FileListData(Path(fp), inode, dr_data_pos))
+                path_parts.pop()
+
+        file_info.files = sorted(file_info.files, key = lambda x: x.lba)
+
+        with open(filelist, "w", encoding="utf8") as f:
+            for d in file_info.files:
+                f.write(f"|{d.inode}||{iso_files.name}/{d.path}|\n")
+            f.write(f"//{file_info.total_inodes}")
 
 
 def rebuild_iso(
@@ -172,7 +217,7 @@ def rebuild_iso(
     for line in lines[:-1]:
         l = [x for x in line.split("|") if x]
         p = Path(l[1])
-        inode_data.append(FileListData(Path(*p.parts[1:]), int(l[0])))
+        inode_data.append(FileListData(Path(*p.parts[1:]), int(l[0]), 0))
 
     if lines[-1].startswith("//") == False:
         print(f"Could not to find the '{filelist.name}' inode total!")
@@ -256,47 +301,6 @@ def rebuild_iso(
         f.write(struct.pack(">I", last_pvd_lba))
         f.seek(-0x7F4, 2)
         f.write(struct.pack("<I", last_pvd_lba))
-
-
-# TODO: remove these
-def sub_402B40(lba: int, blk: list[int], i: int) -> None:
-    blk[i] = lba
-
-
-def sub_402D40(FileName: str, iso, lba: int, size: int):
-    iso.seek(lba * 0x800)
-    # sub_402B80((unsigned __int8 *)FileName);
-    Path(FileName).parent.mkdir(parents=True, exist_ok=True)
-    with open(FileName, "wb+") as f:
-        f.write(iso.read(size))
-    print(FileName)  # why here?
-
-
-# Don't even date to look at this in the original program
-# it does the following read the size field from back to front
-# convert it to string, so 0xDEADBEEF -> "DEADBEEF"
-# loop each character and do acc += pow(16.0, pos) * char
-# YES with double floats, and then, finally store it
-# dunno why size is different when the lba field was just
-# normal god fearing byte shifting and casting to int64
-#
-# Anyway, Block is an ISO9660 DirectoryRecord
-def sub_402350(Block, a3):
-    a3.byte15 = "2"
-    a3.lba = struct.unpack_from("<I", Block, 1)[0]
-    a3.size = struct.unpack_from("<I", Block, 9)[0]
-
-    name_len = struct.unpack_from("<B", Block, 0x1F)[0]
-    a3.file_name = ""
-    if name_len != 0:
-        fname: str = struct.unpack_from(f"<{name_len}s", Block, 0x1F)[0].decode("ascii")
-        if ";" in fname:
-            a3.byte15 = "1"
-            a3.file_name = fname[:-2]
-        else:
-            a3.file_name = fname
-
-    return a3
 
 
 if __name__ == "__main__":
