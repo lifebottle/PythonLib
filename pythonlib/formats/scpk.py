@@ -75,7 +75,7 @@ class Scpk():
 
             temp_len = len(blobs[-1])
             if (temp_len % 4) != 0:
-                blobs[-1] = blob[-1] + (b"#" * (0x4 - ((temp_len) % 0x4)))
+                blobs[-1] = blobs[-1] + (b"#" * (0x4 - ((temp_len) % 0x4)))
         
         # add sizes
         for l in [len(x) for x in blobs]:
