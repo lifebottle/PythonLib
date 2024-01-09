@@ -18,7 +18,7 @@ class scpk_file():
 class Scpk():
     def __init__(self) -> None:
         self.unk1 = 0
-        self.unk2 = 0
+        self.flags = 0
         self.files = []
         self._rsce = b""
         self._rsce_pos = 0
@@ -32,8 +32,9 @@ class Scpk():
             
             self = Scpk()
             self.unk1 = f.read_uint16()
-            self.unk2 = f.read_uint16()
+            self.flags = f.read_uint16()
             file_amount = f.read_uint32()
+            assert self.unk1 == 1, "scpk unk1 is not 1!"  # version?
             assert f.read_uint32() == 0, "scpk padding is not zero!"  # padding?
             self.files = []
 
@@ -61,7 +62,7 @@ class Scpk():
     def to_bytes(self):
         out = MAGIC
         out += struct.pack("<H", self.unk1)
-        out += struct.pack("<H", self.unk2)
+        out += struct.pack("<H", self.flags)
         out += struct.pack("<I", len(self.files))
         out += struct.pack("<I", 0)
 
@@ -71,6 +72,10 @@ class Scpk():
                 blobs.append(comptolib.compress_data(blob.data, version=blob.type))
             else:
                 blobs.append(blob.data)
+
+            temp_len = len(blobs[-1])
+            if (temp_len % 4) != 0:
+                blobs[-1] = blob[-1] + (b"#" * (0x4 - ((temp_len) % 0x4)))
         
         # add sizes
         for l in [len(x) for x in blobs]:
