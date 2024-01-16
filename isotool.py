@@ -138,6 +138,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
                     record_ends.pop()
                     path_parts.pop()
                     iso.seek(record_pos.pop())
+                    continue
 
             # Parse the record
             inode = iso.tell()
