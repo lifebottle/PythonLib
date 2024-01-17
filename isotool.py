@@ -15,7 +15,7 @@ LAYER0_PVD_LOCATION = SYSTEM_AREA_SIZE
 class FileListData:
     path: Path
     inode: int
-    lba: int
+    lba: int = 0
     size: int = 0
 
 
@@ -227,7 +227,40 @@ def save_iso_files(
         iso.seek(file.lba)
 
         with open(final_path, "wb+") as f:
-            f.write(iso.read(file.size))
+            while data := iso.read(0x80000):
+                f.write(data)
+
+
+def check_iso(iso: typing.BinaryIO) -> tuple[bool, int, int]:
+    # Sanity check
+    assert check_pvd(iso, LAYER0_PVD_LOCATION), "No valid PVD found in Layer0!"
+
+    # Test dual-layer-dness
+    has_second_layer = False
+
+    iso.seek(LAYER0_PVD_LOCATION + 0x50)
+    pvd0_sector_count = struct.unpack("<I", iso.read(4))[0]
+    iso.seek(0, io.SEEK_END)
+    iso_sector_count = iso.tell() // SECTOR_SIZE
+    pvd1_pos = pvd0_sector_count * SECTOR_SIZE
+
+    if iso_sector_count != pvd0_sector_count:
+        # sector count of the PVD disagree with the file
+        # check for another PVD at volume end
+        has_second_layer = check_pvd(iso, pvd1_pos)
+
+        if has_second_layer:
+            print("< Dual layer ISO Detected >")
+            print()
+
+        else:
+            print("WARNING: Iso data suggest this is a double layer image")
+            print(
+                "         but no valid PVD was found for Layer1, iso might be corrupt"
+            )
+            print()
+    
+    return has_second_layer, pvd1_pos, iso_sector_count * SECTOR_SIZE
 
 
 def dump_iso(iso_path: Path, filelist: Path, iso_files: Path, save_files: bool) -> None:
@@ -236,32 +269,7 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path, save_files: bool) 
         return
 
     with open(iso_path, "rb") as iso:
-        # Sanity check
-        assert check_pvd(iso, LAYER0_PVD_LOCATION), "No valid PVD found in Layer0!"
-
-        # Test dual-layer-dness
-        has_second_layer = False
-
-        iso.seek(LAYER0_PVD_LOCATION + 0x50)
-        pvd0_sector_count = struct.unpack("<I", iso.read(4))[0]
-        iso.seek(0, io.SEEK_END)
-        iso_sector_count = iso.tell() // SECTOR_SIZE
-        pvd1_pos = pvd0_sector_count * SECTOR_SIZE
-
-        if iso_sector_count != pvd0_sector_count:
-            # sector count of the PVD disagree with the file
-            # check for another PVD at volume end
-            has_second_layer = check_pvd(iso, pvd1_pos)
-
-            if has_second_layer:
-                print("< Dual layer ISO Detected >")
-                print()
-            else:
-                print("WARNING: Iso data suggest this is a double layer image")
-                print(
-                    "         but no valid PVD was found for Layer1, iso might be corrupt"
-                )
-                print()
+        has_second_layer, pvd1_pos, _ = check_iso(iso)
 
         layer0_data = dump_dir_records(iso, LAYER0_PVD_LOCATION, 0)
         layer0_data.files.sort(
@@ -313,62 +321,110 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path, save_files: bool) 
                 )
 
 
-def rebuild_iso(
-    iso: Path, filelist: Path, iso_files: Path, output: Path, add_padding: bool
-) -> None:
+def parse_filelist(file_info: FileListInfo, lines: list[str]) -> None:
+    for line in lines[:-1]:
+        data = [x for x in line.split("|") if x]
+        p = Path(data[1])
+        file_info.files.append(FileListData(Path(*p.parts[1:]), int(data[0])))
+
+    if lines[-1].startswith("//") is False:
+        print("Could not to find inode total!")
+        return
+    
+    file_info.total_inodes = int(lines[-1][2:])
+
+
+def consume_iso_header(iso: typing.BinaryIO, pvd_off: int, pvd_size: int, inodes: int):
+    iso.seek(pvd_off)
+    header = iso.read(0xF60000)
+    iso.seek(pvd_off)
+    i = 0
+    data_start = -1
+    for lba in range(7862):
+        udf_check = struct.unpack("<269x18s1761x", iso.read(SECTOR_SIZE))[0]
+        if udf_check == b"*UDF DVD CGMS Info":
+            i += 1
+
+        if i == inodes + 1:
+            data_start = (lba + 1) * SECTOR_SIZE
+            break
+    else:
+        print(
+            "ERROR: Couldn't get all the UDF file chunk, original tool would've looped here"
+        )
+        print("Closing instead...")
+        exit(1)
+
+    iso.seek(pvd_off + pvd_size - SECTOR_SIZE)
+    footer = iso.read(SECTOR_SIZE)
+    return data_start, header[:data_start], footer
+
+
+def validate_rebuild(filelist: Path, iso_files: Path) -> bool:
     if filelist.exists() is False:
         print(f"Could not to find the '{filelist.name}' files log!")
-        return
+        return False
 
     if iso_files.exists() is False:
         print(f"Could not to find the '{iso_files.name}' files directory!")
-        return
+        return False
 
     if iso_files.is_dir() is False:
         print(f"'{iso_files.name}' is not a directory!")
-        return
+        return False
+    
+    return True
 
+
+def rebuild_iso(
+    iso: Path, filelist: Path, iso_files: Path, output: Path, add_padding: bool
+) -> None:
+    # Validate args
+    if not validate_rebuild(filelist, iso_files):
+        return
+    
+
+    # Parse filelist file
     with open(filelist, "r") as f:
         lines = f.readlines()
 
-    inode_data: list[FileListData] = []
-    for line in lines[:-1]:
-        l = [x for x in line.split("|") if x]
-        p = Path(l[1])
-        inode_data.append(FileListData(Path(*p.parts[1:]), int(l[0]), 0))
+    layer0_data = FileListInfo([], 0)
+    layer1_data = FileListInfo([], 0)
 
-    if lines[-1].startswith("//") is False:
-        print(f"Could not to find the '{filelist.name}' inode total!")
-        return
+    # is a dual layer filelist?
 
-    iso_info = FileListInfo(inode_data, int(lines[-1][2:]))
+    if lines[0].startswith("//"):
+        has_second_layer = True
+
+        l0_files = int(lines.pop(0)[2:]) + 1
+
+        parse_filelist(layer0_data, lines[:l0_files])
+        parse_filelist(layer1_data, lines[l0_files:])
+    else:
+        has_second_layer = False
+
+        parse_filelist(layer0_data, lines[:])
+    
 
     with open(iso, "rb") as f:
-        header = f.read(0xF60000)
-        i = 0
-        data_start = -1
-        for lba in range(7862):
-            udf_check = struct.unpack_from("<269x18s1761x", header, lba * 0x800)[0]
-            if udf_check == b"*UDF DVD CGMS Info":
-                i += 1
+        second_layer, pvd1_pos, pvd1_size = check_iso(f)
 
-            if i == iso_info.total_inodes + 1:
-                data_start = (lba + 1) * 0x800
-                break
+        assert has_second_layer == second_layer, "Filelist type and ISO type disagree!"
+
+        pvd0_hend, pvd0_header, pvd0_footer = consume_iso_header(f, 0, pvd1_pos, layer0_data.total_inodes)
+
+        if has_second_layer:
+            pvd1_hend, pvd1_header, pvd1_footer = consume_iso_header(f, pvd1_pos, pvd1_size, layer1_data.total_inodes)
         else:
-            print(
-                "ERROR: Couldn't get all the UDF file chunk, original tool would've looped here"
-            )
-            print("Closing instead...")
-            return
-
-        f.seek(-0x800, 2)
-        footer = f.read(0x800)
+            pvd1_hend= 0
+            pvd1_header = b""
+            pvd1_footer = b""
+        
 
     with open(output, "wb+") as f:
-        f.write(header[:data_start])
+        f.write(pvd0_header)
 
-        for inode in inode_data:
+        for inode in layer0_data.files:
             fp = iso_files / inode.path
             start_pos = f.tell()
             if fp.exists() is False:
@@ -402,8 +458,10 @@ def rebuild_iso(
 
         # Align to 0x8000
         end_pos = f.tell()
-        al_end = (end_pos + 0x7FFF) & ~(0x7FFF)
+        print(f"LAST LBA {end_pos:04X}")
+        al_end = ((end_pos + 0x8000) & ~(0x7FFF)) - 0x800
         f.write(b"\x00" * (al_end - end_pos))
+        print(f"LAST LBA {f.tell():04X}")
 
         # Sony's cdvdgen tool starting with v2.00 by default adds
         # a 20MiB padding to the end of the PVD, add it here if requested
@@ -414,12 +472,74 @@ def rebuild_iso(
         # Last LBA includes the anchor
         last_pvd_lba = (f.tell() // 0x800) + 1
 
-        f.write(footer)
-        f.seek(0x8050)
+        f.write(pvd0_footer)
+        f.seek(LAYER0_PVD_LOCATION + 0x50)
         f.write(struct.pack("<I", last_pvd_lba))
         f.write(struct.pack(">I", last_pvd_lba))
         f.seek(-0x7F4, 2)
         f.write(struct.pack("<I", last_pvd_lba))
+        print(f"LAST LBA {last_pvd_lba * 0x800:04X}")
+        print(f"LAST LBA {last_pvd_lba * 0x800:04X}")
+        pvd1_pos = f.tell()
+
+        f.seek(0, 2)
+        # PVD1
+        if has_second_layer:
+            print("\n< SECOND LAYER >\n")
+            f.write(pvd1_header)
+
+            for inode in layer1_data.files:
+                fp = iso_files / inode.path
+                start_pos = f.tell()
+                if fp.exists() is False:
+                    print(f"File '{inode.path}' not found!")
+                    return
+
+                print(f"Inserting {str(inode.path)}...")
+
+                with open(fp, "rb") as g:
+                    while data := g.read(0x80000):
+                        f.write(data)
+
+                end_pos = f.tell()
+
+                # Align to next LBA
+                al_end = (end_pos + 0x7FF) & ~(0x7FF)
+                f.write(b"\x00" * (al_end - end_pos))
+
+                end_save = f.tell()
+
+                new_lba = (start_pos - pvd1_pos + SYSTEM_AREA_SIZE) // 0x800
+                new_size = end_pos - start_pos
+                f.seek(inode.inode + 2)
+
+                f.write(struct.pack("<I", new_lba))
+                f.write(struct.pack(">I", new_lba))
+                f.write(struct.pack("<I", new_size))
+                f.write(struct.pack(">I", new_size))
+
+                f.seek(end_save)
+
+            # Align to 0x8000
+            end_pos = f.tell()
+            al_end = (end_pos + 0x7FFF) & ~(0x7FFF)
+            f.write(b"\x00" * (al_end - end_pos))
+
+            # Sony's cdvdgen tool starting with v2.00 by default adds
+            # a 20MiB padding to the end of the PVD, add it here if requested
+            # minus a whole LBA for the end of file Anchor
+            if add_padding:
+                f.write(b"\x00" * (0x140_0000 - 0x800))
+
+            # Last LBA includes the anchor
+            last_pvd_lba = ((f.tell() - pvd1_pos + SYSTEM_AREA_SIZE) // 0x800) + 1
+
+            f.write(pvd1_footer)
+            f.seek(pvd1_pos + 0x50)
+            f.write(struct.pack("<I", last_pvd_lba))
+            f.write(struct.pack(">I", last_pvd_lba))
+            f.seek(-0x7F4, 2)
+            f.write(struct.pack("<I", last_pvd_lba))
 
 
 if __name__ == "__main__":
