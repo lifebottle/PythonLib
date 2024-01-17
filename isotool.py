@@ -1,10 +1,13 @@
+import io
 import struct
 import argparse
 from pathlib import Path
 from dataclasses import dataclass
+import typing
 
-SCRIPT_VERSION = "1.0"
-
+SCRIPT_VERSION = "1.1"
+SECTOR_SIZE = 0x800
+SYSTEM_AREA_SIZE = 0x10 * SECTOR_SIZE
 
 @dataclass
 class FileListData:
@@ -102,8 +105,16 @@ def get_arguments(argv=None):
     return args
 
 
-def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
+def check_pvd(fp: typing.BinaryIO, pvd_loc: int) -> bool:
+    fp.seek(pvd_loc)
+    vd_type, vd_id = struct.unpack("<B5s", fp.read(6))
+    if vd_type == 1 and vd_id == b"CD001":
+        return True
+    else:
+        return False
 
+
+def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
     if iso_path.exists() is False:
         print(f"Could not to find '{iso_path.name}'!")
         return
@@ -111,25 +122,70 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
     iso_files.mkdir(parents=True, exist_ok=True)
 
     with open(iso_path, "rb") as iso:
-        
-        iso.seek(0x809E)
+        # Sanity check
+        assert check_pvd(iso, 0x8000), "No valid PVD found in Layer0!"
+
+        # Test dual-layer-dness
+        iso.seek(0x8050)
+        layer0_sector_count = struct.unpack("<I", iso.read(4))[0]
+        iso.seek(0, io.SEEK_END)
+        iso_sector_count = iso.tell() // SECTOR_SIZE
+        layer1_pvd_pos = layer0_sector_count * SECTOR_SIZE
+        has_second_layer = False
+
+        if iso_sector_count != layer0_sector_count:
+            # sector count of the PVD disagree with the file
+            # check for another PVD at volume end
+            has_second_layer =  check_pvd(iso, layer1_pvd_pos)
+
+            if has_second_layer:
+                print("< Dual layer ISO Detected >")
+            else:
+                print("WARNING: Iso data suggest this is a double layer image")
+                print("         but no valid PVD was found for Layer1, iso might be corrupt")
+
+
         path_parts = []
         record_ends = []
         record_pos = []
         file_info = FileListInfo([], 0)
 
-        # get the root directory record off the PVD
+        # get the root directory record off the PVD in Layer1
+        if has_second_layer:
+            iso.seek(layer1_pvd_pos + 0x9E)
+            dr_data_pos, dr_data_len = struct.unpack("<I4xI", iso.read(12))
+            dr_data_pos *= SECTOR_SIZE
+            record_ends.append(dr_data_pos + dr_data_len + layer1_pvd_pos - (SECTOR_SIZE * 0x10))
+            record_pos.append(dr_data_pos)
+        
+        # get the root directory record off the PVD in Layer0
+        iso.seek(0x809E)
         dr_data_pos, dr_data_len = struct.unpack("<I4xI", iso.read(12))
-        dr_data_pos *= 0x800
+        dr_data_pos *= SECTOR_SIZE
         record_ends.append(dr_data_pos + dr_data_len)
-        record_pos.append(0)
+        if has_second_layer:
+            record_pos.append(record_pos[-1])
+        else:
+            record_pos.append(0)
         iso.seek(dr_data_pos)
+        print(layer1_pvd_pos)
+
+        in_layer1 = False
+        read_offset = 0
 
         # Traverse directory records recursively
         # Did I mention that I won't do function recursion?
         while True:
             # Have we reached the end of current dir record?
             if iso.tell() >= record_ends[-1]:
+                if len(record_ends) == 2 and has_second_layer:
+                    print("")
+                    print("< Dumping Second Layer >")
+                    print("")
+                    path_parts.append("")
+                    read_offset = layer1_pvd_pos - (SECTOR_SIZE * 0x10)
+                    in_layer1 = True
+                
                 if len(record_ends) == 1:
                     # If it's the last one, we finished
                     break
@@ -137,11 +193,12 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
                     # Otherwise keep reading the previous one
                     record_ends.pop()
                     path_parts.pop()
-                    iso.seek(record_pos.pop())
+                    iso.seek(record_pos.pop() + read_offset)
                     continue
 
             # Parse the record
             inode = iso.tell()
+            print(inode)
             dr_len = struct.unpack("<B", iso.read(1))[0]
             dr_blob = iso.read(dr_len - 1)
 
@@ -185,9 +242,18 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
                 # Go to its directory record
                 record_pos.append(iso.tell())
                 record_ends.append(dr_data_pos + dr_data_len)
+
+                # if has_second_layer:
+                #     if in_layer1:
+                #         fp = iso_files / "Layer1"
+                #     else:
+                #         fp = iso_files / "Layer0"
+                # else:
+                #     fp = iso_files
+                
                 fp = iso_files / "/".join(path_parts)
-                fp.mkdir(exist_ok=True)
-                iso.seek(dr_data_pos)
+                fp.mkdir(exist_ok=True, parents=True)
+                iso.seek(dr_data_pos + read_offset)
                 continue
             else:
                 # Otherwise dump the file
@@ -196,11 +262,11 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
 
                 save_pos = iso.tell()
                 with open(iso_files / fp, "wb+") as f:
-                    iso.seek(dr_data_pos)
+                    iso.seek(dr_data_pos + read_offset)
                     f.write(iso.read(dr_data_len))
                 iso.seek(save_pos)
 
-                file_info.files.append(FileListData(Path(fp), inode, dr_data_pos))
+                file_info.files.append(FileListData(Path(fp), inode, dr_data_pos + read_offset))
                 path_parts.pop()
 
         # The filelist file has the files ordered based on their disc position
