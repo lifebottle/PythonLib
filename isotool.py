@@ -227,8 +227,12 @@ def save_iso_files(
         iso.seek(file.lba)
 
         with open(final_path, "wb+") as f:
-            while data := iso.read(0x80000):
-                f.write(data)
+            for _ in range(file.size // SECTOR_SIZE):
+                f.write(iso.read(SECTOR_SIZE))
+
+            if (file.size % SECTOR_SIZE) != 0:
+                f.write(iso.read(file.size % SECTOR_SIZE))
+
 
 
 def check_iso(iso: typing.BinaryIO) -> tuple[bool, int, int]:
