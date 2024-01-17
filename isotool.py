@@ -33,7 +33,7 @@ def main():
     args = get_arguments()
 
     if args.mode == "extract":
-        dump_iso(args.iso, args.filelist, args.files)
+        dump_iso(args.iso, args.filelist, args.files, args.dry)
         print("dumping finished")
     else:
         rebuild_iso(args.iso, args.filelist, args.files, args.output, args.with_padding)
@@ -66,6 +66,13 @@ def get_arguments(argv=None):
         required=False,
         action="store_true",
         help="flag to control outermost iso padding",
+    )
+
+    parser.add_argument(
+        "--dry",
+        required=False,
+        action="store_false",
+        help="dry run, parses the iso without saving the files",
     )
 
     parser.add_argument(
@@ -223,7 +230,7 @@ def save_iso_files(
             f.write(iso.read(file.size))
 
 
-def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
+def dump_iso(iso_path: Path, filelist: Path, iso_files: Path, save_files: bool) -> None:
     if iso_path.exists() is False:
         print(f"Could not to find '{iso_path.name}'!")
         return
@@ -269,28 +276,41 @@ def dump_iso(iso_path: Path, filelist: Path, iso_files: Path) -> None:
         else:
             layer1_data = FileListInfo([], 0)
 
-        # save files
-        save_iso_files(iso, layer0_data, iso_files)
-
-        if has_second_layer:
-            print("\n< SECOND LAYER >\n")
-
-        save_iso_files(iso, layer1_data, iso_files)
-
-        # Save filelist
-        with open(filelist, "w", encoding="utf8") as f:
-            if has_second_layer:
-                f.write(f"//{len(layer0_data.files)}\n")
-
-            for d in layer0_data.files:
-                f.write(f"|{d.inode}||{iso_files.name}/{d.path.as_posix()}|\n")
-            f.write(f"//{layer0_data.total_inodes}")
+        if save_files:
+            # save files (if requested)
+            save_iso_files(iso, layer0_data, iso_files)
 
             if has_second_layer:
-                f.write("\n")
-                for d in layer1_data.files:
+                print("\n< SECOND LAYER >\n")
+
+            save_iso_files(iso, layer1_data, iso_files)
+
+            # Save filelist
+            with open(filelist, "w", encoding="utf8") as f:
+                if has_second_layer:
+                    f.write(f"//{len(layer0_data.files)}\n")
+
+                for d in layer0_data.files:
                     f.write(f"|{d.inode}||{iso_files.name}/{d.path.as_posix()}|\n")
-                f.write(f"//{layer1_data.total_inodes}")
+                f.write(f"//{layer0_data.total_inodes}")
+
+                if has_second_layer:
+                    f.write("\n")
+                    for d in layer1_data.files:
+                        f.write(f"|{d.inode}||{iso_files.name}/{d.path.as_posix()}|\n")
+                    f.write(f"//{layer1_data.total_inodes}")
+        else:
+            # if not then show found data
+            for file in layer0_data.files:
+                print(
+                    f"FOUND {file.path.as_posix()} at 0x{file.lba:08X} with size {file.size} bytes"
+                )
+            if has_second_layer:
+                print("\n< SECOND LAYER >\n")
+            for file in layer1_data.files:
+                print(
+                    f"FOUND {file.path.as_posix()} at 0x{file.lba:08X} with size {file.size} bytes"
+                )
 
 
 def rebuild_iso(
