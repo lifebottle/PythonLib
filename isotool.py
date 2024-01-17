@@ -5,7 +5,7 @@ from pathlib import Path
 from dataclasses import dataclass
 import typing
 
-SCRIPT_VERSION = "1.2"
+SCRIPT_VERSION = "1.3"
 SECTOR_SIZE = 0x800
 SYSTEM_AREA_SIZE = 0x10 * SECTOR_SIZE
 LAYER0_PVD_LOCATION = SYSTEM_AREA_SIZE
