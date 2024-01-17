@@ -3,10 +3,11 @@ import struct
 import argparse
 from pathlib import Path
 from dataclasses import dataclass
-import typing
+from typing import BinaryIO
 
 SCRIPT_VERSION = "1.3"
 SECTOR_SIZE = 0x800
+READ_CHUNK = 0x50_0000 # 5MiB
 SYSTEM_AREA_SIZE = 0x10 * SECTOR_SIZE
 LAYER0_PVD_LOCATION = SYSTEM_AREA_SIZE
 
@@ -116,7 +117,7 @@ def get_arguments(argv=None):
     return args
 
 
-def check_pvd(fp: typing.BinaryIO, pvd_loc: int) -> bool:
+def check_pvd(fp: BinaryIO, pvd_loc: int) -> bool:
     fp.seek(pvd_loc)
     vd_type, vd_id = struct.unpack("<B5s", fp.read(6))
     if vd_type == 1 and vd_id == b"CD001":
@@ -125,7 +126,7 @@ def check_pvd(fp: typing.BinaryIO, pvd_loc: int) -> bool:
         return False
 
 
-def dump_dir_records(iso: typing.BinaryIO, pvd_loc: int, pvd_off: int) -> FileListInfo:
+def dump_dir_records(iso: BinaryIO, pvd_loc: int, pvd_off: int) -> FileListInfo:
     path_parts = []
     record_ends = []
     record_pos = []
@@ -217,7 +218,7 @@ def dump_dir_records(iso: typing.BinaryIO, pvd_loc: int, pvd_off: int) -> FileLi
 
 
 def save_iso_files(
-    iso: typing.BinaryIO, file_info: FileListInfo, base_folder: Path
+    iso: BinaryIO, file_info: FileListInfo, base_folder: Path
 ) -> None:
     for file in file_info.files:
         print(f"SAVING {file.path.as_posix()}")
@@ -227,15 +228,15 @@ def save_iso_files(
         iso.seek(file.lba)
 
         with open(final_path, "wb+") as f:
-            for _ in range(file.size // SECTOR_SIZE):
-                f.write(iso.read(SECTOR_SIZE))
+            for _ in range(file.size // READ_CHUNK):
+                f.write(iso.read(READ_CHUNK))
 
-            if (file.size % SECTOR_SIZE) != 0:
-                f.write(iso.read(file.size % SECTOR_SIZE))
+            if (file.size % READ_CHUNK) != 0:
+                f.write(iso.read(file.size % READ_CHUNK))
 
 
 
-def check_iso(iso: typing.BinaryIO) -> tuple[bool, int, int]:
+def check_iso(iso: BinaryIO) -> tuple[bool, int, int]:
     # Sanity check
     assert check_pvd(iso, LAYER0_PVD_LOCATION), "No valid PVD found in Layer0!"
 
@@ -338,7 +339,7 @@ def parse_filelist(file_info: FileListInfo, lines: list[str]) -> None:
     file_info.total_inodes = int(lines[-1][2:])
 
 
-def consume_iso_header(iso: typing.BinaryIO, pvd_off: int, pvd_size: int, inodes: int):
+def consume_iso_header(iso: BinaryIO, pvd_off: int, pvd_size: int, inodes: int):
     iso.seek(pvd_off)
     header = iso.read(0xF60000)
     iso.seek(pvd_off)
