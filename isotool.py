@@ -2,14 +2,18 @@ import io
 import struct
 import argparse
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import BinaryIO
 
-SCRIPT_VERSION = "1.3"
+SCRIPT_VERSION = "1.5"
 SECTOR_SIZE = 0x800
 READ_CHUNK = 0x50_0000 # 5MiB
 SYSTEM_AREA_SIZE = 0x10 * SECTOR_SIZE
 LAYER0_PVD_LOCATION = SYSTEM_AREA_SIZE
+VOLUME_ALIGN = 0x8000
+
+def align(x: int, alg: int) -> int:
+    return (x + (alg-1)) & ~(alg-1)
 
 
 @dataclass
@@ -24,6 +28,19 @@ class FileListData:
 class FileListInfo:
     files: list[FileListData]
     total_inodes: int
+
+@dataclass
+class IsoLayer:
+    header: bytes = b""
+    footer: bytes = b""
+    offset: int = 0
+    meta: FileListInfo = field(default_factory=lambda: FileListInfo([], 0))
+
+@dataclass
+class Iso:
+    has_second_layer: bool = False
+    layers: list[IsoLayer] = field(default_factory=lambda: [IsoLayer(), IsoLayer()])
+
 
 
 def main():
@@ -210,7 +227,7 @@ def dump_dir_records(iso: BinaryIO, pvd_loc: int, pvd_off: int) -> FileListInfo:
             fp = "/".join(path_parts)
 
             file_info.files.append(
-                FileListData(Path(fp), inode, dr_data_pos, dr_data_len)
+                FileListData(Path(fp), inode - pvd_off, dr_data_pos, dr_data_len)
             )
             path_parts.pop()
 
@@ -339,9 +356,7 @@ def parse_filelist(file_info: FileListInfo, lines: list[str]) -> None:
     file_info.total_inodes = int(lines[-1][2:])
 
 
-def consume_iso_header(iso: BinaryIO, pvd_off: int, pvd_size: int, inodes: int):
-    iso.seek(pvd_off)
-    header = iso.read(0xF60000)
+def consume_iso_header(iso: BinaryIO, pvd_off: int, inodes: int) -> int:
     iso.seek(pvd_off)
     i = 0
     data_start = -1
@@ -360,9 +375,7 @@ def consume_iso_header(iso: BinaryIO, pvd_off: int, pvd_size: int, inodes: int):
         print("Closing instead...")
         exit(1)
 
-    iso.seek(pvd_off + pvd_size - SECTOR_SIZE)
-    footer = iso.read(SECTOR_SIZE)
-    return data_start, header[:data_start], footer
+    return data_start
 
 
 def validate_rebuild(filelist: Path, iso_files: Path) -> bool:
@@ -381,6 +394,69 @@ def validate_rebuild(filelist: Path, iso_files: Path) -> bool:
     return True
 
 
+def write_new_pvd(iso: BinaryIO, iso_files: Path, add_padding: bool, layer_info: IsoLayer, pvd_loc: int) -> int:
+    iso.write(layer_info.header)
+
+    for inode in layer_info.meta.files:
+        fp = iso_files / inode.path
+        start_pos = iso.tell()
+        if fp.exists() is False:
+            print(f"File '{inode.path.as_posix()}' not found!")
+            exit(1)
+
+        print(f"Inserting {str(inode.path)}...")
+
+        with open(fp, "rb") as g:
+            while data := g.read(0x80000):
+                iso.write(data)
+
+        end_pos = iso.tell()
+
+        # Align to next LBA
+        al_end = align(end_pos, SECTOR_SIZE)
+        iso.write(b"\x00" * (al_end - end_pos))
+
+        end_save = iso.tell()
+
+        new_lba = (start_pos - pvd_loc + SYSTEM_AREA_SIZE) // 0x800
+        new_size = end_pos - start_pos
+        iso.seek(inode.inode + pvd_loc - SYSTEM_AREA_SIZE + 2)
+
+        iso.write(struct.pack("<I", new_lba))
+        iso.write(struct.pack(">I", new_lba))
+        iso.write(struct.pack("<I", new_size))
+        iso.write(struct.pack(">I", new_size))
+
+        iso.seek(end_save)
+
+    # Align to 0x8000
+    end_pos = iso.tell()
+    if (end_pos % VOLUME_ALIGN) == 0:
+        al_end = align(end_pos + SECTOR_SIZE, VOLUME_ALIGN)
+    else:
+        al_end = align(end_pos, VOLUME_ALIGN)
+
+    iso.write(b"\x00" * (al_end - end_pos - SECTOR_SIZE))
+
+    # Sony's cdvdgen tool starting with v2.00 by default adds
+    # a 20MiB padding to the end of the PVD, add it here if requested
+    if add_padding:
+        iso.write(b"\x00" * 0x140_0000)
+
+    # Last LBA includes the anchor
+    last_pvd_lba = ((iso.tell() - pvd_loc + SYSTEM_AREA_SIZE) // 0x800) + 1
+
+    iso.write(layer_info.footer)
+    iso.seek(pvd_loc + 0x50)
+    iso.write(struct.pack("<I", last_pvd_lba))
+    iso.write(struct.pack(">I", last_pvd_lba))
+    iso.seek(-0x7F4, io.SEEK_END)
+    iso.write(struct.pack("<I", last_pvd_lba-1))
+    
+    iso.seek(0, io.SEEK_END)
+    return iso.tell()
+
+
 def rebuild_iso(
     iso: Path, filelist: Path, iso_files: Path, output: Path, add_padding: bool
 ) -> None:
@@ -393,158 +469,48 @@ def rebuild_iso(
     with open(filelist, "r") as f:
         lines = f.readlines()
 
-    layer0_data = FileListInfo([], 0)
-    layer1_data = FileListInfo([], 0)
+    iso_info = Iso()
 
     # is a dual layer filelist?
 
     if lines[0].startswith("//"):
-        has_second_layer = True
+        iso_info.has_second_layer = True
 
         l0_files = int(lines.pop(0)[2:]) + 1
 
-        parse_filelist(layer0_data, lines[:l0_files])
-        parse_filelist(layer1_data, lines[l0_files:])
+        parse_filelist(iso_info.layers[0].meta, lines[:l0_files])
+        parse_filelist(iso_info.layers[1].meta, lines[l0_files:])
     else:
-        has_second_layer = False
+        iso_info.has_second_layer = False
 
-        parse_filelist(layer0_data, lines[:])
+        parse_filelist(iso_info.layers[0].meta, lines[:])
     
 
     with open(iso, "rb") as f:
-        second_layer, pvd1_pos, pvd1_size = check_iso(f)
+        second_layer, pvd1_pos, _ = check_iso(f)
 
-        assert has_second_layer == second_layer, "Filelist type and ISO type disagree!"
+        assert iso_info.has_second_layer == second_layer, "Filelist type and ISO type disagree!"
+        l0_start = consume_iso_header(f, 0, iso_info.layers[0].meta.total_inodes)
+        f.seek(0)
+        iso_info.layers[0].header = f.read(l0_start) 
+        f.seek(pvd1_pos - SECTOR_SIZE)
+        iso_info.layers[0].footer = f.read(SECTOR_SIZE) 
 
-        pvd0_hend, pvd0_header, pvd0_footer = consume_iso_header(f, 0, pvd1_pos, layer0_data.total_inodes)
-
-        if has_second_layer:
-            pvd1_hend, pvd1_header, pvd1_footer = consume_iso_header(f, pvd1_pos, pvd1_size, layer1_data.total_inodes)
-        else:
-            pvd1_hend= 0
-            pvd1_header = b""
-            pvd1_footer = b""
-        
+        if iso_info.has_second_layer:
+            l1_start = consume_iso_header(f, pvd1_pos, iso_info.layers[1].meta.total_inodes)
+            f.seek(pvd1_pos)
+            iso_info.layers[1].header = f.read(l1_start) 
+            f.seek(-SECTOR_SIZE, io.SEEK_END)
+            iso_info.layers[1].footer = f.read(SECTOR_SIZE) 
+            iso_info.layers[1].offset = pvd1_pos + SYSTEM_AREA_SIZE
 
     with open(output, "wb+") as f:
-        f.write(pvd0_header)
-
-        for inode in layer0_data.files:
-            fp = iso_files / inode.path
-            start_pos = f.tell()
-            if fp.exists() is False:
-                print(f"File '{inode.path}' not found!")
-                return
-
-            print(f"Inserting {str(inode.path)}...")
-
-            with open(fp, "rb") as g:
-                while data := g.read(0x80000):
-                    f.write(data)
-
-            end_pos = f.tell()
-
-            # Align to next LBA
-            al_end = (end_pos + 0x7FF) & ~(0x7FF)
-            f.write(b"\x00" * (al_end - end_pos))
-
-            end_save = f.tell()
-
-            new_lba = start_pos // 0x800
-            new_size = end_pos - start_pos
-            f.seek(inode.inode + 2)
-
-            f.write(struct.pack("<I", new_lba))
-            f.write(struct.pack(">I", new_lba))
-            f.write(struct.pack("<I", new_size))
-            f.write(struct.pack(">I", new_size))
-
-            f.seek(end_save)
-
-        # Align to 0x8000
-        end_pos = f.tell()
-        print(f"LAST LBA {end_pos:04X}")
-        al_end = ((end_pos + 0x8000) & ~(0x7FFF)) - 0x800
-        f.write(b"\x00" * (al_end - end_pos))
-        print(f"LAST LBA {f.tell():04X}")
-
-        # Sony's cdvdgen tool starting with v2.00 by default adds
-        # a 20MiB padding to the end of the PVD, add it here if requested
-        # minus a whole LBA for the end of file Anchor
-        if add_padding:
-            f.write(b"\x00" * (0x140_0000 - 0x800))
-
-        # Last LBA includes the anchor
-        last_pvd_lba = (f.tell() // 0x800) + 1
-
-        f.write(pvd0_footer)
-        f.seek(LAYER0_PVD_LOCATION + 0x50)
-        f.write(struct.pack("<I", last_pvd_lba))
-        f.write(struct.pack(">I", last_pvd_lba))
-        f.seek(-0x7F4, 2)
-        f.write(struct.pack("<I", last_pvd_lba))
-        print(f"LAST LBA {last_pvd_lba * 0x800:04X}")
-        print(f"LAST LBA {last_pvd_lba * 0x800:04X}")
-        pvd1_pos = f.tell()
-
-        f.seek(0, 2)
+        pvd1_start = write_new_pvd(f, iso_files, add_padding, iso_info.layers[0], SYSTEM_AREA_SIZE)
+        
         # PVD1
-        if has_second_layer:
+        if iso_info.has_second_layer:
             print("\n< SECOND LAYER >\n")
-            f.write(pvd1_header)
-
-            for inode in layer1_data.files:
-                fp = iso_files / inode.path
-                start_pos = f.tell()
-                if fp.exists() is False:
-                    print(f"File '{inode.path}' not found!")
-                    return
-
-                print(f"Inserting {str(inode.path)}...")
-
-                with open(fp, "rb") as g:
-                    while data := g.read(0x80000):
-                        f.write(data)
-
-                end_pos = f.tell()
-
-                # Align to next LBA
-                al_end = (end_pos + 0x7FF) & ~(0x7FF)
-                f.write(b"\x00" * (al_end - end_pos))
-
-                end_save = f.tell()
-
-                new_lba = (start_pos - pvd1_pos + SYSTEM_AREA_SIZE) // 0x800
-                new_size = end_pos - start_pos
-                f.seek(inode.inode + 2)
-
-                f.write(struct.pack("<I", new_lba))
-                f.write(struct.pack(">I", new_lba))
-                f.write(struct.pack("<I", new_size))
-                f.write(struct.pack(">I", new_size))
-
-                f.seek(end_save)
-
-            # Align to 0x8000
-            end_pos = f.tell()
-            al_end = (end_pos + 0x7FFF) & ~(0x7FFF)
-            f.write(b"\x00" * (al_end - end_pos))
-
-            # Sony's cdvdgen tool starting with v2.00 by default adds
-            # a 20MiB padding to the end of the PVD, add it here if requested
-            # minus a whole LBA for the end of file Anchor
-            if add_padding:
-                f.write(b"\x00" * (0x140_0000 - 0x800))
-
-            # Last LBA includes the anchor
-            last_pvd_lba = ((f.tell() - pvd1_pos + SYSTEM_AREA_SIZE) // 0x800) + 1
-
-            f.write(pvd1_footer)
-            f.seek(pvd1_pos + 0x50)
-            f.write(struct.pack("<I", last_pvd_lba))
-            f.write(struct.pack(">I", last_pvd_lba))
-            f.seek(-0x7F4, 2)
-            f.write(struct.pack("<I", last_pvd_lba))
+            write_new_pvd(f, iso_files, add_padding, iso_info.layers[1], pvd1_start)
 
 
 if __name__ == "__main__":
