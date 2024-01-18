@@ -5,12 +5,17 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import BinaryIO
 
-SCRIPT_VERSION = "1.6"
+SCRIPT_VERSION = "1.7"
 SECTOR_SIZE = 0x800
 READ_CHUNK = 0x50_0000 # 5MiB
 SYSTEM_AREA_SIZE = 0x10 * SECTOR_SIZE
 LAYER0_PVD_LOCATION = SYSTEM_AREA_SIZE
+MAX_VOLUME_SECTOR_COUNT = 0x1FD060
+MAX_VOLUME_SIZE = MAX_VOLUME_SECTOR_COUNT * SECTOR_SIZE
 VOLUME_ALIGN = 0x8000
+PAD_NONE = 0
+PAD_20MB = 1
+PAD_VOLUME = 2
 
 def align(x: int, alg: int) -> int:
     return (x + (alg-1)) & ~(alg-1)
@@ -42,7 +47,6 @@ class Iso:
     layers: list[IsoLayer] = field(default_factory=lambda: [IsoLayer(), IsoLayer()])
 
 
-
 def main():
     print(f"pyPS2 ISO Rebuilder v{SCRIPT_VERSION}")
     print("Original by Raynê Games")
@@ -54,7 +58,14 @@ def main():
         dump_iso(args.iso, args.filelist, args.files, args.dry)
         print("dumping finished")
     else:
-        rebuild_iso(args.iso, args.filelist, args.files, args.output, args.with_padding)
+        if args.with_padding:
+            pad_mode = PAD_20MB
+        elif args.max_size:
+            pad_mode = PAD_VOLUME
+        else:
+            pad_mode = PAD_NONE
+
+        rebuild_iso(args.iso, args.filelist, args.files, args.output, pad_mode)
         print("rebuild finished")
 
 
@@ -79,11 +90,20 @@ def get_arguments(argv=None):
         help="input game iso file path",
     )
 
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    
+    group.add_argument(
         "--with-padding",
         required=False,
         action="store_true",
         help="flag to control outermost iso padding",
+    )
+    
+    group.add_argument(
+        "--max-size",
+        required=False,
+        action="store_true",
+        help="flag to make the biggest iso possible",
     )
 
     parser.add_argument(
@@ -405,7 +425,7 @@ def validate_rebuild(filelist: Path, iso_files: Path) -> bool:
     return True
 
 
-def write_new_pvd(iso: BinaryIO, iso_files: Path, add_padding: bool, layer_info: IsoLayer, pvd_loc: int) -> int:
+def write_new_pvd(iso: BinaryIO, iso_files: Path, add_padding: int, layer_info: IsoLayer, pvd_loc: int) -> int:
     iso.write(layer_info.header)
 
     for inode in layer_info.meta.files:
@@ -451,11 +471,19 @@ def write_new_pvd(iso: BinaryIO, iso_files: Path, add_padding: bool, layer_info:
 
     # Sony's cdvdgen tool starting with v2.00 by default adds
     # a 20MiB padding to the end of the PVD, add it here if requested
-    if add_padding:
+    if add_padding == PAD_20MB:
         iso.write(b"\x00" * 0x140_0000)
+    elif add_padding == PAD_VOLUME:
+        empty_sector = b"\x00" * SECTOR_SIZE
+        while (iso.tell() - pvd_loc + SYSTEM_AREA_SIZE) < (MAX_VOLUME_SIZE - SECTOR_SIZE):
+            iso.write(empty_sector)
+        
 
     # Last LBA includes the anchor
     last_pvd_lba = ((iso.tell() - pvd_loc + SYSTEM_AREA_SIZE) // 0x800) + 1
+
+    # Check if we didn't go over the maximum
+    assert last_pvd_lba <= MAX_VOLUME_SECTOR_COUNT, "Iso image would go over the maximum allowed size!"
 
     iso.write(layer_info.footer)
     iso.seek(pvd_loc + 0x50)
@@ -469,7 +497,7 @@ def write_new_pvd(iso: BinaryIO, iso_files: Path, add_padding: bool, layer_info:
 
 
 def rebuild_iso(
-    iso: Path, filelist: Path, iso_files: Path, output: Path, add_padding: bool
+    iso: Path, filelist: Path, iso_files: Path, output: Path, add_padding: int
 ) -> None:
     # Validate args
     if not validate_rebuild(filelist, iso_files):
