@@ -5,7 +5,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import BinaryIO
 
-SCRIPT_VERSION = "1.5"
+SCRIPT_VERSION = "1.6"
 SECTOR_SIZE = 0x800
 READ_CHUNK = 0x50_0000 # 5MiB
 SYSTEM_AREA_SIZE = 0x10 * SECTOR_SIZE
@@ -171,12 +171,23 @@ def dump_dir_records(iso: BinaryIO, pvd_loc: int, pvd_off: int) -> FileListInfo:
                 # Otherwise keep reading the previous one
                 record_ends.pop()
                 path_parts.pop()
-                iso.seek(record_pos.pop() + pvd_off)
+                iso.seek(record_pos.pop())
                 continue
 
         # Parse the record
         inode = iso.tell()
+
         dr_len = struct.unpack("<B", iso.read(1))[0]
+        if dr_len == 0:
+            # Found a 0-sized entry but record is not over
+            # align to boundary or bail out otherwise
+            if inode < record_ends[-1]:
+                iso.seek(align(iso.tell(), SECTOR_SIZE))
+                continue
+            else:
+                print("ERROR: Invalid directory record found")
+                exit(1)
+
         dr_blob = iso.read(dr_len - 1)
 
         (
