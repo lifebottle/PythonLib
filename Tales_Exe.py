@@ -170,6 +170,9 @@ if __name__ == "__main__":
         elif args.file_type == "Story":
             tales_instance.pack_all_story()
 
+        elif args.file_type == "Iso":
+            tales_instance.make_iso()
+
         elif args.file_type == "Skits":
             tales_instance.pack_all_skits()
 

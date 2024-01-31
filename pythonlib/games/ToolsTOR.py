@@ -873,7 +873,10 @@ class ToolsTOR(ToolsTales):
         # file_list: dict[int, Path] = {}
         for file in (self.paths["temp_files"] / "DAT").glob("*/*"):
             file_index = int(file.name[:5])
-            file_list[file_index] = file
+            if file_index in file_list and file_list[file_index].is_dir():
+                continue
+            else:
+                file_list[file_index] = file
                 
         with open(output_dat_path, "wb") as output_dat:
             for i in tqdm(range(total_files)):
@@ -882,11 +885,19 @@ class ToolsTOR(ToolsTales):
                     remainders.append(0); sectors.append(buffer)
                     continue
 
-                with open(file, "rb") as f2:
-                    data = f2.read()
-                
-                comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
-                if comp_type != None:
+                if file.is_dir() and file.parent.stem == "SCPK":
+                    scpk_path = original_files / "SCPK" / (file.stem + ".scpk")
+                    scpk_o = Scpk.from_path(scpk_path)
+                    with open(file / (file.stem + ".rsce"), "rb") as f:
+                        scpk_o.rsce = f.read()
+                    data = scpk_o.to_bytes()
+                    comp_type = re.search(self.VALID_FILE_NAME, scpk_path.name).group(2)
+                else:
+                    with open(file, "rb") as f2:
+                        data = f2.read()
+                    comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
+
+                if comp_type is not None:
                     data = comptolib.compress_data(data, version=int(comp_type))
             
                 output_dat.write(data)
