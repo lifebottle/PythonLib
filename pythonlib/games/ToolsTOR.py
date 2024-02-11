@@ -719,7 +719,7 @@ class ToolsTOR(ToolsTales):
         with open(self.paths["menu_table"], encoding="utf-8") as f:
             menu_json = json.load(f)
 
-        for entry in tqdm(menu_json):
+        for entry in (pbar:= tqdm(menu_json)):
 
             if entry["file_path"] == "${main_exe}":
                 file_path = self.paths["original_files"] / self.main_exe_name
@@ -730,8 +730,10 @@ class ToolsTOR(ToolsTales):
 
             if entry["is_pak"]:
                 pak = Pak.from_path(file_path, int(entry["pak_type"]))
+                (out_path / file_last[:-4]).mkdir(parents=True, exist_ok=True)
                 
                 for p_file in entry["files"]:
+                    pbar.set_description_str(p_file["friendly_name"])
                     f_index = p_file["file"]
                     base_offset = p_file["base_offset"]
                     
@@ -750,11 +752,11 @@ class ToolsTOR(ToolsTales):
                         f.seek(0)
                         pak[f_index].data = f.read()
 
-                (out_path / file_last).parent.mkdir(parents=True, exist_ok=True)
-                with open(out_path / file_last, "wb") as f:
-                    f.write(pak.to_bytes(entry["pak_type"]))
+                    with open(out_path / file_last[:-4] / f"{f_index:04d}.bin", "wb") as f:
+                        f.write(pak[f_index].data)
 
             else:
+                pbar.set_description_str(entry["friendly_name"])
                 base_offset = entry["base_offset"]
                 pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in entry["safe_areas"]] 
                 pools.sort(key=lambda x: x[1])
