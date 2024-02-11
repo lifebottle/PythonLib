@@ -839,6 +839,12 @@ class ToolsTOR(ToolsTales):
                 "-strequ",
                 "__SLPS_PATH__", 
                 str(self.paths["temp_files"] / self.main_exe_name),
+                "-strequ",
+                "__BTL_OVL_PATH__", 
+                str(self.paths["temp_files"] / "DAT" / "PAK3" / "00013" / "0000.bin"),
+                "-strequ",
+                "__3DFIELD_OVL_PATH__", 
+                str(self.paths["temp_files"] / "DAT" / "PAK3" / "00013" / "0002.bin"),
             ]
         )
 
