@@ -854,64 +854,17 @@ class ToolsTOR(ToolsTales):
     def pack_main_archive(self):
         sectors: list[int] = [0]
         remainders: list[int] = []
-        buffer = 0
 
         # Copy the original SLPS to Disc/New
         # shutil.copy(self.elf_original, self.elf_new)
    
         print("Packing DAT.BIN files...")
         output_dat_path = self.paths["final_files"] / "DAT.BIN"
-        original_files = self.paths["extracted_files"] / "DAT"
         total_files = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
-    
-            
-        # Get all original DAT.BIN files
-        file_list: dict[int, Path] = {}
-        for file in original_files.glob("*/*"):
-            file_index = int(file.name[:5])
-            file_list[file_index] = file
-
-        # Overlay whatever we have compiled
-        # file_list: dict[int, Path] = {}
-        for file in (self.paths["temp_files"] / "DAT").glob("*/*"):
-            file_index = int(file.name[:5])
-            if file_index in file_list and file_list[file_index].is_dir():
-                continue
-            else:
-                file_list[file_index] = file
                 
         with open(output_dat_path, "wb") as output_dat:
-            for i in tqdm(range(total_files)):
-                file = file_list.get(i)
-                if not file:
-                    remainders.append(0); sectors.append(buffer)
-                    continue
-
-                if file.is_dir() and file.parent.stem == "SCPK":
-                    scpk_path = original_files / "SCPK" / (file.stem + ".scpk")
-                    scpk_o = Scpk.from_path(scpk_path)
-                    with open(file / (file.stem + ".rsce"), "rb") as f:
-                        scpk_o.rsce = f.read()
-                    data = scpk_o.to_bytes()
-                    comp_type = re.search(self.VALID_FILE_NAME, scpk_path.name).group(2)
-                else:
-                    with open(file, "rb") as f2:
-                        data = f2.read()
-                    comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
-
-                if comp_type is not None:
-                    data = comptolib.compress_data(data, version=int(comp_type))
-            
-                output_dat.write(data)
-                size = len(data)
-                remainder = 0x40 - (size % 0x40)
-                if remainder == 0x40: remainder = 0
-                output_dat.write(b"\x00" * remainder)
-              
-        
-                remainders.append(remainder)
-                buffer += size + remainder
-                sectors.append(buffer)
+            for blob in tqdm(self._pack_dat_iter(sectors, remainders), total=total_files, desc="Inserting DAT.BIN"):
+                output_dat.write(blob)
         
         #Use the new SLPS updated and update the pointers for the SCPK
         # original_slps = self.paths["original_files"] / self.main_exe_name
@@ -930,6 +883,7 @@ class ToolsTOR(ToolsTales):
     def _pack_dat_iter(self, sectors: list[int], remainders: list[int]) -> Iterable[bytes]:
         buffer = 0
         original_files = self.paths["extracted_files"] / "DAT"
+        temp_files = self.paths["temp_files"] / "DAT"
         total_files = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
     
             
@@ -942,7 +896,10 @@ class ToolsTOR(ToolsTales):
         # Overlay whatever we have compiled
         for file in (self.paths["temp_files"] / "DAT").glob("*/*"):
             file_index = int(file.name[:5])
-            file_list[file_index] = file
+            if file_index in file_list and file_list[file_index].is_dir():
+                continue
+            else:
+                file_list[file_index] = file
             
         for i in range(total_files):
             file = file_list.get(i)
@@ -951,10 +908,27 @@ class ToolsTOR(ToolsTales):
                 yield b""
                 continue
 
-            with open(file, "rb") as f2:
-                data = f2.read()
+            if file.is_dir() and file.parent.stem == "SCPK":
+                scpk_path = original_files / "SCPK" / (file.stem + ".scpk")
+                scpk_o = Scpk.from_path(scpk_path)
+                with open(file / (file.stem + ".rsce"), "rb") as f:
+                    scpk_o.rsce = f.read()
+                data = scpk_o.to_bytes()
+                comp_type = re.search(self.VALID_FILE_NAME, scpk_path.name).group(2)
+            elif file.is_dir() and file.parent.stem == "PAK3":
+                pak_path = original_files / "PAK3" / (file.stem + ".pak3")
+                pak_o = Pak.from_path(pak_path, 3)
+                for pak_file in file.glob("*.bin"):
+                    file_index = int(pak_file.name.split(".bin")[0])
+                    with open(pak_file, "rb") as pf:
+                        pak_o.files[file_index].data = pf.read()
+                data = pak_o.to_bytes(3)
+                comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
+            else:
+                with open(file, "rb") as f2:
+                    data = f2.read()
+                comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
             
-            comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
             if comp_type != None:
                 data = comptolib.compress_data(data, version=int(comp_type))
         
