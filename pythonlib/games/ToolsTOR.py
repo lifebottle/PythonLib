@@ -439,6 +439,8 @@ class ToolsTOR(ToolsTales):
         final_text = japanese_text or ''
         if (status in self.list_status_insertion and english_text is not None):
             final_text = english_text
+        elif entry_node.find("EnglishText").attrib.get("empty"):
+            final_text = ""
         
         voiceId_node = entry_node.find("VoiceId")
         if (voiceId_node is not None):
@@ -456,9 +458,9 @@ class ToolsTOR(ToolsTales):
         new_text_offsets = dict()
               
         #Read the XML for the corresponding THEIRSCE
-        
-        tree = etree.parse(xml)
-        root = tree.getroot()
+        with open(xml, "r") as xmlFile:
+            root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
+        # root = tree.getroot()
 
         #Go at the start of the dialog
         #Loop on every Entry and reinsert
@@ -743,7 +745,7 @@ class ToolsTOR(ToolsTales):
 
                     # Get the xml
                     with open(xml_path / (p_file["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
-                        root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
+                        root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
 
 
                     with FileIO(pak[f_index].data, "rb") as f:
@@ -762,7 +764,7 @@ class ToolsTOR(ToolsTales):
                 pools.sort(key=lambda x: x[1])
 
                 with open(xml_path / (entry["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
-                    root = etree.fromstring(xmlFile.read(), parser=etree.XMLParser(recover=True))
+                    root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
                 
                 with open(file_path, "rb") as f:
                     file_b = f.read()
