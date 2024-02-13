@@ -458,7 +458,7 @@ class ToolsTOR(ToolsTales):
         new_text_offsets = dict()
               
         #Read the XML for the corresponding THEIRSCE
-        with open(xml, "r") as xmlFile:
+        with open(xml, "r", encoding="utf-8") as xmlFile:
             root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
         # root = tree.getroot()
 
