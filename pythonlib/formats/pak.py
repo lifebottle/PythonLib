@@ -6,37 +6,36 @@ from ..utils import comptolib
 
 
 @dataclass
-class pak_file():
+class pak_file:
     is_compressed: bool
     type: int
     data: bytes
 
 
-class Pak():
+class Pak:
     def __init__(self) -> None:
         self.type = -1
         self.align = False
         self.files = []
 
-    
     @staticmethod
-    def from_path(path, type) -> 'Pak':
+    def from_path(path, type) -> "Pak":
         with FileIO(path) as f:
             self = Pak()
-            # if type == -1:
-            #     type = Pak.get_pak_type(f)
+            if type != -1:
+                self.type = type
 
             file_amount = f.read_uint32()
             self.files = []
             blobs: list[bytes] = []
             offsets: list[int] = []
-            sizes: list[int] = []  
+            sizes: list[int] = []
 
             # Pak0
             if type == 0:
                 for _ in range(file_amount):
                     sizes.append(f.read_uint32())
-                
+
                 for size in sizes:
                     blobs.append(f.read(size))
 
@@ -60,7 +59,7 @@ class Pak():
                 for offset, size in zip(offsets, sizes):
                     f.seek(offset)
                     blobs.append(f.read(size))
-        
+
             for off in offsets:
                 if off % 0x10 == 0:
                     self.align = True
@@ -76,32 +75,33 @@ class Pak():
             self.files.append(pak_file(is_compressed, c_type, blob))
 
         return self
-    
+
     @staticmethod
     def get_pak_type(data: bytes) -> Optional[int]:
         is_aligned = False
-        
+
         data_size = len(data)
-        if data_size < 0x8: return None
-    
+        if data_size < 0x8:
+            return None
+
         files = struct.unpack("<I", data[:4])[0]
         first_entry = struct.unpack("<I", data[4:8])[0]
-    
+
         # Expectations
         pak1_header_size = 4 + (files * 8)
         pak3_header_size = 4 + (files * 4)
-    
+
         # Check for alignment
         if first_entry % 0x10 == 0:
             is_aligned = True
-        
+
         if pak1_header_size % 0x10 != 0:
             pak1_check = pak1_header_size + (0x10 - (pak1_header_size % 0x10))
         else:
             pak1_check = pak1_header_size
-    
-        # First test pak0 
-        # (pak0 can't be aligned, so header size 
+
+        # First test pak0
+        # (pak0 can't be aligned, so header size
         # would be the same as unaligned pak3)
         if len(data) > pak3_header_size:
             calculated_size = 0
@@ -109,35 +109,32 @@ class Pak():
                 calculated_size += size
             if calculated_size == len(data) - pak3_header_size:
                 return 0
-    
+
         # Test for pak1
         if is_aligned:
             if pak1_check == first_entry:
                 return 1
         elif pak1_header_size == first_entry:
-                return 1
-        
-        #Test for pak3
-        previous = 0
-        for offset in struct.unpack(f"<{files}I", data[4: (files+1)*4]):
+            return 1
 
+        # Test for pak3
+        previous = 0
+        for offset in struct.unpack(f"<{files}I", data[4 : (files + 1) * 4]):
             if offset > previous and offset >= pak3_header_size:
                 previous = offset
             else:
                 return None
-        
-        last_offset = (4*(files+1))+8
-        if data[last_offset : first_entry] == b'\x00' * (first_entry - last_offset):
+
+        last_offset = (4 * (files + 1)) + 8
+        if data[last_offset:first_entry] == b"\x00" * (first_entry - last_offset):
             return 3
         return None
-    
 
     def to_bytes(self, type=-1) -> bytes:
-        
         compose_mode = type if type != -1 else self.type
         if compose_mode == -1:
             raise ValueError("Trying to compose an invalid PAK type")
-        
+
         # Collect blobs
         blobs = []
         for blob in self.files:
@@ -148,7 +145,7 @@ class Pak():
 
         # Compose
         out = struct.pack("<I", len(self.files))
-        
+
         # Pak0
         if compose_mode == 0:
             for blob in blobs:
@@ -163,8 +160,8 @@ class Pak():
             for i, j in zip(sizes[::1], sizes[1::1]):
                 if self.align:
                     i = i + (0x10 - (i % 0x10))
-                struct.pack("<I", offset + i)
-                struct.pack("<I", j)
+                out += struct.pack("<I", offset + i)
+                out += struct.pack("<I", j)
                 offset += i
         # Pak3
         elif compose_mode == 3:
@@ -177,7 +174,7 @@ class Pak():
                 out += struct.pack("<I", cur)
                 cur += len(blob)
                 if self.align:
-                    cur += (0x10 - (cur % 0x10))
+                    cur += 0x10 - (cur % 0x10)
 
         # add files
         for blob in blobs:
@@ -186,7 +183,6 @@ class Pak():
             out += blob
 
         return out
-    
 
     def __getitem__(self, item):
         return self.files[item]
