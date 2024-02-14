@@ -155,11 +155,11 @@ class Pak:
             offset = 4 + (8 * len(blobs))
             sizes = [0] + list([len(x) for x in blobs])
             if self.align:
-                offset = offset + (0x10 - (offset % 0x10))
+                offset = (offset + 0xF) & ~0xF
 
             for i, j in zip(sizes[::1], sizes[1::1]):
                 if self.align:
-                    i = i + (0x10 - (i % 0x10))
+                    i = (i + 0xF) & ~0xF
                 out += struct.pack("<I", offset + i)
                 out += struct.pack("<I", j)
                 offset += i
@@ -167,19 +167,19 @@ class Pak:
         elif compose_mode == 3:
             offset = 4 + (4 * len(blobs))
             if self.align:
-                offset = offset + (0x10 - (offset % 0x10))
+                offset = (offset + 0xF) & ~0xF
 
             cur = offset
             for blob in blobs:
                 out += struct.pack("<I", cur)
                 cur += len(blob)
                 if self.align:
-                    cur += 0x10 - (cur % 0x10)
+                    cur = (cur + 0xF) & ~0xF
 
         # add files
         for blob in blobs:
             if self.align:
-                out += b"\x00" * (0x10 - (len(out) % 0x10))
+                out += b"\x00" * (((len(out) + 0xF) & ~0xF) - len(out))
             out += blob
 
         return out
