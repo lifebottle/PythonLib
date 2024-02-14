@@ -626,22 +626,15 @@ class ToolsTOR(ToolsTales):
                 for p_file in entry["files"]:
                     f_index = int(p_file["file"])
                     with FileIO(pak[f_index].data, "rb") as f:
-                        xml_data = self.extract_menu_file(p_file, f)
-
-                    with open(xml_path / (p_file["friendly_name"] + ".xml"), "wb") as xmlFile:
-                        xmlFile.write(xml_data)
-
+                        self.extract_menu_file(xml_path, p_file, f)
             else:
                 with FileIO(file_path, "rb") as f:
-                    xml_data = self.extract_menu_file(entry, f)
+                    self.extract_menu_file(xml_path, entry, f)
 
-                with open(xml_path / (entry["friendly_name"] + ".xml"), "wb") as xmlFile:
-                    xmlFile.write(xml_data)
-            
             self.id = 1
             
 
-    def extract_menu_file(self, file_def, f: FileIO) -> bytes:
+    def extract_menu_file(self, xml_path: Path, file_def, f: FileIO) -> None:
 
         base_offset = file_def["base_offset"]
         xml_root = etree.Element("MenuText")
@@ -684,6 +677,12 @@ class ToolsTOR(ToolsTales):
             if section['style'][0] == "T": max_len = int(section['style'][1:])
             self.create_Node_XML(xml_root, list_informations, section['section'], max_len)
 
+            if file_def["split_sections"]:
+                file_name = file_def["friendly_name"] + "_" + section["section"].replace(" ", "_") + ".xml"
+                with open(xml_path / file_name, "wb") as xmlFile:
+                    xmlFile.write(etree.tostring(xml_root, encoding="UTF-8", pretty_print=True))
+                xml_root = etree.Element("MenuText")
+
         # Write the embedded pointers section last
         temp = dict()
         for k, v in emb.items():
@@ -704,11 +703,20 @@ class ToolsTOR(ToolsTales):
 
         #Build the XML Structure with the information
         if len(list_informations) != 0:
+            if file_def["split_sections"]:
+                xml_root = etree.Element("MenuText")
             self.create_Node_XML(xml_root, list_informations, "MIPS PTR TEXT")
 
-        
         #Write to XML file
-        return etree.tostring(xml_root, encoding="UTF-8", pretty_print=True)
+        # return etree.tostring(xml_root, encoding="UTF-8", pretty_print=True)
+        if file_def["split_sections"]:
+            file_name = file_def["friendly_name"] + "_MIPS_PTR.xml"
+            with open(xml_path / file_name, "wb") as xmlFile:
+                xmlFile.write(etree.tostring(xml_root, encoding="UTF-8", pretty_print=True))
+        else:
+            file_name = file_def["friendly_name"] + ".xml"
+            with open(xml_path / file_name, "wb") as xmlFile:
+                xmlFile.write(etree.tostring(xml_root, encoding="UTF-8", pretty_print=True))
 
 
     def pack_all_menu(self) -> None:
@@ -763,8 +771,34 @@ class ToolsTOR(ToolsTales):
                 pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in entry["safe_areas"]] 
                 pools.sort(key=lambda x: x[1])
 
-                with open(xml_path / (entry["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
-                    root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
+                if entry["split_sections"]:
+                    root = None
+                    for section in entry["sections"]:
+                        xml_name = entry["friendly_name"] + "_" + section["section"].replace(" ", "_") + ".xml"
+                        with open(xml_path / xml_name, "r", encoding='utf-8') as xmlFile:
+                            data = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
+                        
+                        for result in data.iter('Strings'):
+                            if root is None:
+                                root = data 
+                                insertion_point = root.findall("./Strings")[0]
+                            else:
+                                insertion_point.extend(result) 
+                    if len(entry["embedded"]) != 0:
+                        xml_name = entry["friendly_name"] + "_MIPS_PTR.xml"
+                        with open(xml_path / xml_name, "r", encoding='utf-8') as xmlFile:
+                            data = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
+                        
+                        for result in data.iter('Strings'):
+                            if root is None:
+                                root = data 
+                                insertion_point = root.findall("./Strings")[0]
+                            else:
+                                insertion_point.extend(result) 
+
+                else:
+                    with open(xml_path / (entry["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
+                        root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
                 
                 with open(file_path, "rb") as f:
                     file_b = f.read()
@@ -917,20 +951,29 @@ class ToolsTOR(ToolsTales):
                 continue
 
             if file.is_dir() and file.parent.stem == "SCPK":
-                scpk_path = original_files / "SCPK" / (file.stem + ".scpk")
+                scpk_path = original_files / "SCPK" / (file.name + ".scpk")
                 scpk_o = Scpk.from_path(scpk_path)
                 with open(file / (file.stem + ".rsce"), "rb") as f:
                     scpk_o.rsce = f.read()
                 data = scpk_o.to_bytes()
                 comp_type = re.search(self.VALID_FILE_NAME, scpk_path.name).group(2)
             elif file.is_dir() and file.parent.stem == "PAK3":
-                pak_path = original_files / "PAK3" / (file.stem + ".pak3")
+                pak_path = original_files / "PAK3" / (file.name + ".pak3")
                 pak_o = Pak.from_path(pak_path, 3)
                 for pak_file in file.glob("*.bin"):
                     file_index = int(pak_file.name.split(".bin")[0])
                     with open(pak_file, "rb") as pf:
                         pak_o.files[file_index].data = pf.read()
                 data = pak_o.to_bytes(3)
+                comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
+            elif file.is_dir() and file.parent.stem == "PAK1":
+                pak_path = original_files / "PAK1" / (file.name + ".pak1")
+                pak_o = Pak.from_path(pak_path, 1)
+                for pak_file in file.glob("*.bin"):
+                    file_index = int(pak_file.name.split(".bin")[0])
+                    with open(pak_file, "rb") as pf:
+                        pak_o.files[file_index].data = pf.read()
+                data = pak_o.to_bytes(1)
                 comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
             else:
                 with open(file, "rb") as f2:
