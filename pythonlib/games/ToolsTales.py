@@ -498,8 +498,10 @@ class ToolsTales:
                 for c in t:
                     if c in self.PRINTABLE_CHARS or c == "\u3000":
                         output += c.encode("cp932")
+                    elif c in self.ijsonTblTags["TBL"]:
+                        output += struct.pack(">H", self.ijsonTblTags["TBL"][c])
                     else:
-                        output += struct.pack(">H", self.ijsonTblTags["TBL"].get(c, int.from_bytes(c.encode("cp932"), "big")))
+                        output += struct.pack(">H", int.from_bytes(c.encode("cp932"), "big"))
 
         return output
         
