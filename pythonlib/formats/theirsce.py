@@ -175,7 +175,7 @@ class Theirsce(FileIO):
 
             if size_mask == 0:
                 value = 0xFFFFFF00 | (top | 0xF8) if signed else top
-            if size_mask == 1:
+            elif size_mask == 1:
                 value = top << 8 | self.read_uint8()
                 value = value | 0xFFFF0000 | 0xF800 if signed else value
             elif size_mask == 2:

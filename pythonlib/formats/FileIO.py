@@ -9,11 +9,11 @@ class FileIO(object):
     def __init__(self, path: Union[Path, str, BytesIO, bytes], mode="r+b", endian="little"):
         self.mode: str = mode
         self._isBitesIO = False
-        if type(path) is bytes:
+        if isinstance(path, bytes):
             self.path = None
             self.f = path # type: ignore
             self.is_memory_file = True
-        elif type(path) is BytesIO:
+        elif isinstance(path, BytesIO):
             self.path = None
             self.f = path
             self._isBitesIO = True

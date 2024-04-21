@@ -502,7 +502,7 @@ class ToolsTOR(ToolsTales):
 
         in_list = []
         if self.changed_only:
-            for item in porcelain.status(self.get_repo_fixed()).unstaged:
+            for item in porcelain.status(self.get_repo_fixed()).unstaged: # type: ignore
                 item_path = Path(item.decode("utf-8"))
                 if item_path.parent.name == "skits":
                     in_list.append(pak2_path / item_path.with_suffix(".3.pak2").name)
@@ -590,7 +590,8 @@ class ToolsTOR(ToolsTales):
             for step in split:
                 if step == "P":
                     off = file.read_uint32()
-                    if base_offset != 0 and off == 0: continue
+                    if base_offset == 0 and off == 0: 
+                        continue
                     pointers_offset.append(file.tell() - 4)
                     pointers_value.append(off - base_offset)
                 elif step == "T":
@@ -674,7 +675,8 @@ class ToolsTOR(ToolsTales):
             list_informations = [(k, str(v['ptr'])[1:-1], v.setdefault('emb', None)) for k, v in temp.items()]
 
             # Build the XML Structure with the information
-            if section['style'][0] == "T": max_len = int(section['style'][1:])
+            if section['style'][0] == "T":
+                max_len = int(section['style'][1:])
             self.create_Node_XML(xml_root, list_informations, section['section'], max_len)
 
             if file_def["split_sections"]:
@@ -842,10 +844,11 @@ class ToolsTOR(ToolsTales):
             text_bytes = self.get_node_bytes(line) + b"\x00"
 
             for pool in pools:
-                l = len(text_bytes)
-                if l <= pool[1]:
+                ln = len(text_bytes)
+                if ln <= pool[1]:
                     str_pos = pool[0]
-                    pool[0] += l; pool[1] -= l
+                    pool[0] += ln
+                    pool[1] -= ln
                     break
             else:
                 raise ValueError("Ran out of space")
@@ -861,7 +864,8 @@ class ToolsTOR(ToolsTales):
                 val_lo = (virt_pos) & 0xFFFF
                 
                 # can't encode the lui+addiu directly
-                if val_lo >= 0x8000: val_hi += 1
+                if val_lo >= 0x8000:
+                    val_hi += 1
 
                 f.write_uint16_at(_h, val_hi)
                 f.write_uint16_at(_l, val_lo)
@@ -925,7 +929,6 @@ class ToolsTOR(ToolsTales):
     def _pack_dat_iter(self, sectors: list[int], remainders: list[int]) -> Iterable[bytes]:
         buffer = 0
         original_files = self.paths["extracted_files"] / "DAT"
-        temp_files = self.paths["temp_files"] / "DAT"
         total_files = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
     
             
@@ -946,46 +949,50 @@ class ToolsTOR(ToolsTales):
         for i in range(total_files):
             file = file_list.get(i)
             if not file:
-                remainders.append(0); sectors.append(buffer)
+                remainders.append(0)
+                sectors.append(buffer)
                 yield b""
                 continue
 
-            if file.is_dir() and file.parent.stem == "SCPK":
-                scpk_path = original_files / "SCPK" / (file.name + ".scpk")
-                scpk_o = Scpk.from_path(scpk_path)
-                with open(file / (file.stem + ".rsce"), "rb") as f:
-                    scpk_o.rsce = f.read()
-                data = scpk_o.to_bytes()
-                comp_type = re.search(self.VALID_FILE_NAME, scpk_path.name).group(2)
-            elif file.is_dir() and file.parent.stem == "PAK3":
-                pak_path = original_files / "PAK3" / (file.name + ".pak3")
-                pak_o = Pak.from_path(pak_path, 3)
-                for pak_file in file.glob("*.bin"):
-                    file_index = int(pak_file.name.split(".bin")[0])
-                    with open(pak_file, "rb") as pf:
-                        pak_o.files[file_index].data = pf.read()
-                data = pak_o.to_bytes(3)
-                comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
-            elif file.is_dir() and file.parent.stem == "PAK1":
-                pak_path = original_files / "PAK1" / (file.name + ".pak1")
-                pak_o = Pak.from_path(pak_path, 1)
-                for pak_file in file.glob("*.bin"):
-                    file_index = int(pak_file.name.split(".bin")[0])
-                    with open(pak_file, "rb") as pf:
-                        pak_o.files[file_index].data = pf.read()
-                data = pak_o.to_bytes(1)
-                comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
+            data = b""
+            if file.is_dir():
+                if file.parent.stem == "SCPK":
+                    scpk_path = original_files / "SCPK" / (file.name + ".scpk")
+                    scpk_o = Scpk.from_path(scpk_path)
+                    with open(file / (file.stem + ".rsce"), "rb") as f:
+                        scpk_o.rsce = f.read()
+                    data = scpk_o.to_bytes()
+                    comp_type = re.search(self.VALID_FILE_NAME, scpk_path.name).group(2)
+                elif file.parent.stem == "PAK3":
+                    pak_path = original_files / "PAK3" / (file.name + ".pak3")
+                    pak_o = Pak.from_path(pak_path, 3)
+                    for pak_file in file.glob("*.bin"):
+                        file_index = int(pak_file.name.split(".bin")[0])
+                        with open(pak_file, "rb") as pf:
+                            pak_o.files[file_index].data = pf.read()
+                    data = pak_o.to_bytes(3)
+                    comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
+                if file.parent.stem == "PAK1":
+                    pak_path = original_files / "PAK1" / (file.name + ".pak1")
+                    pak_o = Pak.from_path(pak_path, 1)
+                    for pak_file in file.glob("*.bin"):
+                        file_index = int(pak_file.name.split(".bin")[0])
+                        with open(pak_file, "rb") as pf:
+                            pak_o.files[file_index].data = pf.read()
+                    data = pak_o.to_bytes(1)
+                    comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
             else:
                 with open(file, "rb") as f2:
                     data = f2.read()
                 comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
             
-            if comp_type != None:
+            if comp_type is not None:
                 data = comptolib.compress_data(data, version=int(comp_type))
         
             size = len(data)
             remainder = 0x40 - (size % 0x40)
-            if remainder == 0x40: remainder = 0
+            if remainder == 0x40:
+                remainder = 0
     
             remainders.append(remainder)
             buffer += size + remainder
@@ -1004,7 +1011,7 @@ class ToolsTOR(ToolsTales):
 
         in_list = []
         if self.changed_only:
-            for item in porcelain.status(self.get_repo_fixed()).unstaged:
+            for item in porcelain.status(self.get_repo_fixed()).unstaged: # type: ignore
                 item_path = Path(item.decode("utf-8"))
                 if item_path.parent.name == "story":
                     in_list.append(scpk_path / item_path.with_suffix(".scpk").name)
@@ -1037,7 +1044,7 @@ class ToolsTOR(ToolsTales):
 
         print("Extracting ISO files...")
         
-        iso = pycdlib.PyCdlib()
+        iso = pycdlib.PyCdlib() # type: ignore
         iso.open(str(game_iso))
 
         extract_to = self.paths["original_files"]
@@ -1088,7 +1095,7 @@ class ToolsTOR(ToolsTales):
 
             # 1st place the logo + iso data from the .ims file
             with open(self.paths["original_files"] / "_header.ims", "rb") as f:
-                for _ in tqdm(range(273), desc=f"Copying iso header"):
+                for _ in tqdm(range(273), desc="Copying iso header"):
                     new.write(f.read(0x800))
                 anchor_save = f.read(0x800)
 
@@ -1119,7 +1126,7 @@ class ToolsTOR(ToolsTales):
             remainders: list[int] = []
             total = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
             dat_sz = 0
-            for blob in tqdm(self._pack_dat_iter(sectors, remainders), total=total, desc=f"Inserting DAT.BIN"):
+            for blob in tqdm(self._pack_dat_iter(sectors, remainders), total=total, desc="Inserting DAT.BIN"):
                 new.write(blob)
                 dat_sz += len(blob)
             
@@ -1133,13 +1140,14 @@ class ToolsTOR(ToolsTales):
                 dt.seek(0, 2)
                 fld_sz = dt.tell()
                 dt.seek(0)
-                with tqdm(total=fld_sz, desc=f"Inserting FLD.BIN", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
+                with tqdm(total=fld_sz, desc="Inserting FLD.BIN", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
                     while data := dt.read(0x8000):
                         new.write(data)
                         pbar.update(len(data))
             
             # Align file and add the 20MiB pad cdvdgen adds
-            new.write_padding(0x8000); new.write(b"\x00" * 0x13F_F800)
+            new.write_padding(0x8000)
+            new.write(b"\x00" * 0x13F_F800)
 
             # get end of volume spot
             end = new.tell()
