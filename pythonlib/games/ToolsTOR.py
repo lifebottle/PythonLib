@@ -885,6 +885,9 @@ class ToolsTOR(ToolsTales):
                 "-strequ",
                 "__3DFIELD_OVL_PATH__", 
                 str(self.paths["temp_files"] / "DAT" / "PAK3" / "00013" / "0002.bin"),
+                "-strequ",
+                "__MNU_NAME_OVL_PATH__", 
+                str(self.paths["temp_files"] / "DAT" / "OVL" / "11224.ovl"),
             ]
         )
 
