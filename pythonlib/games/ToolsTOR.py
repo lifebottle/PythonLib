@@ -891,6 +891,9 @@ class ToolsTOR(ToolsTales):
                 "-strequ",
                 "__MNU_STATUS_OVL_PATH__", 
                 str(self.paths["temp_files"] / "DAT" / "OVL" / "11216.ovl"),
+                "-strequ",
+                "__MNU_MONSTER_OVL_PATH__", 
+                str(self.paths["temp_files"] / "DAT" / "OVL" / "11217.ovl"),
             ]
         )
 
