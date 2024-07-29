@@ -4,6 +4,7 @@ import shutil
 import struct
 import subprocess
 import types
+import os
 from collections.abc import Iterable
 from dataclasses import dataclass
 from itertools import tee
@@ -872,10 +873,24 @@ class ToolsTOR(ToolsTales):
 
 
     def patch_binaries(self):
-        subprocess.run(
+        bin_path = self.paths["tools"] / "bin"
+        cc_path = self.paths["tools"] / "bin" / "cc" / "bin"
+        dll_path = self.paths["tools"] / "bin" / "dll"
+        env = os.environ.copy()
+        env["PATH"] = f"{bin_path.as_posix()};{cc_path.as_posix()};{dll_path.as_posix()};{env['PATH']}"
+        r = subprocess.run(
             [
-                str(self.paths["tools"] / "asm" / "armips.exe"),
-                str(self.paths["tools"] / "asm" / self.asm_file),
+                "make.exe",
+            ],
+            env=env,
+            cwd=str(self.paths["tools"] / "hacks")
+        )
+        if r.returncode != 0:
+            raise ValueError("Error building code")
+        r = subprocess.run(
+            [
+                str(self.paths["tools"] / "hacks" / "armips.exe"),
+                str(self.paths["tools"] / "hacks" / self.asm_file),
                 "-strequ",
                 "__SLPS_PATH__", 
                 str(self.paths["temp_files"] / self.main_exe_name),
@@ -894,8 +909,12 @@ class ToolsTOR(ToolsTales):
                 "-strequ",
                 "__MNU_MONSTER_OVL_PATH__", 
                 str(self.paths["temp_files"] / "DAT" / "OVL" / "11217.ovl"),
-            ]
+            ],
+            env=env,
+            cwd=str(self.paths["tools"] / "hacks")
         )
+        if r.returncode != 0:
+            raise ValueError("Error running armips")
 
 
     def create_Node_XML(self, root, list_informations, section, max_len = 0) -> None:
