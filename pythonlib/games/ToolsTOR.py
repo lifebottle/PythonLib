@@ -880,7 +880,7 @@ class ToolsTOR(ToolsTales):
         env["PATH"] = f"{bin_path.as_posix()};{cc_path.as_posix()};{dll_path.as_posix()};{env['PATH']}"
         r = subprocess.run(
             [
-                "make.exe",
+                str(self.paths["tools"] / "bin" / "make.exe"),
             ],
             env=env,
             cwd=str(self.paths["tools"] / "hacks")
