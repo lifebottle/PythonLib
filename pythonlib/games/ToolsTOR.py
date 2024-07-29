@@ -881,8 +881,6 @@ class ToolsTOR(ToolsTales):
         r = subprocess.run(
             [
                 str(self.paths["tools"] / "bin" / "make.exe"),
-                "SHELL=cmd",
-                ".SHELLFLAGS=//c"
             ],
             env=env,
             cwd=str(self.paths["tools"] / "hacks")
