@@ -627,8 +627,16 @@ class ToolsTOR(ToolsTales):
 
                 for p_file in entry["files"]:
                     f_index = int(p_file["file"])
-                    with FileIO(pak[f_index].data, "rb") as f:
-                        self.extract_menu_file(xml_path, p_file, f)
+                    if p_file["is_sce"]:
+                        theirsce = Theirsce(pak[f_index].data)
+                        xml_text = self.get_xml_from_theirsce(theirsce, "Story")
+                        self.id = 1
+                        
+                        with open(xml_path / (p_file["friendly_name"] + ".xml"), "wb") as xml:
+                            xml.write(xml_text)
+                    else:
+                        with FileIO(pak[f_index].data, "rb") as f:
+                            self.extract_menu_file(xml_path, p_file, f)
             else:
                 with FileIO(file_path, "rb") as f:
                     self.extract_menu_file(xml_path, entry, f)
@@ -748,25 +756,34 @@ class ToolsTOR(ToolsTales):
                 for p_file in entry["files"]:
                     pbar.set_description_str(p_file["friendly_name"])
                     f_index = p_file["file"]
-                    base_offset = p_file["base_offset"]
-                    
-                    # Create pools of valid free spots
-                    pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in p_file["safe_areas"]] 
-                    pools.sort(key=lambda x: x[1])
-
-                    # Get the xml
-                    with open(xml_path / (p_file["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
-                        root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
-
-
-                    with FileIO(pak[f_index].data, "rb") as f:
-                        self.pack_menu_file(root, pools, base_offset, f)
+                    if p_file["is_sce"]:
+                        old_rsce = Theirsce(pak[f_index].data)
+                        new_rsce = self.get_new_theirsce(old_rsce, xml_path / (p_file["friendly_name"] + ".xml"))
+                        new_rsce.seek(0)
+                        pak[f_index].data = new_rsce.read()
                         
-                        f.seek(0)
-                        pak[f_index].data = f.read()
+                        with open(out_path / file_last[:-4] / f"{f_index:04d}.bin", "wb") as f:
+                            f.write(pak[f_index].data)
+                    else:
+                        base_offset = p_file["base_offset"]
+                        
+                        # Create pools of valid free spots
+                        pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in p_file["safe_areas"]] 
+                        pools.sort(key=lambda x: x[1])
 
-                    with open(out_path / file_last[:-4] / f"{f_index:04d}.bin", "wb") as f:
-                        f.write(pak[f_index].data)
+                        # Get the xml
+                        with open(xml_path / (p_file["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
+                            root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
+
+
+                        with FileIO(pak[f_index].data, "rb") as f:
+                            self.pack_menu_file(root, pools, base_offset, f)
+                            
+                            f.seek(0)
+                            pak[f_index].data = f.read()
+
+                        with open(out_path / file_last[:-4] / f"{f_index:04d}.bin", "wb") as f:
+                            f.write(pak[f_index].data)
 
             else:
                 pbar.set_description_str(entry["friendly_name"])
