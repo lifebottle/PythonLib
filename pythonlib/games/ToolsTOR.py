@@ -1033,7 +1033,7 @@ class ToolsTOR(ToolsTales):
                         file_index = int(pak_file.name.split(".bin")[0])
                         with open(pak_file, "rb") as pf:
                             pak_o.files[file_index].data = pf.read()
-                    data = pak_o.to_bytes(1)
+                    data = pak_o.to_bytes(0)
                     comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
             else:
                 with open(file, "rb") as f2:
