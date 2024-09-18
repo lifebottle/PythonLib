@@ -1026,6 +1026,15 @@ class ToolsTOR(ToolsTales):
                             pak_o.files[file_index].data = pf.read()
                     data = pak_o.to_bytes(1)
                     comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
+                if file.parent.stem == "PAK0":
+                    pak_path = original_files / "PAK0" / (file.name + ".pak0")
+                    pak_o = Pak.from_path(pak_path, 1)
+                    for pak_file in file.glob("*.bin"):
+                        file_index = int(pak_file.name.split(".bin")[0])
+                        with open(pak_file, "rb") as pf:
+                            pak_o.files[file_index].data = pf.read()
+                    data = pak_o.to_bytes(1)
+                    comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
             else:
                 with open(file, "rb") as f2:
                     data = f2.read()
