@@ -773,7 +773,7 @@ class ToolsTOR(ToolsTales):
             xml_path = xml_folder_path / (entry["friendly_name"] + ".xml")
             root = self.read_xml(xml_path)
 
-        self.pack_menu_file(root, pools, base_offset, blob)
+        self.pack_menu_file(root, pools, base_offset, blob, entry["friendly_name"] == "mnu_monster")
         blob.seek(0)
         return blob.read()
 
@@ -819,61 +819,86 @@ class ToolsTOR(ToolsTales):
                 f.write(data)
 
 
-    def pack_menu_file(self, root, pools: list[list[int]], base_offset: int, f: FileIO) -> None:
-        for line in root.iter("Entry"):
-            hi = []
-            lo = []
-            flat_ptrs = []
+    def pack_menu_file(self, root, pools: list[list[int]], base_offset: int, f: FileIO, monster_hack: bool) -> None:
+        limit_reached = False
+        out_file = f
+        vbase_offset = base_offset
+        mode = "wb" if monster_hack else "a"
+        seen_strings: dict[bytes, int] = dict()
 
-            p = line.find("EmbedOffset")
-            if p is not None:
-                hi = [int(x) - base_offset for x in p.find("hi").text.split(",")]
-                lo = [int(x) - base_offset for x in p.find("lo").text.split(",")]
+        with FileIO(self.paths["temp_files"] / "DAT/BIN/10264.bin", mode) as monster_file:
+            for line in root.iter("Entry"):
+                hi = []
+                lo = []
+                flat_ptrs = []
 
-            poff = line.find("PointerOffset")
-            if poff.text is not None:
-                flat_ptrs = [int(x) for x in poff.text.split(",")]
+                p = line.find("EmbedOffset")
+                if p is not None:
+                    hi = [int(x) - base_offset for x in p.find("hi").text.split(",")]
+                    lo = [int(x) - base_offset for x in p.find("lo").text.split(",")]
 
-            mlen = line.find("MaxLength")
-            if mlen is not None:
-                max_len = int(mlen.text)
-                f.seek(flat_ptrs[0])
-                text_bytes = self.get_node_bytes(line) + b"\x00"
-                if len(text_bytes) > max_len:
-                    tqdm.write(f"Line id {line.find('Id').text} ({line.find('JapaneseText').text}) too long, truncating...")
-                    f.write(text_bytes[:max_len-1] + b"\x00")
-                else:
-                    f.write(text_bytes + (b"\x00" * (max_len-len(text_bytes))))
-                continue
-            
-            text_bytes = self.get_node_bytes(line) + b"\x00"
+                poff = line.find("PointerOffset")
+                if poff.text is not None:
+                    flat_ptrs = [int(x) for x in poff.text.split(",")]
 
-            for pool in pools:
-                ln = len(text_bytes)
-                if ln <= pool[1]:
-                    str_pos = pool[0]
-                    pool[0] += ln
-                    pool[1] -= ln
-                    break
-            else:
-                raise ValueError("Ran out of space")
-            
-            f.seek(str_pos)
-            f.write(text_bytes)
-            virt_pos = str_pos + base_offset
-            for off in flat_ptrs:
-                f.write_uint32_at(off, virt_pos)
-            
-            for _h, _l in zip(hi, lo):
-                val_hi = (virt_pos >> 0x10) & 0xFFFF
-                val_lo = (virt_pos) & 0xFFFF
+                mlen = line.find("MaxLength")
+                if mlen is not None:
+                    max_len = int(mlen.text)
+                    out_file.seek(flat_ptrs[0])
+                    text_bytes = self.get_node_bytes(line) + b"\x00"
+                    if len(text_bytes) > max_len:
+                        tqdm.write(f"Line id {line.find('Id').text} ({line.find('JapaneseText').text}) too long, truncating...")
+                        out_file.write(text_bytes[:max_len-1] + b"\x00")
+                    else:
+                        out_file.write(text_bytes + (b"\x00" * (max_len-len(text_bytes))))
+                    continue
                 
-                # can't encode the lui+addiu directly
-                if val_lo >= 0x8000:
-                    val_hi += 1
+                text_bytes = self.get_node_bytes(line) + b"\x00"
 
-                f.write_uint16_at(_h, val_hi)
-                f.write_uint16_at(_l, val_lo)
+                if not limit_reached:
+                    for pool in pools:
+                        ln = len(text_bytes)
+                        if ln <= pool[1]:
+                            str_pos = pool[0]
+                            if text_bytes not in seen_strings:
+                                pool[0] += ln
+                                pool[1] -= ln
+                            break
+                    else:
+                        if monster_hack:
+                            limit_reached = True
+                            out_file = monster_file
+                            str_pos = 0
+                            vbase_offset = 0x00391400
+                        else:
+                            raise ValueError("Ran out of space")
+                
+                if text_bytes in seen_strings:
+                    virt_pos = seen_strings[text_bytes]
+                else:
+                    out_file.seek(str_pos)
+                    out_file.write(text_bytes)
+                    virt_pos = str_pos + vbase_offset
+                    seen_strings[text_bytes] = str_pos + vbase_offset
+
+                if limit_reached:
+                    if str_pos >= 0x19000:
+                        raise ValueError("mnu_monster too big, again!")
+                    str_pos += len(text_bytes)
+
+                for off in flat_ptrs:
+                    f.write_uint32_at(off, virt_pos)
+                
+                for _h, _l in zip(hi, lo):
+                    val_hi = (virt_pos >> 0x10) & 0xFFFF
+                    val_lo = (virt_pos) & 0xFFFF
+                    
+                    # can't encode the lui+addiu directly
+                    if val_lo >= 0x8000:
+                        val_hi += 1
+
+                    f.write_uint16_at(_h, val_hi)
+                    f.write_uint16_at(_l, val_lo)
 
 
     def patch_binaries(self):
