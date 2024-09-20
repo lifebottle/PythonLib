@@ -958,17 +958,20 @@ class ToolsTOR(ToolsTales):
                 f.write(struct.pack("<I", sector + remainder))
 
 
-    def _pack_dat_iter(self, sectors: list[int], remainders: list[int]) -> Iterable[bytes]:
+    def _pack_dat_iter(self, sectors: list[int], remainders: list[int]) -> Iterable[tuple[bytes, int]]:
         buffer = 0
         original_files = self.paths["extracted_files"] / "DAT"
-        total_files = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
+        total_files = ((self.POINTERS_END - self.POINTERS_BEGIN) // 4) - 1
+
+        ######
+        original_data = self.get_datbin_file_data()
     
             
         # Get all original DAT.BIN files
         file_list: dict[int, Path] = {}
-        for file in original_files.glob("*/*"):
-            file_index = int(file.name[:5])
-            file_list[file_index] = file
+        # for file in original_files.glob("*/*"):
+        #     file_index = int(file.name[:5])
+        #     file_list[file_index] = file
 
         # Overlay whatever we have compiled
         for file in (self.paths["temp_files"] / "DAT").glob("*/*"):
@@ -977,69 +980,102 @@ class ToolsTOR(ToolsTales):
                 continue
             else:
                 file_list[file_index] = file
-            
-        for i in range(total_files):
-            file = file_list.get(i)
-            if not file:
-                remainders.append(0)
-                sectors.append(buffer)
-                yield b""
-                continue
 
-            data = b""
-            if file.is_dir():
-                if file.parent.stem == "SCPK":
-                    scpk_path = original_files / "SCPK" / (file.name + ".scpk")
-                    scpk_o = Scpk.from_path(scpk_path)
-                    with open(file / (file.stem + ".rsce"), "rb") as f:
-                        scpk_o.rsce = f.read()
-                    data = scpk_o.to_bytes()
-                    comp_type = re.search(self.VALID_FILE_NAME, scpk_path.name).group(2)
-                elif file.parent.stem == "PAK3":
-                    pak_path = original_files / "PAK3" / (file.name + ".pak3")
-                    pak_o = Pak.from_path(pak_path, 3)
-                    for pak_file in file.glob("*.bin"):
-                        file_index = int(pak_file.name.split(".bin")[0])
-                        with open(pak_file, "rb") as pf:
-                            pak_o.files[file_index].data = pf.read()
-                    data = pak_o.to_bytes(3)
-                    comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
-                if file.parent.stem == "PAK1":
-                    pak_path = original_files / "PAK1" / (file.name + ".pak1")
-                    pak_o = Pak.from_path(pak_path, 1)
-                    for pak_file in file.glob("*.bin"):
-                        file_index = int(pak_file.name.split(".bin")[0])
-                        with open(pak_file, "rb") as pf:
-                            pak_o.files[file_index].data = pf.read()
-                    data = pak_o.to_bytes(1)
-                    comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
-                if file.parent.stem == "PAK0":
-                    pak_path = original_files / "PAK0" / (file.name + ".pak0")
-                    pak_o = Pak.from_path(pak_path, 0)
-                    for pak_file in file.glob("*.bin"):
-                        file_index = int(pak_file.name.split(".bin")[0])
-                        with open(pak_file, "rb") as pf:
-                            pak_o.files[file_index].data = pf.read()
-                    data = pak_o.to_bytes(0)
-                    comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
-            else:
-                with open(file, "rb") as f2:
-                    data = f2.read()
-                comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
-            
-            if comp_type is not None:
-                data = comptolib.compress_data(data, version=int(comp_type))
+        max_chunk_size = 0x1000000
         
-            size = len(data)
-            remainder = 0x40 - (size % 0x40)
-            if remainder == 0x40:
-                remainder = 0
-    
-            remainders.append(remainder)
-            buffer += size + remainder
-            sectors.append(buffer)
+        with open(self.paths["original_files"] / "DAT.BIN", "rb") as datbin:
+            i = 0
+            while i < total_files:
+                start_index = i
 
-            yield data + (b"\x00" * remainder)
+                current_chunk_size = 0
+                while i < total_files:
+                    if file_list.get(i):
+                        break
+                    size = original_data[i][1]
+                    remainder = 0x40 - (size % 0x40)
+                    if remainder == 0x40:
+                        remainder = 0
+
+                    size += remainder
+
+                    if current_chunk_size + size > max_chunk_size:
+                        break
+
+                    current_chunk_size += size
+                    remainders.append(remainder)
+                    buffer += size
+                    sectors.append(buffer)
+                    i += 1
+
+                if start_index != i:
+                    datbin.seek(original_data[start_index][0])
+                    blob = datbin.read(current_chunk_size)
+                    yield blob, i - start_index
+                    continue
+
+                file = file_list[i]
+                # if not file:
+                #     remainders.append(0)
+                #     sectors.append(buffer)
+                #     i += 1
+                #     yield b"", 1
+                #     continue
+
+                data = b""
+                if file.is_dir():
+                    if file.parent.stem == "SCPK":
+                        scpk_path = original_files / "SCPK" / (file.name + ".scpk")
+                        scpk_o = Scpk.from_path(scpk_path)
+                        with open(file / (file.stem + ".rsce"), "rb") as f:
+                            scpk_o.rsce = f.read()
+                        data = scpk_o.to_bytes()
+                        comp_type = re.search(self.VALID_FILE_NAME, scpk_path.name).group(2)
+                    elif file.parent.stem == "PAK3":
+                        pak_path = original_files / "PAK3" / (file.name + ".pak3")
+                        pak_o = Pak.from_path(pak_path, 3)
+                        for pak_file in file.glob("*.bin"):
+                            file_index = int(pak_file.name.split(".bin")[0])
+                            with open(pak_file, "rb") as pf:
+                                pak_o.files[file_index].data = pf.read()
+                        data = pak_o.to_bytes(3)
+                        comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
+                    if file.parent.stem == "PAK1":
+                        pak_path = original_files / "PAK1" / (file.name + ".pak1")
+                        pak_o = Pak.from_path(pak_path, 1)
+                        for pak_file in file.glob("*.bin"):
+                            file_index = int(pak_file.name.split(".bin")[0])
+                            with open(pak_file, "rb") as pf:
+                                pak_o.files[file_index].data = pf.read()
+                        data = pak_o.to_bytes(1)
+                        comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
+                    if file.parent.stem == "PAK0":
+                        pak_path = original_files / "PAK0" / (file.name + ".pak0")
+                        pak_o = Pak.from_path(pak_path, 0)
+                        for pak_file in file.glob("*.bin"):
+                            file_index = int(pak_file.name.split(".bin")[0])
+                            with open(pak_file, "rb") as pf:
+                                pak_o.files[file_index].data = pf.read()
+                        data = pak_o.to_bytes(0)
+                        comp_type = re.search(self.VALID_FILE_NAME, pak_path.name).group(2)
+                else:
+                    with open(file, "rb") as f2:
+                        data = f2.read()
+                    comp_type = re.search(self.VALID_FILE_NAME, file.name).group(2)
+                
+                if comp_type is not None:
+                    data = comptolib.compress_data(data, version=int(comp_type))
+            
+                size = len(data)
+                remainder = 0x40 - (size % 0x40)
+                if remainder == 0x40:
+                    remainder = 0
+        
+                remainders.append(remainder)
+                buffer += size + remainder
+                sectors.append(buffer)
+                i += 1
+                yield data + (b"\x00" * remainder), 1
 
         
     def pack_all_story(self):
@@ -1171,7 +1207,7 @@ class ToolsTOR(ToolsTales):
                     size = f.tell()
                     f.seek(0)
                     with tqdm(total=size, desc=f"Inserting {file.name}", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
-                        while data := f.read(0x8000):
+                        while data := f.read(0x10000000):
                             new.write(data)
                             pbar.update(len(data))
                 new.write_padding(0x800)
@@ -1182,9 +1218,12 @@ class ToolsTOR(ToolsTales):
             remainders: list[int] = []
             total = (self.POINTERS_END - self.POINTERS_BEGIN) // 4
             dat_sz = 0
-            for blob in tqdm(self._pack_dat_iter(sectors, remainders), total=total, desc="Inserting DAT.BIN"):
-                new.write(blob)
-                dat_sz += len(blob)
+            with tqdm(total=total-1, desc="Inserting DAT.BIN") as pbar:
+                for blob, skip in self._pack_dat_iter(sectors, remainders):
+                    new.write(blob)
+                    dat_sz += len(blob)
+                    pbar.update(skip)
+                remainders.append(0)
             
             # Align to nearest LBA
             new.write_padding(0x800)
@@ -1197,7 +1236,7 @@ class ToolsTOR(ToolsTales):
                 fld_sz = dt.tell()
                 dt.seek(0)
                 with tqdm(total=fld_sz, desc="Inserting FLD.BIN", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
-                    while data := dt.read(0x8000):
+                    while data := dt.read(0x1000000):
                         new.write(data)
                         pbar.update(len(data))
             
