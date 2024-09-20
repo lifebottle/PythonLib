@@ -773,7 +773,7 @@ class ToolsTOR(ToolsTales):
             xml_path = xml_folder_path / (entry["friendly_name"] + ".xml")
             root = self.read_xml(xml_path)
 
-        self.pack_menu_file(root, pools, base_offset, blob, entry["friendly_name"] == "mnu_monster")
+        self.pack_menu_file(root, pools, base_offset, blob)
         blob.seek(0)
         return blob.read()
 
