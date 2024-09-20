@@ -1063,6 +1063,15 @@ class ToolsTOR(ToolsTales):
         xml_path = self.paths["story_xml"]
         scpk_path = self.paths["extracted_files"] / "DAT" / "SCPK"
 
+        # Collect available anp3's
+        anp3_path = self.paths["translated_files"] / "graphic"
+
+        anp3s: dict[str, tuple[int, bytes]] = dict()
+
+        for anp3 in anp3_path.glob("*.anp3"):
+            with anp3.open("rb") as f:
+                anp3s[anp3.stem[:5]] = (int(anp3.stem[6:8]), f.read())
+
         in_list = []
         if self.changed_only:
             for item in porcelain.status(self.get_repo_fixed()).unstaged: # type: ignore
@@ -1082,6 +1091,12 @@ class ToolsTOR(ToolsTales):
             new_rsce = self.get_new_theirsce(old_rsce, xml_path / file.with_suffix(".xml").name)
             new_rsce.seek(0)
             curr_scpk.rsce = new_rsce.read()
+
+            # insert anp3 (if applicable)
+            scpk_name = file.stem[:5]
+            if scpk_name in anp3s:
+                char_id = curr_scpk.char_ids[anp3s[scpk_name][0]]
+                curr_scpk.chars[char_id].files[0].data = anp3s[scpk_name][1]
             
             with open(out_path / file.name, "wb") as f:
                 f.write(curr_scpk.to_bytes())

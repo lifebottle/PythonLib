@@ -26,6 +26,7 @@ class Scpk:
         self.map: bytes = b""
         self._map_comp_type = 0
         self.chars: dict[int, Pak] = dict()
+        self.char_ids: list[int] = list()
         self.rsce: bytes = b""
         self._rsce_comp_type = 0
         self.unk_file: bytes = b""
@@ -63,12 +64,11 @@ class Scpk:
             if flags & CHR_FLAG:
                 f.seek(cursor)
                 total_chars = f.read_uint16()
-                char_ids = []
                 for _ in range(total_chars):
-                    char_ids.append(f.read_uint16())
+                    self.char_ids.append(f.read_uint16())
                 cursor += sizes.pop(0)
 
-                for id in char_ids:
+                for id in self.char_ids:
                     size = sizes.pop(0)
                     self.chars[id] = Pak.from_path(f.read_at(cursor, size), 1)
                     cursor += size

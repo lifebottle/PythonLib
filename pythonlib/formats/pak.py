@@ -16,7 +16,7 @@ class Pak:
     def __init__(self) -> None:
         self.type = -1
         self.align = False
-        self.files = []
+        self.files: list[pak_file] = []
 
     @staticmethod
     def from_path(path, type) -> "Pak":
