@@ -1143,7 +1143,7 @@ class ToolsTOR(ToolsTales):
             # insert anp3 (if applicable)
             scpk_name = file.stem[:5]
             if scpk_name in anp3s:
-                char_id = curr_scpk.char_ids[anp3s[scpk_name][0]]
+                char_id = curr_scpk.char_ids[anp3s[scpk_name][0] - 2] # the -2 is to account for the map and chrid "files"
                 curr_scpk.chars[char_id].files[0].data = anp3s[scpk_name][1]
             
             with open(out_path / file.name, "wb") as f:
