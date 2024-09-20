@@ -424,6 +424,11 @@ class ToolsTOR(ToolsTales):
        
         return finalText
     
+    def read_xml(self, xml_path: Path) -> etree._Element:
+        with xml_path.open("r", encoding='utf-8') as xml_file:
+            xml_str = xml_file.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>")
+        root = etree.fromstring(xml_str, parser=etree.XMLParser(recover=True))
+        return root
 
     def get_node_bytes(self, entry_node) -> bytes:
         
@@ -459,8 +464,7 @@ class ToolsTOR(ToolsTales):
         new_text_offsets = dict()
               
         #Read the XML for the corresponding THEIRSCE
-        with open(xml, "r", encoding="utf-8") as xmlFile:
-            root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
+        root = self.read_xml(xml)
         # root = tree.getroot()
 
         #Go at the start of the dialog
@@ -613,7 +617,7 @@ class ToolsTOR(ToolsTales):
 
         # Read json descriptor file
         with open(self.paths["menu_table"], encoding="utf-8") as f:
-            menu_json = json.load(f)
+            menu_json = json.load(f) # type: ignore
 
         for entry in tqdm(menu_json):
 
@@ -730,106 +734,89 @@ class ToolsTOR(ToolsTales):
                 xmlFile.write(etree.tostring(xml_root, encoding="UTF-8", pretty_print=True))
 
 
+    def get_menu_file_paths(self, entry: dict) -> tuple[Path, Path]:
+        if entry["file_path"] == "${main_exe}":
+            file_path = self.paths["original_files"] / self.main_exe_name
+            stem = self.main_exe_name
+        else:
+            file_path = self.paths["extracted_files"] / entry["file_path"]
+            stem = entry["file_path"]
+        return file_path, Path(stem)
+    
+    def merge_split_menu_files(self, entry: dict, xml_folder_path: Path) -> etree._Element:
+        names = []
+
+        for section in entry["sections"]:
+            names.append(f"{entry['friendly_name']}_{section['section'].replace(' ', '_')}.xml")
+        
+        if len(entry["embedded"]) != 0:
+            names.append(entry["friendly_name"] + "_MIPS_PTR.xml")
+
+        root = etree.Element("merged")
+        insertion_point = etree.SubElement(root, "Strings")
+        for name in names:
+            data = self.read_xml(xml_folder_path / name)
+            insertion_point.extend(data.iterfind("./Strings"))
+        
+        return root
+    
+    def get_new_menu(self, entry: dict, blob: FileIO, xml_folder_path: Path):
+        base_offset = entry["base_offset"]
+        
+        # Create pools of valid free spots
+        pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in entry["safe_areas"]] 
+        pools.sort(key=lambda x: x[1])
+
+        if entry.get("split_sections", False):
+            root = self.merge_split_menu_files(entry, xml_folder_path)
+        else:
+            xml_path = xml_folder_path / (entry["friendly_name"] + ".xml")
+            root = self.read_xml(xml_path)
+
+        self.pack_menu_file(root, pools, base_offset, blob, entry["friendly_name"] == "mnu_monster")
+        blob.seek(0)
+        return blob.read()
+
+    
     def pack_all_menu(self) -> None:
         print("Packing Menu Files...")
-
-        xml_path = self.paths["menu_xml"]
-        out_path = self.paths["temp_files"]
+        xml_folder_path: Path = self.paths["menu_xml"]
+        out_path: Path = self.paths["temp_files"]
 
         # Read json descriptor file
         with open(self.paths["menu_table"], encoding="utf-8") as f:
-            menu_json = json.load(f)
+            menu_json = json.load(f) # type: ignore
 
-        for entry in (pbar:= tqdm(menu_json)):
-
-            if entry["file_path"] == "${main_exe}":
-                file_path = self.paths["original_files"] / self.main_exe_name
-                file_last = self.main_exe_name
-            else:
-                file_path = self.paths["extracted_files"] / entry["file_path"]
-                file_last = entry["file_path"]
+        for entry in (pbar := tqdm(menu_json)):
+            file_path, file_relpath = self.get_menu_file_paths(entry)
 
             if entry["is_pak"]:
-                pak = Pak.from_path(file_path, int(entry["pak_type"]))
-                (out_path / file_last[:-4]).mkdir(parents=True, exist_ok=True)
+                pak = Pak.from_path(file_path, entry["pak_type"])
+                out_folder = out_path / file_relpath.with_suffix("")
                 
                 for p_file in entry["files"]:
                     pbar.set_description_str(p_file["friendly_name"])
                     f_index = p_file["file"]
+                    dest_path = out_folder / f"{f_index:04d}.bin"
+
                     if p_file["is_sce"]:
                         old_rsce = Theirsce(pak[f_index].data)
-                        new_rsce = self.get_new_theirsce(old_rsce, xml_path / (p_file["friendly_name"] + ".xml"))
+                        xml_name = xml_folder_path / (p_file["friendly_name"] + ".xml")
+                        new_rsce = self.get_new_theirsce(old_rsce, xml_name)
                         new_rsce.seek(0)
-                        pak[f_index].data = new_rsce.read()
-                        
-                        with open(out_path / file_last[:-4] / f"{f_index:04d}.bin", "wb") as f:
-                            f.write(pak[f_index].data)
+                        data = new_rsce.read()
                     else:
-                        base_offset = p_file["base_offset"]
-                        
-                        # Create pools of valid free spots
-                        pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in p_file["safe_areas"]] 
-                        pools.sort(key=lambda x: x[1])
-
-                        # Get the xml
-                        with open(xml_path / (p_file["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
-                            root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
-
-
-                        with FileIO(pak[f_index].data, "rb") as f:
-                            self.pack_menu_file(root, pools, base_offset, f)
-                            
-                            f.seek(0)
-                            pak[f_index].data = f.read()
-
-                        with open(out_path / file_last[:-4] / f"{f_index:04d}.bin", "wb") as f:
-                            f.write(pak[f_index].data)
+                        with FileIO(pak[f_index].data, "r+b") as f:
+                            data = self.get_new_menu(p_file, f, xml_folder_path)
 
             else:
-                pbar.set_description_str(entry["friendly_name"])
-                base_offset = entry["base_offset"]
-                pools: list[list[int]] = [[x[0] - base_offset, x[1]-x[0]] for x in entry["safe_areas"]] 
-                pools.sort(key=lambda x: x[1])
+                dest_path = out_path / file_relpath
+                with FileIO(file_path, "r+b") as f:
+                    data = self.get_new_menu(entry, f, xml_folder_path)
 
-                if entry["split_sections"]:
-                    root = None
-                    for section in entry["sections"]:
-                        xml_name = entry["friendly_name"] + "_" + section["section"].replace(" ", "_") + ".xml"
-                        with open(xml_path / xml_name, "r", encoding='utf-8') as xmlFile:
-                            data = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
-                        
-                        for result in data.iter('Strings'):
-                            if root is None:
-                                root = data 
-                                insertion_point = root.findall("./Strings")[0]
-                            else:
-                                insertion_point.extend(result) 
-                    if len(entry["embedded"]) != 0:
-                        xml_name = entry["friendly_name"] + "_MIPS_PTR.xml"
-                        with open(xml_path / xml_name, "r", encoding='utf-8') as xmlFile:
-                            data = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
-                        
-                        for result in data.iter('Strings'):
-                            if root is None:
-                                root = data 
-                                insertion_point = root.findall("./Strings")[0]
-                            else:
-                                insertion_point.extend(result) 
-
-                else:
-                    with open(xml_path / (entry["friendly_name"] + ".xml"), "r", encoding='utf-8') as xmlFile:
-                        root = etree.fromstring(xmlFile.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>"), parser=etree.XMLParser(recover=True))
-                
-                with open(file_path, "rb") as f:
-                    file_b = f.read()
-                
-                with FileIO(file_b, "wb") as f:
-                    self.pack_menu_file(root, pools, base_offset, f)
-
-                    f.seek(0)
-                    (out_path / file_last).parent.mkdir(parents=True, exist_ok=True)
-                    with open(out_path / file_last, "wb") as g:
-                        g.write(f.read())
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            with dest_path.open("wb") as f:
+                f.write(data)
 
 
     def pack_menu_file(self, root, pools: list[list[int]], base_offset: int, f: FileIO) -> None:
