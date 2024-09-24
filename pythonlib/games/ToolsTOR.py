@@ -15,6 +15,7 @@ import pycdlib
 import pyjson5 as json
 from dulwich import line_ending, porcelain
 from tqdm import tqdm
+import io
 
 import pythonlib.formats.pak2 as pak2lib
 import pythonlib.utils.comptolib as comptolib
@@ -362,6 +363,7 @@ class ToolsTOR(ToolsTales):
         while True:
             b = src.read(1)
             if b == b"\x00": break
+            if b == b"": break
 
             b = ord(b)
             # Custom Encoded Text
@@ -1102,7 +1104,163 @@ class ToolsTOR(ToolsTales):
                 i += 1
                 yield data + (b"\x00" * remainder), 1
 
+    def get_xml_from_list(self, lines: list[tuple[int, str]], section: str) -> bytes:
+
+        root = etree.Element("SceneText")
+        strings_node = etree.SubElement(root, 'Strings')
+        etree.SubElement(strings_node, 'Section').text = section
         
+        for line in lines:
+            entry_node = etree.SubElement(strings_node, "Entry")
+            etree.SubElement(entry_node,"PointerOffset").text = str(line[0])
+
+            text_split = list(filter(None, re.split(self.COMMON_TAG, line[1])))
+            
+            if len(text_split) > 1 and text_split[0].startswith("<voice:"):
+                etree.SubElement(entry_node,"VoiceId").text  = text_split[0][1:-1].split(":")[1]
+                etree.SubElement(entry_node, "JapaneseText").text = ''.join(text_split[1:])
+            else:
+                etree.SubElement(entry_node, "JapaneseText").text = line[1]
+            
+            etree.SubElement(entry_node,"EnglishText")
+            etree.SubElement(entry_node,"Notes")
+            etree.SubElement(entry_node,"Id").text = str(self.id)
+            
+            self.id = self.id + 1
+            
+            if line[1] == '':
+                statusText = 'Done'
+            else:
+                statusText = 'To Do'
+            etree.SubElement(entry_node,"Status").text = statusText
+        
+        # Return XML string
+        return etree.tostring(root, encoding="UTF-8", pretty_print=True)
+
+    def extract_all_minigame(self, replace=False) -> None:
+        print("Extracting Minigame files...")
+
+        valid_sfm2 = [ 
+            1, 17, 30, 31, 34, 36, 37, 38, 
+            39, 40, 41, 42, 43, 45, 48, 53, 61
+        ]
+
+        folder_path = self.paths["translated_files"] / "minigame"
+        folder_path.mkdir(exist_ok=True)
+        pak3_path = self.paths["extracted_files"] / "DAT" / "PAK3" / "00023.pak3"
+
+        minigame_pak = Pak.from_path(pak3_path, 3)
+        for index in tqdm(valid_sfm2):
+            self.id = 0
+            sfm = minigame_pak.files[index].data
+
+            lines = []
+            
+            with FileIO(sfm, "rb") as f:
+                # special case
+                if index == 45:
+                    tbl_off = f.read_int32_at(0x20)
+                    f.seek(tbl_off)
+                    offsets = struct.unpack("<14I", f.read(0x38))[1::2]
+
+                    for off in offsets:
+                        lines.append((off, self.bytes_to_text(f, tbl_off + off))) # fake offset
+                    
+                code_off = f.read_int32_at(0x18)
+                code_end = code_off + f.read_int32_at(0xC)
+                text_off = f.read_int32_at(0x1C)
+
+                f.seek(code_off)
+                while f.tell() < code_end:
+                    b = f.read_int8()
+                    len = (b >> 4) & 0xF
+                    opcode = b & 0xF
+
+                    # is it the load string opcode?
+                    if opcode == 7:
+                        if f.read_int8() == 2:
+                            off = f.tell()
+                            if len == 3:
+                                str_off = f.read_uint8()
+                            elif len == 4:
+                                str_off = f.read_uint16()
+                            else:
+                                raise ValueError
+
+                            save = f.tell()
+                            lines.append((off, self.bytes_to_text(f, str_off + text_off)))
+                            f.seek(save)
+                        else:
+                            f.read(len - 2)
+                    else:
+                        f.read(len - 1)
+
+            
+            xml_text = self.get_xml_from_list(lines, "Minigame")
+            
+            xml_name = f"{index:04d}.xml"
+            with open(folder_path / xml_name, "wb") as xml:
+                xml.write(xml_text.replace(b"\n", b"\r\n"))
+
+
+    def pack_all_minigame(self):
+        print("Recreating Minigame files...")
+
+        valid_sfm2 = [ 
+            1, 17, 30, 31, 34, 36, 37, 38, 
+            39, 40, 41, 42, 43, 45, 48, 53, 61
+        ]
+        
+        pak3_path = self.paths["extracted_files"] / "DAT" / "PAK3" / "00023.pak3"
+        out_path = self.paths["temp_files"] / "DAT" / "SCPK" / "00023"
+        out_path.mkdir(parents=True, exist_ok=True)
+
+        minigame_pak = Pak.from_path(pak3_path, 3)
+        for index in tqdm(valid_sfm2):
+            
+            sfm = minigame_pak.files[index].data
+
+            with FileIO(sfm, "rb") as f:                
+                new_text_offsets = dict()
+                root = self.read_xml(folder_path / f"{index:04d}.xml")
+                text_off = f.read_int32_at(0x1C)
+                tbl_off = f.read_int32_at(0x20) + 4
+                f.seek(text_off)
+                f.truncate()
+
+                nodes = [ele for ele in root.iter('Entry')]
+                nodes = [ele for ele in nodes if ele.find('PointerOffset').text != "-1"]
+
+                for entry_node in nodes:
+                    new_text_offsets[entry_node.find("PointerOffset").text] = f.tell()
+                    bytes_entry = self.get_node_bytes(entry_node)
+                    f.write(bytes_entry + b'\x00')
+                
+                for i, (pointer, text_offset) in enumerate(new_text_offsets.items()):
+                    new_value = text_offset - text_off
+
+                    if index == 45 and i < 7:
+                        f.write_uint32_at(tbl_off + (i * 8), new_value + 0x54)
+                    else:
+                        f.seek(int(pointer) - 2)
+                        len = (f.read_uint8() >> 4) & 0xF
+                        if len == 3:
+                            f.write(struct.pack("<B", new_value))
+                        elif len == 4:
+                            f.write(struct.pack("<H", new_value))
+                        else:
+                            raise ValueError
+
+                f.seek(0, io.SEEK_END)
+                file_size = f.tell()
+                f.write_uint32_at(0x8, file_size)
+                f.write_uint32_at(0x10, file_size - text_off)
+
+                f.seek(0)
+                with open(out_path / f"{index:04d}.bin", "wb") as o:
+                    o.write(f.read())
+
+
     def pack_all_story(self):
         print("Recreating Story files...")
 

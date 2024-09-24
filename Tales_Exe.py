@@ -41,10 +41,10 @@ def get_arguments(argv=None):
     sp_extract.add_argument(
         "-ft",
         "--file_type",
-        choices=["Iso", "Main", "Menu", "Story", "Skits"],
+        choices=["Iso", "Main", "Menu", "Story", "Minigame", "Skits"],
         required=True,
         metavar="file_type",
-        help="(Required) - Options: Iso, Init, Main, Menu, Story, Skits",
+        help="(Required) - Options: Iso, Init, Main, Menu, Story, Minigame, Skits",
     )
 
     sp_extract.add_argument(
@@ -80,10 +80,10 @@ def get_arguments(argv=None):
     sp_insert.add_argument(
         "-ft",
         "--file_type",
-        choices=["Iso", "Main", "Menu", "Story", "Skits", "All", "Asm"],
+        choices=["Iso", "Main", "Menu", "Story", "Skits", "Minigame", "All", "Asm"],
         required=True,
         metavar="file_type",
-        help="(Required) - Options: Iso, Init, Main, Elf, Story, Skits, All, Asm",
+        help="(Required) - Options: Iso, Init, Main, Elf, Story, Skits, Minigame, All, Asm",
     )
 
     sp_insert.add_argument(
@@ -169,6 +169,9 @@ if __name__ == "__main__":
 
         elif args.file_type == "Story":
             tales_instance.pack_all_story()
+        
+        elif args.file_type == "Minigame":
+            tales_instance.pack_all_minigame()
 
         elif args.file_type == "Iso":
             tales_instance.make_iso()
@@ -186,6 +189,7 @@ if __name__ == "__main__":
             tales_instance.pack_all_story()
             tales_instance.pack_all_skits()
             tales_instance.pack_all_menu()
+            tales_instance.pack_all_minigame()
             tales_instance.patch_binaries()
             tales_instance.make_iso()
 
@@ -203,6 +207,9 @@ if __name__ == "__main__":
 
         if args.file_type == "Story":
             tales_instance.extract_all_story()
+
+        if args.file_type == "Minigame":
+            tales_instance.extract_all_minigame()
 
         if args.file_type == "Skits":
             tales_instance.extract_all_skits(args.replace)
