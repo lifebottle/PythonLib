@@ -1214,7 +1214,7 @@ class ToolsTOR(ToolsTales):
         folder_path = self.paths["translated_files"] / "minigame"
         folder_path.mkdir(exist_ok=True)
         pak3_path = self.paths["extracted_files"] / "DAT" / "PAK3" / "00023.pak3"
-        out_path = self.paths["temp_files"] / "DAT" / "SCPK" / "00023"
+        out_path = self.paths["temp_files"] / "DAT" / "PAK3" / "00023"
         out_path.mkdir(parents=True, exist_ok=True)
 
         minigame_pak = Pak.from_path(pak3_path, 3)
