@@ -1210,7 +1210,9 @@ class ToolsTOR(ToolsTales):
             1, 17, 30, 31, 34, 36, 37, 38, 
             39, 40, 41, 42, 43, 45, 48, 53, 61
         ]
-        
+
+        folder_path = self.paths["translated_files"] / "minigame"
+        folder_path.mkdir(exist_ok=True)
         pak3_path = self.paths["extracted_files"] / "DAT" / "PAK3" / "00023.pak3"
         out_path = self.paths["temp_files"] / "DAT" / "SCPK" / "00023"
         out_path.mkdir(parents=True, exist_ok=True)
