@@ -1246,6 +1246,7 @@ class ToolsTOR(ToolsTales):
                     else:
                         f.seek(int(pointer) - 2)
                         len = (f.read_uint8() >> 4) & 0xF
+                        f.read_uint8()
                         if len == 3:
                             f.write(struct.pack("<B", new_value))
                         elif len == 4:
@@ -1254,9 +1255,11 @@ class ToolsTOR(ToolsTales):
                             raise ValueError
 
                 f.seek(0, io.SEEK_END)
+                text_size = f.tell() - text_off
+                f.write_padding(8)
                 file_size = f.tell()
                 f.write_uint32_at(0x8, file_size)
-                f.write_uint32_at(0x10, file_size - text_off)
+                f.write_uint32_at(0x10, text_size)
 
                 f.seek(0)
                 with open(out_path / f"{index:04d}.bin", "wb") as o:
