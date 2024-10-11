@@ -810,15 +810,18 @@ class ToolsTOR(ToolsTales):
                     else:
                         with FileIO(pak[f_index].data, "r+b") as f:
                             data = self.get_new_menu(p_file, f, xml_folder_path)
-
+                    
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    with dest_path.open("wb") as f:
+                        f.write(data)
             else:
                 dest_path = out_path / file_relpath
                 with FileIO(file_path, "r+b") as f:
                     data = self.get_new_menu(entry, f, xml_folder_path)
 
-            dest_path.parent.mkdir(parents=True, exist_ok=True)
-            with dest_path.open("wb") as f:
-                f.write(data)
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                with dest_path.open("wb") as f:
+                    f.write(data)
 
 
     def pack_menu_file(self, root, pools: list[list[int]], base_offset: int, f: FileIO, monster_hack: bool) -> None:
@@ -826,9 +829,11 @@ class ToolsTOR(ToolsTales):
         out_file = f
         vbase_offset = base_offset
         mode = "wb" if monster_hack else "a"
+        monster_path = self.paths["temp_files"] / "DAT/BIN/10264.bin"
         seen_strings: dict[bytes, int] = dict()
+        monster_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with FileIO(self.paths["temp_files"] / "DAT/BIN/10264.bin", mode) as monster_file:
+        with FileIO(monster_path, mode) as monster_file:
             for line in root.iter("Entry"):
                 hi = []
                 lo = []
