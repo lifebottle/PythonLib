@@ -83,6 +83,7 @@ class AluOperation(Enum):
 
 @dataclass
 class TheirsceBaseInstruction:
+    position: int
     mnemonic: str = field(default=False, init=False) # type: ignore
     type: InstructionType = field(default=False, init=False) # type: ignore
     #size: int
@@ -182,6 +183,7 @@ class TheirsceReferenceInstruction(TheirsceBaseInstruction):
     offset: int
     shift:  int
     position: int
+    is_array: bool = False
     mnemonic = "REF"
     type = InstructionType.REFERENCE
 

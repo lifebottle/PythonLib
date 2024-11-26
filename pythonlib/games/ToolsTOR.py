@@ -16,13 +16,13 @@ import pyjson5 as json
 from tqdm import tqdm
 import io
 
-import pythonlib.formats.pak2 as pak2lib
+import pythonlib.formats.rebirth.pak2 as pak2lib
 import pythonlib.utils.comptolib as comptolib
 from pythonlib.formats.FileIO import FileIO
 from pythonlib.formats.pak import Pak
-from pythonlib.formats.scpk import Scpk
-from pythonlib.formats.theirsce import Theirsce
-from pythonlib.formats.theirsce_instructions import (AluOperation,
+from pythonlib.formats.rebirth.scpk import Scpk
+from pythonlib.formats.rebirth.theirsce import Theirsce
+from pythonlib.formats.rebirth.theirsce_instructions import (AluOperation,
                                                      InstructionType,
                                                      TheirsceBaseInstruction)
 

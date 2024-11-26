@@ -1,10 +1,29 @@
+from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from typing import Generator, Union
 
-from .FileIO import FileIO
-from .theirsce_funcs import *
-from .theirsce_instructions import *
+from ..FileIO import FileIO
+from .theirsce_funcs import SYSCALL_NAMES
+from .theirsce_instructions import (
+    AluOperation,
+    BranchType,
+    InstructionType,
+    ReferenceScope,
+    TheirsceAcquireInstruction,
+    TheirsceAluInstruction,
+    TheirsceBaseInstruction,
+    TheirsceBranchInstruction,
+    TheirsceBreakInstruction,
+    TheirsceLocalCallInstruction,
+    TheirscePushInstruction,
+    TheirsceReferenceInstruction,
+    TheirsceReturnInstruction,
+    TheirsceSpecialReferenceInstruction,
+    TheirsceStringInstruction,
+    TheirsceSyscallInstruction,
+    VariableType,
+)
 
 # I followed other project when making this class
 # not sure how if it's the best approach
@@ -16,6 +35,12 @@ class subsection:
     unk1: int
     unk2: int
     off:  int
+
+@dataclass
+class function:
+    arguments: list
+    body:  list
+    visited: bool = False
 
 
 class Theirsce(FileIO):
@@ -48,6 +73,8 @@ class Theirsce(FileIO):
                 subsections.append(sub)
             self.sections.append(subsections)
             self.seek(pos)
+
+        self.functions = self.get_functions()
     
     def __enter__(self):
         return super().__enter__()
@@ -121,6 +148,36 @@ class Theirsce(FileIO):
                 continue
 
         return data
+
+    def get_functions(self):
+        funs: dict[int, function] = {}
+        ops = list(self.walk_code())
+
+        bd = []
+        fn_st = ops[0].position; ops.pop(0)
+        for val in ops:
+            if val.type == InstructionType.BREAK:
+                if bd[0].type == InstructionType.ACQUIRE:
+                    funs[fn_st] = function(bd[0].params, bd)
+                    bd.pop(0)
+                else:
+                    funs[fn_st] = function([], bd)
+                fn_st = val.position
+                bd = []
+            else:
+                bd.append(val)
+
+        if bd[0].type == InstructionType.ACQUIRE:
+            funs[fn_st] = function(bd[0].params, bd)
+            bd.pop(0)
+        else:
+            funs[fn_st] = function([], bd)
+
+        return funs
+    
+    def reset_seen_functions(self):
+        for fun in self.functions.values():
+            fun.visited = False
 
     def read_opcode(self) -> TheirsceBaseInstruction:
         pos = self.tell()

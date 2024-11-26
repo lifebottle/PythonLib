@@ -2,9 +2,9 @@ import struct
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..formats.FileIO import FileIO
-from ..formats.pak import Pak
-from ..utils import comptolib
+from ..FileIO import FileIO
+from ..pak import Pak
+from ...utils import comptolib
 
 MAGIC = b"SCPK"
 

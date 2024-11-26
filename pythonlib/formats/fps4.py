@@ -1,4 +1,6 @@
-import os, struct, sys
+import os
+import struct
+import sys
 
 def dump_fps4(name, name2, base_path):
 

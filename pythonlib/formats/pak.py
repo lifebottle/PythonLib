@@ -186,6 +186,9 @@ class Pak:
 
     def __getitem__(self, item):
         return self.files[item]
+    
+    def __setitem__(self, item, data):
+        self.files[item] = data
 
     def __len__(self):
         return len(self.files)
