@@ -13,7 +13,6 @@ from pathlib import Path
 import lxml.etree as etree
 import pycdlib
 import pyjson5 as json
-from dulwich import line_ending, porcelain
 from tqdm import tqdm
 import io
 
@@ -43,24 +42,6 @@ class NameEntry:
 
 
 VARIABLE_NAME = "[VARIABLE]"
-
-
-# Bandage method to override autocrlf settings for peple without git
-def get_blob_normalizer_custom(self):
-    """Return a BlobNormalizer object."""
-    git_attributes = {}
-    config_stack = self.get_config_stack()
-    config_stack.set("core", "autocrlf", "true")
-    try:
-        tree = self.object_store[self.refs[b"HEAD"]].tree
-        return line_ending.TreeBlobNormalizer(
-            config_stack,
-            git_attributes,
-            self.object_store,
-            tree,
-        )
-    except KeyError:
-        return line_ending.BlobNormalizer(config_stack, git_attributes)
 
 
 class ToolsTOR(ToolsTales):
@@ -100,12 +81,6 @@ class ToolsTOR(ToolsTales):
         self.list_status_insertion.extend(insert_mask)
         self.changed_only = changed_only
         self.repo_path = str(base_path)
-
-
-    def get_repo_fixed(self):
-        r = porcelain.Repo(self.repo_path)
-        r.get_blob_normalizer = types.MethodType(get_blob_normalizer_custom, r)
-        return r
 
 
     # Extract the story files
@@ -497,7 +472,16 @@ class ToolsTOR(ToolsTales):
                 theirsce.write( struct.pack("<H", new_value))
             
         return theirsce
-    
+
+    def get_changed_targets(self, target_files: list[tuple[Path, Path, Path]]) -> list[tuple[Path, Path, Path]]:
+        changed: list[tuple[Path, Path, Path]] = list()
+        for o, t, s in target_files:
+            t_mod_time = os.path.getmtime(t)
+            s_mod_time = os.path.getmtime(s)
+            if t_mod_time < s_mod_time:
+                changed.append((o, t, s))
+        
+        return changed
 
     def pack_all_skits(self):
         print("Recreating Skit files...")
@@ -507,31 +491,25 @@ class ToolsTOR(ToolsTales):
         xml_path = self.paths["skit_xml"]
         pak2_path = self.paths["extracted_files"] / "DAT" / "PAK2"
 
-        in_list = []
-        if self.changed_only:
-            for item in porcelain.status(self.get_repo_fixed()).unstaged: # type: ignore
-                item_path = Path(item.decode("utf-8"))
-                if item_path.parent.name == "skits":
-                    in_list.append(pak2_path / item_path.with_suffix(".3.pak2").name)
-            if len(in_list) == 0:
-                print("No changed files to insert...")
-                return
-        else:
-            in_list = list(pak2_path.glob("*.pak2"))
+        target_files = list()
+        for file in pak2_path.glob("*.pak2"):
+            xml_name = file.name.split(".")[0] + ".xml"
+            target_files.append((file, out_path / file.name, xml_path / xml_name))
 
-        for file in (pbar := tqdm(in_list)):
+        changed_files = self.get_changed_targets(target_files)
+
+        for file, target, xml in (pbar := tqdm(changed_files)):
             pbar.set_description_str(file.name)
             with open(file, "rb") as f:
                 pak2_data = f.read()
             pak2_obj = pak2lib.get_data(pak2_data)
 
             old_rsce = Theirsce(pak2_obj.chunks.theirsce)
-            xml_name = file.name.split(".")[0] + ".xml"
-            new_rsce = self.get_new_theirsce(old_rsce, xml_path / xml_name)
+            new_rsce = self.get_new_theirsce(old_rsce, xml)
             new_rsce.seek(0)
             pak2_obj.chunks.theirsce = new_rsce.read()
             
-            with open(out_path / file.name, "wb") as f:
+            with open(target, "wb") as f:
                 f.write(pak2lib.create_pak2(pak2_obj))
 
 
@@ -1288,23 +1266,18 @@ class ToolsTOR(ToolsTales):
             with anp3.open("rb") as f:
                 anp3s[anp3.stem[:5]] = (int(anp3.stem[6:8]), f.read())
 
-        in_list = []
-        if self.changed_only:
-            for item in porcelain.status(self.get_repo_fixed()).unstaged: # type: ignore
-                item_path = Path(item.decode("utf-8"))
-                if item_path.parent.name == "story":
-                    in_list.append(scpk_path / item_path.with_suffix(".scpk").name)
-            if len(in_list) == 0:
-                print("No changed files to insert...")
-                return
-        else:
-            in_list = list(scpk_path.glob("*.scpk"))
+        target_files = list()
+        for file in scpk_path.glob("*.scpk"):
+            xml_name = file.name.split(".")[0] + ".xml"
+            target_files.append((file, out_path / file.name, xml_path / xml_name))
 
-        for file in (pbar:= tqdm(in_list)):
+        changed_files = self.get_changed_targets(target_files)
+
+        for file, target, xml in (pbar:= tqdm(changed_files)):
             pbar.set_description_str(file.name)
             curr_scpk = Scpk.from_path(file)
             old_rsce = Theirsce(curr_scpk.rsce)
-            new_rsce = self.get_new_theirsce(old_rsce, xml_path / file.with_suffix(".xml").name)
+            new_rsce = self.get_new_theirsce(old_rsce, xml)
             new_rsce.seek(0)
             curr_scpk.rsce = new_rsce.read()
 
@@ -1314,7 +1287,7 @@ class ToolsTOR(ToolsTales):
                 char_id = curr_scpk.char_ids[anp3s[scpk_name][0] - 2] # the -2 is to account for the map and chrid "files"
                 curr_scpk.chars[char_id].files[0].data = anp3s[scpk_name][1]
             
-            with open(out_path / file.name, "wb") as f:
+            with open(target, "wb") as f:
                 f.write(curr_scpk.to_bytes())
 
             
