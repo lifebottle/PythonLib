@@ -474,6 +474,9 @@ class ToolsTOR(ToolsTales):
         return theirsce
 
     def get_changed_targets(self, target_files: list[tuple[Path, Path, Path]]) -> list[tuple[Path, Path, Path]]:
+        if not self.changed_only:
+            return target_files
+
         changed: list[tuple[Path, Path, Path]] = list()
         for o, t, s in target_files:
             t_mod_time = os.path.getmtime(t)
