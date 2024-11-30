@@ -1465,10 +1465,12 @@ class ToolsTOR(ToolsTales):
 
     def clean_builds(self, path: Path) -> None:
         targets = list(path.glob("*.iso"))
-        targets.extend(list(path.glob("*.sym")))
         target_files = sorted(targets, key=lambda x: x.name)[:-4]
-        if len(target_files) != 0:
-            print("Cleaning builds folder...")
-            for file in target_files:
-                print(f"deleting {str(file.name)}...")
-                file.unlink()
+        if len(target_files) == 0:
+            return
+        
+        print("Cleaning builds folder...")
+        for file in target_files:
+            print(f"deleting {str(file.name)}...")
+            file.unlink()
+            file.with_suffix(".sym").unlink(missing_ok=True)
