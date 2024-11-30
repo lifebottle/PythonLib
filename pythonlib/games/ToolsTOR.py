@@ -1464,7 +1464,9 @@ class ToolsTOR(ToolsTales):
 
 
     def clean_builds(self, path: Path) -> None:
-        target_files = sorted(list(path.glob("*.iso")), key=lambda x: x.name)[:-4]
+        targets = list(path.glob("*.iso"))
+        targets.extend(list(path.glob("*.sym")))
+        target_files = sorted(targets, key=lambda x: x.name)[:-4]
         if len(target_files) != 0:
             print("Cleaning builds folder...")
             for file in target_files:
