@@ -936,6 +936,8 @@ class ToolsTOR(ToolsTales):
                 "-strequ",
                 "__MNU_MONSTER_OVL_PATH__", 
                 str(self.paths["temp_files"] / "DAT" / "OVL" / "11217.ovl"),
+                "-sym2",
+                str(self.paths["game_builds"] / (self.get_build_name() + ".sym"))
             ],
             env=env,
             cwd=str(self.paths["tools"] / "hacks")
