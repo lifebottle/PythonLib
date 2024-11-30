@@ -81,6 +81,16 @@ class ToolsTOR(ToolsTales):
         self.list_status_insertion.extend(insert_mask)
         self.changed_only = changed_only
         self.repo_path = str(base_path)
+        self.build_ts: datetime.datetime = datetime.datetime.now()
+        self.single_build: bool = False
+
+
+    def get_build_name(self) -> str:
+        if self.single_build:
+            return "TalesOfRebirth_latest"
+        else:
+            n: datetime.datetime = self.build_ts 
+            return f"TalesOfRebirth_{n.year:02d}{n.month:02d}{n.day:02d}{n.hour:02d}{n.minute:02d}"
 
 
     # Extract the story files
@@ -1348,9 +1358,8 @@ class ToolsTOR(ToolsTales):
         self.clean_builds(self.paths["game_builds"])
 
         # Set up new iso name
-        n: datetime.datetime = datetime.datetime.now()
         new_iso = self.paths["game_builds"] 
-        new_iso /= f"TalesOfRebirth_{n.year:02d}{n.month:02d}{n.day:02d}{n.hour:02d}{n.minute:02d}.iso"
+        new_iso /= self.get_build_name() + ".iso"
         
         with FileIO(new_iso, "wb+") as new:
 

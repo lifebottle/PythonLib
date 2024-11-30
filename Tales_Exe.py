@@ -128,6 +128,13 @@ def get_arguments(argv=None):
         action="store_true",
         help="(Optional) - Insert only changed files not yet commited",
     )
+    
+    sp_insert.add_argument(
+        "--single-build",
+        required=False,
+        action="store_true",
+        help="(Optional) - Create just a single iso instead",
+    )
 
     args = parser.parse_args()
 
@@ -148,6 +155,7 @@ def getTalesInstance(args, game_name):
         talesInstance = ToolsTOR.ToolsTOR(
             args.project.resolve(), insert_mask, args.only_changed
         )
+        talesInstance.single_build = args.single_build
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
     else:
