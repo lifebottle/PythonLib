@@ -1,10 +1,11 @@
 import datetime
+import io
+import os
 import re
 import shutil
 import struct
 import subprocess
 import types
-import os
 from collections.abc import Iterable
 from dataclasses import dataclass
 from itertools import tee
@@ -14,7 +15,6 @@ import lxml.etree as etree
 import pycdlib
 import pyjson5 as json
 from tqdm import tqdm
-import io
 
 import pythonlib.formats.rebirth.pak2 as pak2lib
 import pythonlib.utils.comptolib as comptolib
@@ -22,9 +22,11 @@ from pythonlib.formats.FileIO import FileIO
 from pythonlib.formats.pak import Pak
 from pythonlib.formats.rebirth.scpk import Scpk
 from pythonlib.formats.rebirth.theirsce import Theirsce
-from pythonlib.formats.rebirth.theirsce_instructions import (AluOperation,
-                                                     InstructionType,
-                                                     TheirsceBaseInstruction)
+from pythonlib.formats.rebirth.theirsce_instructions import (
+    AluOperation,
+    InstructionType,
+    TheirsceBaseInstruction,
+)
 
 from .ToolsTales import ToolsTales
 
