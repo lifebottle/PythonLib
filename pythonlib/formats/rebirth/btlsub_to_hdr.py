@@ -184,7 +184,10 @@ def text_to_cstr(text: str, is_name: bool = False) -> str:
         elif token == "\n":
             output += " NL "
         else:
-            output += f'"{token}"'
+            if is_name and token != "&":
+                output += f'NAME("{token}")'
+            else: 
+                output += f'"{token}"'
 
     return output.strip()
 
