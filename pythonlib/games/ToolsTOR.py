@@ -16,6 +16,7 @@ import pycdlib
 import pyjson5 as json
 from tqdm import tqdm
 
+import pythonlib.formats.rebirth.btlsub_to_hdr as btl_maker
 import pythonlib.formats.rebirth.pak2 as pak2lib
 import pythonlib.utils.comptolib as comptolib
 from pythonlib.formats.FileIO import FileIO
@@ -85,6 +86,38 @@ class ToolsTOR(ToolsTales):
         self.repo_path = str(base_path)
         self.build_ts: datetime.datetime = datetime.datetime.now()
         self.single_build: bool = False
+        self.make_btl_subs: bool = False
+
+
+    def create_btl_subs(self):
+        if not self.make_btl_subs:
+            return
+        
+        print("Updating battle sub data...")
+
+        error, data = btl_maker.grab_online_csv_data()
+        local_csv = self.paths["temp_files"] / "btl_subs.csv"
+        if error:
+            print("Error fetching the sheet online.")
+            print("Using cached version instead...")
+
+            if not local_csv.exists():
+                print("No cached btl_subs.csv found! Skipping...")
+                return
+            
+            with local_csv.open("r", newline="", encoding="utf8") as f:
+                lines = btl_maker.generate_header_lines(f)
+        else:
+            with local_csv.open("w", encoding="utf8") as f:
+                f.write(data.read())
+
+            data.seek(0)
+            lines = btl_maker.generate_header_lines(data)
+
+        h_file = self.paths["tools"] / "hacks/src/battle_subs_text.h"
+        with h_file.open("w", encoding="utf8") as f:
+            f.write("\n".join(lines))
+        print("Done!")
 
 
     def get_build_name(self) -> str:
