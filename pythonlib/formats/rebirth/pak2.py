@@ -85,14 +85,13 @@ def create_pak2(data: pak2_file)->bytes:
     offsets_new = []
     offsets_new.append(output.tell())
 
-    # theirsce
-    offsets_new.append(insert_padded_chunk(output, data.chunks.theirsce))
-
-    # lipsync
+    # lipsync & theirsce
     if data.chunks.lipsync:
+        offsets_new.append(insert_padded_chunk(output, data.chunks.theirsce))
         offsets_new.append(insert_padded_chunk(output, data.chunks.lipsync))
     else:
         offsets_new.append(0)
+        offsets_new.append(insert_padded_chunk(output, data.chunks.theirsce))
 
     # unused
     offsets_new.append(insert_padded_chunk(output, data.chunks.unused))
