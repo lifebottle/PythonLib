@@ -132,8 +132,16 @@ def get_arguments(argv=None):
     sp_insert.add_argument(
         "--update-battle-subs",
         required=False,
+        dest="update_subs",
         action="store_true",
-        help="(Optional) - Update Battle Subs header from google sheet",
+        help="(Deprecated)",
+    )
+    
+    sp_insert.add_argument(
+        "--update-subs",
+        required=False,
+        action="store_true",
+        help="(Optional) - Update Battle and Fmv Subs",
     )
     
     sp_insert.add_argument(
@@ -163,7 +171,7 @@ def getTalesInstance(args, game_name):
             args.project.resolve(), insert_mask, args.only_changed
         )
         talesInstance.single_build = args.single_build
-        talesInstance.make_btl_subs = args.update_battle_subs
+        talesInstance.make_btl_subs = args.update_subs
     elif game_name == "NDX":
         talesInstance = ToolsNDX.ToolsNDX("TBL_All.json")
     else:
@@ -180,7 +188,8 @@ if __name__ == "__main__":
 
     if args.action == "insert":
 
-        if args.update_battle_subs:
+        if args.update_subs:
+            tales_instance.create_fmv_subs()
             tales_instance.create_btl_subs()
 
         if args.file_type == "Main":

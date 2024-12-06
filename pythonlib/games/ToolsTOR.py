@@ -17,6 +17,7 @@ import pyjson5 as json
 from tqdm import tqdm
 
 import pythonlib.formats.rebirth.btlsub_to_hdr as btl_maker
+import pythonlib.formats.rebirth.fmv_to_hdr as fmv_maker
 import pythonlib.formats.rebirth.pak2 as pak2lib
 import pythonlib.utils.comptolib as comptolib
 from pythonlib.formats.FileIO import FileIO
@@ -115,6 +116,23 @@ class ToolsTOR(ToolsTales):
             lines = btl_maker.generate_header_lines(data)
 
         h_file = self.paths["tools"] / "hacks/src/battle_subs_text.h"
+        with h_file.open("w", encoding="utf8") as f:
+            f.write("\n".join(lines))
+        print("Done!")
+
+
+    def create_fmv_subs(self):
+        if not self.make_btl_subs:
+            return
+        
+        print("Updating FMV sub data...")
+
+        srt_path = self.paths["translated_files"] / "fmv"
+        srts = list(srt_path.glob("*.srt"))
+
+        lines = fmv_maker.generate_header_lines(srts)
+
+        h_file = self.paths["tools"] / "hacks/src/fmv_subs_text.h"
         with h_file.open("w", encoding="utf8") as f:
             f.write("\n".join(lines))
         print("Done!")
@@ -447,8 +465,11 @@ class ToolsTOR(ToolsTales):
         return finalText
     
     def read_xml(self, xml_path: Path) -> etree._Element:
-        with xml_path.open("r", encoding='utf-8') as xml_file:
-            xml_str = xml_file.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>")
+        try:
+            with xml_path.open("r", encoding='utf-8') as xml_file:
+                xml_str = xml_file.read().replace("<EnglishText></EnglishText>", "<EnglishText empty=\"true\"></EnglishText>")
+        except FileNotFoundError:
+            xml_str = "<SceneText></SceneText>"
         root = etree.fromstring(xml_str, parser=etree.XMLParser(recover=True))
         return root
 
