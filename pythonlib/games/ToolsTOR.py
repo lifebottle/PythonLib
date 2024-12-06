@@ -1061,6 +1061,11 @@ class ToolsTOR(ToolsTales):
                 continue
             else:
                 file_list[file_index] = file
+        
+        # Further Overlay replacements
+        for file in (self.paths["translated_files"] / "replacements").glob("*/*"):
+            file_index = int(file.name[:5])
+            file_list[file_index] = file
 
         max_chunk_size = 0x1000000
         
