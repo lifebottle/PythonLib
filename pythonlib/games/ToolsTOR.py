@@ -867,7 +867,7 @@ class ToolsTOR(ToolsTales):
                 with FileIO(file_path, "r+b") as f:
                     data = f.read()
 
-                with FileIO(dest_path, "r+b") as f:
+                with FileIO(dest_path, "wb") as f:
                     f.write(data)
                     f.seek(0)
                     self.get_new_menu(entry, f, xml_folder_path)
@@ -1435,30 +1435,25 @@ class ToolsTOR(ToolsTales):
                 anchor_save = f.read(0x800)
 
 
-            if not skip_base_files:
-                # place the file data in
-                files = [
-                    self.paths["original_files"] / "SYSTEM.CNF",
-                    self.paths["temp_files"] / "SLPS_254.50",
-                    self.paths["original_files"] / "IOPRP300.IMG",
-                    self.paths["original_files"] / "BOOT.IRX",
-                    self.paths["original_files"] / "MOV.BIN",
-                ]
+            # place the file data in
+            files = [
+                self.paths["original_files"] / "SYSTEM.CNF",
+                self.paths["temp_files"] / "SLPS_254.50",
+                self.paths["original_files"] / "IOPRP300.IMG",
+                self.paths["original_files"] / "BOOT.IRX",
+                self.paths["original_files"] / "MOV.BIN",
+            ]
 
-                for file in files:
-                    with open(file, "rb") as f:
-                        f.seek(0, 2)
-                        size = f.tell()
-                        f.seek(0)
-                        with tqdm(total=size, desc=f"Inserting {file.name}", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
-                            while data := f.read(0x10000000):
-                                new.write(data)
-                                pbar.update(len(data))
-                    new.write_padding(0x800)
-                # print(f"{new.tell():08X}")
-            else:
-                new.seek(0x6775E800)
-                print("Existing iso found, overwritting...")
+            for file in files:
+                with open(file, "rb") as f:
+                    f.seek(0, 2)
+                    size = f.tell()
+                    f.seek(0)
+                    with tqdm(total=size, desc=f"Inserting {file.name}", unit="B", unit_divisor=1024, unit_scale=True) as pbar:
+                        while data := f.read(0x10000000):
+                            new.write(data)
+                            pbar.update(len(data))
+                new.write_padding(0x800)
 
             
             # Now we plop the new DAT.BIN in its legitimate spot
