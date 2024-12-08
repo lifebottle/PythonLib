@@ -85,7 +85,10 @@ def entry_to_line_str(entry: SubEntry, index: int) -> list[str]:
     content.append(f"    {priority},")
     content.append(f"    {start_text},")
     content.append(f"    {end_text},")
-    content.append(f'    {name} ": " {text}')
+    if name:
+        content.append(f'    {name} ": " {text}')
+    else:
+        content.append(f'    {text}')
     content.append("};")
     return content
 
