@@ -269,7 +269,7 @@ class ToolsTOR(ToolsTales):
         #         sections.append(sub.off)
 
         # Setup three-way opcode generator
-        d = TheirsceBaseInstruction(); d.type = InstructionType.INVALID
+        d = TheirsceBaseInstruction(0); d.type = InstructionType.INVALID
         a,b,c = tee(theirsce.walk_code(), 3)
         next(a, d)
         next(b, d); next(b, d)
@@ -863,12 +863,14 @@ class ToolsTOR(ToolsTales):
                         f.write(data)
             else:
                 dest_path = out_path / file_relpath
-                with FileIO(file_path, "r+b") as f:
-                    data = self.get_new_menu(entry, f, xml_folder_path)
-
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
-                with dest_path.open("wb") as f:
+                with FileIO(file_path, "r+b") as f:
+                    data = f.read()
+
+                with FileIO(dest_path, "wb") as f:
                     f.write(data)
+                    f.seek(0)
+                    self.get_new_menu(entry, f, xml_folder_path)
 
 
     def pack_menu_file(self, root, pools: list[list[int]], base_offset: int, f: FileIO, monster_hack: bool) -> None:

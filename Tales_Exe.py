@@ -72,6 +72,28 @@ def get_arguments(argv=None):
         help="(Optional) - Insert only changed files not yet commited",
     )
 
+    sp_extract.add_argument(
+        "--update-battle-subs",
+        required=False,
+        dest="update_subs",
+        action="store_true",
+        help="(Deprecated)",
+    )
+    
+    sp_extract.add_argument(
+        "--update-subs",
+        required=False,
+        action="store_true",
+        help="(Optional) - Update Battle and Fmv Subs",
+    )
+    
+    sp_extract.add_argument(
+        "--single-build",
+        required=False,
+        action="store_true",
+        help="(Optional) - Create just a single iso instead",
+    )
+
     sp_insert = sp.add_parser(
         "insert",
         help="Take the new texts and recreate the files",
