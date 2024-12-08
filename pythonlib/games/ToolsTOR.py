@@ -867,7 +867,7 @@ class ToolsTOR(ToolsTales):
                 with FileIO(file_path, "r+b") as f:
                     data = f.read()
 
-                with FileIO(dest_path, "wb") as f:
+                with FileIO(dest_path, "r+b") as f:
                     f.write(data)
                     f.seek(0)
                     self.get_new_menu(entry, f, xml_folder_path)
