@@ -7,7 +7,11 @@ def subs_to_lines(subs: list[srt.SrtSub], name: str) -> list[str]:
     content = list()
     inner_content = list()
 
-    content.append(f"const fmv_sub fmv_{name}[{len(subs) * 2}] = {{")
+    content.append(f"const fmv_sub fmv_{name}[{(len(subs) * 2) + 1}] = {{")
+    inner_content.append("{")
+    inner_content.append("    TS_TO_FRAMES(0, 0, 0),")
+    inner_content.append("    (char*)NULL")
+    inner_content.append("},")
     for sub in subs:
         start = sub.start
         start_text = f"TS_TO_FRAMES({start.minutes}, {start.seconds}, {start.milis})"
