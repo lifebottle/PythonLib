@@ -28,12 +28,14 @@ def str_to_timestamp(time_stamp: str) -> TimeStamp:
         minutes = times[1]
         seconds = times[2]
         milis = times[3]
+        milis = int(str(milis).ljust(3, '0'))
     if colon_cnt == 1:
         times = [int(s) for s in re.findall(rTIME_STAMP_NO_HOUR, time_stamp)[0]]
         hours = 0
         minutes = times[0]
         seconds = times[1]
         milis = times[2]
+        milis = int(str(milis).ljust(3, '0'))
     if colon_cnt == 0 or time_stamp.isspace():
         hours = 0
         minutes = 0
