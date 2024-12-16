@@ -963,9 +963,11 @@ class ToolsTOR(ToolsTales):
         dll_path = self.paths["tools"] / "bin" / "dll"
         env = os.environ.copy()
         env["PATH"] = f"{bin_path.as_posix()};{cc_path.as_posix()};{dll_path.as_posix()};{env['PATH']}"
+        n: datetime.datetime = self.build_ts 
         r = subprocess.run(
             [
                 str(self.paths["tools"] / "bin" / "make.exe"),
+                f"PATCH_SERIAL={n.year:02d}{n.month:02d}{n.day:02d}{n.hour:02d}{n.minute:02d}",
             ],
             env=env,
             cwd=str(self.paths["tools"] / "hacks")
